@@ -147,6 +147,40 @@ class BMG_Elementor_Widget extends \Elementor\Widget_Base {
 			'condition'   => [ 'list_position!' => 'none' ],
 		] );
 
+		$this->add_control( 'start_zoom', [
+			'label'       => esc_html__( 'Starting Zoom', 'bmg-interactive-map' ),
+			'type'        => \Elementor\Controls_Manager::NUMBER,
+			'min'         => -5,
+			'max'         => 5,
+			'step'        => 0.5,
+			'default'     => '',
+			'placeholder' => esc_html__( 'Default (fit all)', 'bmg-interactive-map' ),
+			'description' => esc_html__( 'Leaflet zoom level. Leave blank to fit the whole map.', 'bmg-interactive-map' ),
+			'separator'   => 'before',
+		] );
+
+		$this->add_control( 'start_x', [
+			'label'       => esc_html__( 'Starting Center X %', 'bmg-interactive-map' ),
+			'type'        => \Elementor\Controls_Manager::NUMBER,
+			'min'         => 0,
+			'max'         => 100,
+			'step'        => 0.1,
+			'default'     => '',
+			'placeholder' => '50',
+			'condition'   => [ 'start_zoom!' => '' ],
+		] );
+
+		$this->add_control( 'start_y', [
+			'label'       => esc_html__( 'Starting Center Y %', 'bmg-interactive-map' ),
+			'type'        => \Elementor\Controls_Manager::NUMBER,
+			'min'         => 0,
+			'max'         => 100,
+			'step'        => 0.1,
+			'default'     => '',
+			'placeholder' => '50',
+			'condition'   => [ 'start_zoom!' => '' ],
+		] );
+
 		$this->end_controls_section();
 
 		// ── Marker Tooltip Style ─────────────────────────────────────────────
@@ -518,6 +552,9 @@ class BMG_Elementor_Widget extends \Elementor\Widget_Base {
 			'zoom_position' => $settings['zoom_position'] ?? '',
 			'show_tooltips' => ( $settings['show_tooltips'] ?? '' ) === '1' ? '1' : '0',
 			'list_title'    => $settings['list_title'] ?? '',
+			'start_zoom'    => (string) ( $settings['start_zoom'] ?? '' ),
+			'start_x'       => (string) ( $settings['start_x']    ?? '' ),
+			'start_y'       => (string) ( $settings['start_y']    ?? '' ),
 		] );
 	}
 }

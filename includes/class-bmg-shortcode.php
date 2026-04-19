@@ -41,7 +41,7 @@ class BMG_Shortcode {
 		$close_icon_html               = self::$pending_close_icon_html;
 		self::$pending_close_icon_html = '';
 
-		$atts   = shortcode_atts( [ 'id' => 0, 'width' => '', 'height' => '', 'list_position' => 'none', 'zoom_position' => '', 'show_tooltips' => '0', 'list_title' => '' ], $atts, 'bmg_map' );
+		$atts   = shortcode_atts( [ 'id' => 0, 'width' => '', 'height' => '', 'list_position' => 'none', 'zoom_position' => '', 'show_tooltips' => '0', 'list_title' => '', 'start_zoom' => '', 'start_x' => '', 'start_y' => '' ], $atts, 'bmg_map' );
 		$map_id = absint( $atts['id'] );
 		$dim_w  = self::sanitize_dimension( $atts['width'] );
 		$dim_h  = self::sanitize_dimension( $atts['height'] );
@@ -52,6 +52,11 @@ class BMG_Shortcode {
 		$valid_zoom_pos = [ 'topleft', 'topright', 'bottomleft', 'bottomright' ];
 		$zoom_position  = in_array( $atts['zoom_position'], $valid_zoom_pos, true ) ? $atts['zoom_position'] : '';
 		$list_title     = sanitize_text_field( $atts['list_title'] );
+
+		$start_zoom = $atts['start_zoom'] !== '' ? (float) $atts['start_zoom'] : '';
+		$start_x    = $atts['start_x']    !== '' ? min( 100.0, max( 0.0, (float) $atts['start_x'] ) ) : '';
+		$start_y    = $atts['start_y']    !== '' ? min( 100.0, max( 0.0, (float) $atts['start_y'] ) ) : '';
+		$has_start  = $start_zoom !== '' && $start_x !== '' && $start_y !== '';
 
 		if ( ! $map_id ) {
 			return '<!-- bmg_map: no id provided -->';
@@ -237,6 +242,11 @@ class BMG_Shortcode {
 				<?php echo $zoom_position ? 'data-zoom-position="' . esc_attr( $zoom_position ) . '"' : ''; ?>
 				<?php echo $map_min_zoom !== '' ? 'data-min-zoom="' . esc_attr( $map_min_zoom ) . '"' : ''; ?>
 				<?php echo $map_max_zoom !== '' ? 'data-max-zoom="' . esc_attr( $map_max_zoom ) . '"' : ''; ?>
+				<?php if ( $has_start ) : ?>
+				data-start-zoom="<?php echo esc_attr( $start_zoom ); ?>"
+				data-start-x="<?php echo esc_attr( $start_x ); ?>"
+				data-start-y="<?php echo esc_attr( $start_y ); ?>"
+				<?php endif; ?>
 				<?php echo $close_icon_html ? 'data-close-icon="' . esc_attr( $close_icon_html ) . '"' : ''; ?>
 				aria-label="<?php echo esc_attr( $map->post_title ); ?>">
 			</div>

@@ -82,10 +82,13 @@
 
 			requestAnimationFrame( function () {
 
-			// Per-map zoom position and zoom levels override global settings.
-			var zoomPos = el.dataset.zoomPosition || ZOOM_POSITION;
-			var minZoom = el.dataset.minZoom !== undefined && el.dataset.minZoom !== '' ? Number( el.dataset.minZoom ) : MIN_ZOOM;
-			var maxZoom = el.dataset.maxZoom !== undefined && el.dataset.maxZoom !== '' ? Number( el.dataset.maxZoom ) : MAX_ZOOM;
+			// Per-embed zoom position and levels override global settings.
+			var zoomPos   = el.dataset.zoomPosition || ZOOM_POSITION;
+			var minZoom   = el.dataset.minZoom !== undefined && el.dataset.minZoom !== '' ? Number( el.dataset.minZoom ) : MIN_ZOOM;
+			var maxZoom   = el.dataset.maxZoom !== undefined && el.dataset.maxZoom !== '' ? Number( el.dataset.maxZoom ) : MAX_ZOOM;
+			var hasStart  = el.dataset.startZoom !== undefined && el.dataset.startZoom !== ''
+			                && el.dataset.startX !== undefined && el.dataset.startX !== ''
+			                && el.dataset.startY !== undefined && el.dataset.startY !== '';
 
 			// Stash the Leaflet instance so the Elementor re-render hook can
 			// destroy it cleanly before re-initialising.
@@ -111,10 +114,13 @@
 			var bounds = [ [ 0, 0 ], [ H, W ] ];
 			L.imageOverlay( imageUrl, bounds ).addTo( map );
 
-			// Only fit immediately if the container has non-zero dimensions.
-			// Calling fitBounds on a 0×0 container corrupts Leaflet's internal zoom
-			// state; the delayed retries below recover once the container has a size.
-			if ( el.offsetWidth > 0 && el.offsetHeight > 0 ) {
+			// Apply starting view or fit-all, depending on whether a start view is set.
+			if ( hasStart ) {
+				map.setView(
+					toLatLng( parseFloat( el.dataset.startX ), parseFloat( el.dataset.startY ), W, H ),
+					parseFloat( el.dataset.startZoom )
+				);
+			} else if ( el.offsetWidth > 0 && el.offsetHeight > 0 ) {
 				map.fitBounds( bounds, { padding: [ 0, 0 ] } );
 			}
 
@@ -135,7 +141,7 @@
 			function fitIfUntouched() {
 				if ( el._bmgMap !== map ) return;
 				map.invalidateSize();
-				if ( ! userInteracted && el.offsetWidth > 0 && el.offsetHeight > 0 ) {
+				if ( ! hasStart && ! userInteracted && el.offsetWidth > 0 && el.offsetHeight > 0 ) {
 					map.fitBounds( bounds, { padding: [ 0, 0 ] } );
 				}
 			}
@@ -152,7 +158,7 @@
 				var wrapperObserver = new ResizeObserver( function () {
 					if ( el._bmgMap !== map ) { wrapperObserver.disconnect(); return; }
 					map.invalidateSize();
-					if ( ! userInteracted && el.offsetWidth > 0 && el.offsetHeight > 0 ) {
+					if ( ! hasStart && ! userInteracted && el.offsetWidth > 0 && el.offsetHeight > 0 ) {
 						map.fitBounds( bounds, { padding: [ 0, 0 ] } );
 					}
 				} );
@@ -241,9 +247,23 @@
 				var poly = L.polygon( latlngs, {
 					color      : area.color,
 					fillColor  : area.fillColor,
-					fillOpacity: area.fillOpacity,
+					fillOpacity: 0,
 					weight     : 2,
 				} ).addTo( map );
+
+				poly.bindTooltip( escHtml( area.title ), {
+					sticky   : true,
+					direction: 'top',
+					offset   : [ 0, -4 ],
+				} );
+
+				poly.on( 'mouseover', function () {
+					poly.setStyle( { fillOpacity: area.fillOpacity } );
+				} );
+
+				poly.on( 'mouseout', function () {
+					poly.setStyle( { fillOpacity: 0 } );
+				} );
 
 				poly.on( 'click', function ( e ) {
 					L.DomEvent.stopPropagation( e );

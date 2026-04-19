@@ -2,7 +2,7 @@
 /**
  * Plugin Name: BMG Interactive Map
  * Description: Renders interactive custom image-based maps with clickable location markers, managed via custom post types.
- * Version:     2.0.32
+ * Version:     2.0.33
  * Author:      BMG
  * License:     GPL-2.0-or-later
  * Text Domain: bmg-interactive-map
@@ -15,7 +15,7 @@ if ( defined( 'BMG_MAP_VERSION' ) ) {
 	return;
 }
 
-define( 'BMG_MAP_VERSION',    '2.0.32' );
+define( 'BMG_MAP_VERSION',    '2.0.33' );
 define( 'BMG_MAP_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'BMG_MAP_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
