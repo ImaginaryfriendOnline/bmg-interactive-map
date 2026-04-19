@@ -82,34 +82,43 @@ class BMG_Shortcode {
 		$explicit_size  = false;
 		$spacer_img_src = ''; // non-empty → render <img class="bmg-map-aspect-spacer">
 
+		// Image metadata — needed for SVG spacer in all non-explicit-height paths.
+		$thumb_id = get_post_thumbnail_id( $map_id );
+		$img_meta = wp_get_attachment_metadata( $thumb_id );
+		$img_w    = ! empty( $img_meta['width'] )  ? (int) $img_meta['width']  : 16;
+		$img_h    = ! empty( $img_meta['height'] ) ? (int) $img_meta['height'] : 9;
+
 		if ( $dim_w && $dim_h ) {
-			// Both explicit — cap pixel widths at 100% with CSS min() and derive
-			// height via aspect-ratio so the map scales proportionally on narrow screens.
-			$w_is_px       = substr( $dim_w, -2 ) === 'px';
-			$h_is_px       = substr( $dim_h, -2 ) === 'px';
-			$w_css         = $w_is_px ? 'min(' . $dim_w . ',100%)' : $dim_w;
-			$wrapper_style = 'width:' . $w_css . ';';
+			$w_is_px = substr( $dim_w, -2 ) === 'px';
+			$h_is_px = substr( $dim_h, -2 ) === 'px';
+
 			if ( $w_is_px && $h_is_px ) {
-				$wrapper_style .= 'aspect-ratio:' . (int) $dim_w . '/' . (int) $dim_h . ';';
+				// Both pixel dims: cap width with max-width and use an SVG spacer to
+				// preserve the user's requested aspect ratio.  This works in all browsers
+				// and is fully responsive — the SVG scales with the container width.
+				$svg            = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' . (int) $dim_w . ' ' . (int) $dim_h . '"/>';
+				$spacer_img_src = 'data:image/svg+xml,' . rawurlencode( $svg );
+				$wrapper_style  = 'max-width:' . $dim_w . ';';
+				$explicit_size  = true; // JS must not override the user-specified ratio
 			} else {
-				$wrapper_style .= 'height:' . $dim_h . ';';
+				// Mixed units (e.g. %-width + px-height): inline both.
+				$w_css         = $w_is_px ? 'min(' . $dim_w . ',100%)' : $dim_w;
+				$wrapper_style = 'width:' . $w_css . ';height:' . $dim_h . ';';
+				$explicit_size = true;
 			}
-			$explicit_size = true;
 		} elseif ( $dim_h ) {
 			// Height only — pin width:100% inline so flex parents can't shrink it.
 			$wrapper_style = 'width:100%;height:' . $dim_h . ';';
 			$explicit_size = true;
 		} else {
-			$thumb_id = get_post_thumbnail_id( $map_id );
-			$img_meta = wp_get_attachment_metadata( $thumb_id );
-			$img_w    = ! empty( $img_meta['width'] )  ? (int) $img_meta['width']  : 16;
-			$img_h    = ! empty( $img_meta['height'] ) ? (int) $img_meta['height'] : 9;
-
 			if ( $dim_w && substr( $dim_w, -2 ) === 'px' ) {
-				// px width, no height — cap at viewport with min() and let aspect-ratio
-				// derive the height so it scales correctly on narrow screens.
-				$wrapper_style = 'width:min(' . $dim_w . ',100%);aspect-ratio:' . $img_w . '/' . $img_h . ';';
-				$explicit_size = true;
+				// px width, no height: cap with max-width; SVG spacer from image metadata
+				// establishes the correct aspect-ratio height in all browsers.
+				$svg            = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' . $img_w . ' ' . $img_h . '"/>';
+				$spacer_img_src = 'data:image/svg+xml,' . rawurlencode( $svg );
+				$wrapper_style  = 'max-width:' . $dim_w . ';';
+				// explicit_size stays false: JS will correct the SVG viewBox to the
+				// image's exact natural dimensions after it loads.
 			} else {
 				// % width or no width — SVG spacer creates the intrinsic height.
 				$wrapper_style  = $dim_w ? 'width:' . $dim_w . ';' : '';

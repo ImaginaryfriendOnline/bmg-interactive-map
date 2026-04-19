@@ -116,21 +116,38 @@
 			// size at 0 / 300 / 1 000 ms; after the user has interacted we still
 			// call invalidateSize (to keep Leaflet's internal state correct) but
 			// skip fitBounds so we don't reset their zoom/pan position.
+			// Track real user interaction (mouse/touch/wheel), NOT Leaflet's
+			// movestart/zoomstart — those also fire from our own fitBounds calls,
+			// which would prematurely lock out the size-correction retries below.
 			var userInteracted = false;
-			map.on( 'movestart zoomstart', function () { userInteracted = true; } );
+			[ 'mousedown', 'touchstart', 'wheel', 'pointerdown' ].forEach( function ( evt ) {
+				el.addEventListener( evt, function () { userInteracted = true; }, { passive: true } );
+			} );
+
+			function fitIfUntouched() {
+				if ( el._bmgMap !== map ) return;
+				map.invalidateSize();
+				if ( ! userInteracted ) {
+					map.fitBounds( bounds, { padding: [ 0, 0 ] } );
+				}
+			}
 
 			[ 0, 300, 1000 ].forEach( function ( delay ) {
-				setTimeout( function () {
-					// Stale-timeout guard: if the element has been re-initialised
-					// (e.g. Elementor replaced the widget HTML) this closure's `map`
-					// is no longer the active instance — skip to avoid conflicts.
-					if ( el._bmgMap !== map ) return;
+				setTimeout( fitIfUntouched, delay );
+			} );
+
+			// ResizeObserver: re-fit whenever the container changes size (handles
+			// Elementor column animations, sticky headers, tab switches, etc.)
+			if ( window.ResizeObserver ) {
+				var sizeObserver = new ResizeObserver( function () {
+					if ( el._bmgMap !== map ) { sizeObserver.disconnect(); return; }
 					map.invalidateSize();
 					if ( ! userInteracted ) {
 						map.fitBounds( bounds, { padding: [ 0, 0 ] } );
 					}
-				}, delay );
-			} );
+				} );
+				sizeObserver.observe( el );
+			}
 
 			// Prevent panning too far outside the image.
 			map.setMaxBounds( [
