@@ -10,7 +10,6 @@
 	width: 100%;
 	max-width: 100%;
 	position: relative;
-	z-index: 0; /* contain Leaflet's internal stacking contexts so fixed headers paint above */
 }
 
 /* Inline SVG <img> that gives the wrapper its intrinsic height.

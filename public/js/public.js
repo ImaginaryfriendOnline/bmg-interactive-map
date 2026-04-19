@@ -136,17 +136,33 @@
 				setTimeout( fitIfUntouched, delay );
 			} );
 
-			// ResizeObserver: re-fit whenever the container changes size (handles
-			// Elementor column animations, sticky headers, tab switches, etc.)
+			// Directly set the wrapper height from measured width × image ratio.
+			// This is more reliable than the SVG spacer in flex/grid contexts
+			// (e.g. Elementor columns) where percentage heights can silently
+			// resolve to 0 — leaving the map container with no height to fill.
+			function layoutWrapper() {
+				if ( ! wrapper || wrapper.dataset.explicitSize ) return;
+				var ww = wrapper.offsetWidth;
+				if ( ww > 0 ) {
+					wrapper.style.height = Math.round( ww * H / W ) + 'px';
+				}
+			}
+			layoutWrapper();
+
+			// ResizeObserver on the WRAPPER (not the container): fires whenever
+			// the column/layout width changes, so we can re-derive the height and
+			// re-fit Leaflet.  Observing the wrapper instead of el means we catch
+			// width changes that happen before the wrapper has any height at all.
 			if ( window.ResizeObserver ) {
-				var sizeObserver = new ResizeObserver( function () {
-					if ( el._bmgMap !== map ) { sizeObserver.disconnect(); return; }
+				var wrapperObserver = new ResizeObserver( function () {
+					if ( el._bmgMap !== map ) { wrapperObserver.disconnect(); return; }
+					layoutWrapper();
 					map.invalidateSize();
 					if ( ! userInteracted ) {
 						map.fitBounds( bounds, { padding: [ 0, 0 ] } );
 					}
 				} );
-				sizeObserver.observe( el );
+				wrapperObserver.observe( wrapper || el );
 			}
 
 			// Prevent panning too far outside the image.
