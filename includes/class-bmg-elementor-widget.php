@@ -132,8 +132,6 @@ class BMG_Elementor_Widget extends \Elementor\Widget_Base {
 				'none'     => esc_html__( 'None (hidden)',    'bmg-interactive-map' ),
 				'right'    => esc_html__( 'Right',            'bmg-interactive-map' ),
 				'left'     => esc_html__( 'Left',             'bmg-interactive-map' ),
-				'above'    => esc_html__( 'Above',            'bmg-interactive-map' ),
-				'below'    => esc_html__( 'Below',            'bmg-interactive-map' ),
 				'float-tl' => esc_html__( 'Float: Top Left',  'bmg-interactive-map' ),
 				'float-tr' => esc_html__( 'Float: Top Right', 'bmg-interactive-map' ),
 				'float-bl' => esc_html__( 'Float: Bot Left',  'bmg-interactive-map' ),

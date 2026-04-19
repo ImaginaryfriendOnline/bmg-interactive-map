@@ -68,9 +68,8 @@ Full parameter reference:
 | Value | Effect |
 |-------|--------|
 | `none` | No list |
-| `left` / `right` | Side panel (220 px) |
-| `above` / `below` | Stacked above or below the map |
-| `float-tl` / `float-tr` / `float-bl` / `float-br` | Floating overlay in a corner |
+| `left` / `right` | Side panel (220 px); collapses to a narrow icon strip |
+| `float-tl` / `float-tr` / `float-bl` / `float-br` | Floating overlay in a corner; collapses to a single header bar |
 
 Examples:
 

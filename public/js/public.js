@@ -239,7 +239,14 @@
 		var items = listEl.querySelectorAll( '.bmg-location-list__item' );
 
 		// Set --bmg-map-height so the list CSS var matches the rendered map.
-		layoutEl.style.setProperty( '--bmg-map-height', mapEl.offsetHeight + 'px' );
+		// Re-sync on resize (e.g. phone rotation) so the panel stays the right height.
+		function syncListHeight() {
+			layoutEl.style.setProperty( '--bmg-map-height', mapEl.offsetHeight + 'px' );
+		}
+		syncListHeight();
+		if ( window.ResizeObserver ) {
+			new ResizeObserver( syncListHeight ).observe( mapEl );
+		}
 
 		// For floating lists with more than 10 locations: cap the panel height
 		// to exactly 10 items (plus the search bar if present) so it stays
@@ -250,6 +257,31 @@
 			var searchH     = searchWrap ? searchWrap.offsetHeight : 0;
 			var itemH       = items[ 0 ].offsetHeight || 36; // 36 px fallback
 			listEl.style.maxHeight = ( searchH + itemH * 10 ) + 'px';
+		}
+
+		// Collapse/expand toggle.
+		var toggleBtn = listEl.querySelector( '.bmg-location-list__toggle' );
+		if ( toggleBtn ) {
+			var savedMaxHeight = '';
+
+			toggleBtn.addEventListener( 'click', function () {
+				var collapsed = listEl.classList.toggle( 'bmg-location-list--collapsed' );
+				toggleBtn.setAttribute( 'aria-expanded', collapsed ? 'false' : 'true' );
+				toggleBtn.setAttribute( 'aria-label',    collapsed ? 'Expand location list' : 'Collapse location list' );
+
+				if ( collapsed ) {
+					savedMaxHeight = listEl.style.maxHeight;
+					listEl.style.maxHeight = '';
+				} else if ( savedMaxHeight ) {
+					listEl.style.maxHeight = savedMaxHeight;
+				}
+
+				// Re-measure after the CSS transition completes.
+				setTimeout( function () {
+					syncListHeight();
+					map.invalidateSize();
+				}, 220 );
+			} );
 		}
 
 		// Search: filter list items as the user types.  Markers stay on the

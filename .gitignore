@@ -1,5 +1,5 @@
 # Release archives
-*.zip
+releases/
 
 # Leaflet library (downloaded on activation)
 lib/

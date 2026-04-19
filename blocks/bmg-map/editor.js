@@ -108,8 +108,6 @@
 								{ label: __( 'None',             'bmg-interactive-map' ), value: 'none'     },
 								{ label: __( 'Right',            'bmg-interactive-map' ), value: 'right'    },
 								{ label: __( 'Left',             'bmg-interactive-map' ), value: 'left'     },
-								{ label: __( 'Above',            'bmg-interactive-map' ), value: 'above'    },
-								{ label: __( 'Below',            'bmg-interactive-map' ), value: 'below'    },
 								{ label: __( 'Float: Top Left',  'bmg-interactive-map' ), value: 'float-tl' },
 								{ label: __( 'Float: Top Right', 'bmg-interactive-map' ), value: 'float-tr' },
 								{ label: __( 'Float: Bot Left',  'bmg-interactive-map' ), value: 'float-bl' },

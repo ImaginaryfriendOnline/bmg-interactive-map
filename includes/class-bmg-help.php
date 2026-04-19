@@ -148,7 +148,7 @@ class BMG_Help {
 								<td><code>none</code></td>
 								<td>
 									<?php esc_html_e( 'Show a location list. Values:', 'bmg-interactive-map' ); ?>
-									<code>none</code>, <code>left</code>, <code>right</code>, <code>above</code>, <code>below</code>,
+									<code>none</code>, <code>left</code>, <code>right</code>,
 									<code>float-tl</code>, <code>float-tr</code>, <code>float-bl</code>, <code>float-br</code>
 								</td>
 							</tr>
@@ -211,21 +211,19 @@ class BMG_Help {
 						</thead>
 						<tbody>
 							<tr><td><code>none</code></td><td><?php esc_html_e( 'No list shown (default).', 'bmg-interactive-map' ); ?></td></tr>
-							<tr><td><code>right</code></td><td><?php esc_html_e( 'List panel to the right of the map (side-by-side).', 'bmg-interactive-map' ); ?></td></tr>
-							<tr><td><code>left</code></td><td><?php esc_html_e( 'List panel to the left of the map (side-by-side).', 'bmg-interactive-map' ); ?></td></tr>
-							<tr><td><code>above</code></td><td><?php esc_html_e( 'List panel above the map (stacked).', 'bmg-interactive-map' ); ?></td></tr>
-							<tr><td><code>below</code></td><td><?php esc_html_e( 'List panel below the map (stacked).', 'bmg-interactive-map' ); ?></td></tr>
-							<tr><td><code>float-tl</code></td><td><?php esc_html_e( 'Floating overlay panel — top-left corner of the map.', 'bmg-interactive-map' ); ?></td></tr>
-							<tr><td><code>float-tr</code></td><td><?php esc_html_e( 'Floating overlay panel — top-right corner of the map.', 'bmg-interactive-map' ); ?></td></tr>
-							<tr><td><code>float-bl</code></td><td><?php esc_html_e( 'Floating overlay panel — bottom-left corner of the map.', 'bmg-interactive-map' ); ?></td></tr>
-							<tr><td><code>float-br</code></td><td><?php esc_html_e( 'Floating overlay panel — bottom-right corner of the map.', 'bmg-interactive-map' ); ?></td></tr>
+							<tr><td><code>right</code></td><td><?php esc_html_e( 'List panel to the right of the map (side-by-side). Collapses to an icon strip.', 'bmg-interactive-map' ); ?></td></tr>
+							<tr><td><code>left</code></td><td><?php esc_html_e( 'List panel to the left of the map (side-by-side). Collapses to an icon strip.', 'bmg-interactive-map' ); ?></td></tr>
+							<tr><td><code>float-tl</code></td><td><?php esc_html_e( 'Floating overlay panel — top-left corner of the map. Collapses to a single header bar.', 'bmg-interactive-map' ); ?></td></tr>
+							<tr><td><code>float-tr</code></td><td><?php esc_html_e( 'Floating overlay panel — top-right corner of the map. Collapses to a single header bar.', 'bmg-interactive-map' ); ?></td></tr>
+							<tr><td><code>float-bl</code></td><td><?php esc_html_e( 'Floating overlay panel — bottom-left corner of the map. Collapses to a single header bar.', 'bmg-interactive-map' ); ?></td></tr>
+							<tr><td><code>float-br</code></td><td><?php esc_html_e( 'Floating overlay panel — bottom-right corner of the map. Collapses to a single header bar.', 'bmg-interactive-map' ); ?></td></tr>
 						</tbody>
 					</table>
 
 					<h3 style="margin-top:16px;"><?php esc_html_e( 'Search', 'bmg-interactive-map' ); ?></h3>
 					<p><?php esc_html_e( 'A search field is automatically added to the top of the list panel in these cases:', 'bmg-interactive-map' ); ?></p>
 					<ul>
-						<li><?php esc_html_e( 'Always, for side and stacked positions (left / right / above / below).', 'bmg-interactive-map' ); ?></li>
+						<li><?php esc_html_e( 'Always, for side positions (left / right).', 'bmg-interactive-map' ); ?></li>
 						<li><?php esc_html_e( 'When there are more than 10 locations, for floating positions.', 'bmg-interactive-map' ); ?></li>
 					</ul>
 					<p><?php esc_html_e( 'Typing in the search box filters the list items by title. Map markers are unaffected.', 'bmg-interactive-map' ); ?></p>

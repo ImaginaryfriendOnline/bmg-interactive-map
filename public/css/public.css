@@ -8,6 +8,7 @@
 .bmg-map-aspect-wrapper {
 	display: block;
 	width: 100%;
+	max-width: 100%;
 	position: relative;
 	z-index: 0; /* contain Leaflet's internal stacking contexts so fixed headers paint above */
 }
@@ -141,18 +142,6 @@
 	min-width: 0; /* prevents flex child from overflowing */
 }
 
-/* Stacked (above / below) */
-.bmg-map-layout--list-above,
-.bmg-map-layout--list-below {
-	display: flex;
-	flex-direction: column;
-}
-
-.bmg-map-layout--list-above .bmg-map-aspect-wrapper,
-.bmg-map-layout--list-below .bmg-map-aspect-wrapper {
-	width: 100%;
-}
-
 /* -----------------------------------------------------------------
    Location list panel
    ----------------------------------------------------------------- */
@@ -170,6 +159,7 @@
 	flex: 0 0 220px;
 	width: 220px;
 	max-height: var( --bmg-map-height, 400px );
+	transition: width 0.2s ease, flex-basis 0.2s ease;
 }
 
 .bmg-map-layout--list-right .bmg-location-list {
@@ -178,21 +168,6 @@
 
 .bmg-map-layout--list-left .bmg-location-list {
 	border-right: none;
-}
-
-/* Stacked panels: full width, capped height */
-.bmg-map-layout--list-above .bmg-location-list,
-.bmg-map-layout--list-below .bmg-location-list {
-	width: 100%;
-	max-height: 200px;
-}
-
-.bmg-map-layout--list-above .bmg-location-list {
-	border-bottom: none;
-}
-
-.bmg-map-layout--list-below .bmg-location-list {
-	border-top: none;
 }
 
 /* -----------------------------------------------------------------
@@ -350,4 +325,119 @@
 		border-right: 1px solid #ccc;
 		border-top: none;
 	}
+}
+
+/* -----------------------------------------------------------------
+   Location list header & collapse toggle
+   ----------------------------------------------------------------- */
+
+.bmg-location-list__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 6px 8px;
+	border-bottom: 1px solid #ccc;
+	background: inherit;
+	min-height: 34px;
+	box-sizing: border-box;
+	flex-shrink: 0;
+}
+
+.bmg-location-list__label {
+	font-size: 0.8125em;
+	font-weight: 600;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	flex: 1 1 auto;
+	min-width: 0;
+	margin-right: 6px;
+}
+
+.bmg-location-list__toggle {
+	flex: 0 0 auto;
+	background: none;
+	border: none;
+	cursor: pointer;
+	padding: 2px 4px;
+	color: inherit;
+	line-height: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	opacity: 0.55;
+	transition: opacity 0.12s ease;
+}
+
+.bmg-location-list__toggle:hover { opacity: 1; }
+
+/* Toggle icon character — direction depends on panel type and state */
+.bmg-map-layout--list-left .bmg-location-list__toggle-icon::before  { content: '‹'; font-size: 1.3em; line-height: 1; }
+.bmg-map-layout--list-right .bmg-location-list__toggle-icon::before { content: '›'; font-size: 1.3em; line-height: 1; }
+
+.bmg-map-layout--list-float-tl .bmg-location-list__toggle-icon::before,
+.bmg-map-layout--list-float-tr .bmg-location-list__toggle-icon::before,
+.bmg-map-layout--list-float-bl .bmg-location-list__toggle-icon::before,
+.bmg-map-layout--list-float-br .bmg-location-list__toggle-icon::before { content: '▲'; font-size: 0.75em; line-height: 1; }
+
+/* Collapsed icon — directions are reversed */
+.bmg-map-layout--list-left  .bmg-location-list--collapsed .bmg-location-list__toggle-icon::before { content: '›'; }
+.bmg-map-layout--list-right .bmg-location-list--collapsed .bmg-location-list__toggle-icon::before { content: '‹'; }
+
+.bmg-map-layout--list-float-tl .bmg-location-list--collapsed .bmg-location-list__toggle-icon::before,
+.bmg-map-layout--list-float-tr .bmg-location-list--collapsed .bmg-location-list__toggle-icon::before,
+.bmg-map-layout--list-float-bl .bmg-location-list--collapsed .bmg-location-list__toggle-icon::before,
+.bmg-map-layout--list-float-br .bmg-location-list--collapsed .bmg-location-list__toggle-icon::before { content: '▼'; }
+
+/* -----------------------------------------------------------------
+   Collapsed state — shared
+   ----------------------------------------------------------------- */
+
+.bmg-location-list--collapsed .bmg-location-list__header {
+	border-bottom: none;
+}
+
+.bmg-location-list--collapsed .bmg-location-search-wrap,
+.bmg-location-list--collapsed .bmg-location-list__items {
+	display: none;
+}
+
+/* -----------------------------------------------------------------
+   Collapsed state — side panels (shrink to icon-only strip)
+   ----------------------------------------------------------------- */
+
+.bmg-map-layout--list-left .bmg-location-list--collapsed,
+.bmg-map-layout--list-right .bmg-location-list--collapsed {
+	flex: 0 0 34px;
+	width: 34px;
+}
+
+.bmg-map-layout--list-left .bmg-location-list--collapsed .bmg-location-list__header,
+.bmg-map-layout--list-right .bmg-location-list--collapsed .bmg-location-list__header {
+	justify-content: center;
+	padding: 8px 0;
+	height: 100%;
+	overflow: hidden;
+}
+
+.bmg-map-layout--list-left .bmg-location-list--collapsed .bmg-location-list__label,
+.bmg-map-layout--list-right .bmg-location-list--collapsed .bmg-location-list__label {
+	display: none;
+}
+
+.bmg-map-layout--list-left .bmg-location-list--collapsed .bmg-location-list__toggle,
+.bmg-map-layout--list-right .bmg-location-list--collapsed .bmg-location-list__toggle {
+	width: 100%;
+	padding: 0;
+}
+
+/* -----------------------------------------------------------------
+   Collapsed state — floating panels (shrink to header bar only)
+   ----------------------------------------------------------------- */
+
+.bmg-map-layout--list-float-tl .bmg-location-list--collapsed,
+.bmg-map-layout--list-float-tr .bmg-location-list--collapsed,
+.bmg-map-layout--list-float-bl .bmg-location-list--collapsed,
+.bmg-map-layout--list-float-br .bmg-location-list--collapsed {
+	max-height: none !important; /* override both CSS and any JS-set inline value */
 }

@@ -46,7 +46,7 @@ class BMG_Shortcode {
 		$dim_w  = self::sanitize_dimension( $atts['width'] );
 		$dim_h  = self::sanitize_dimension( $atts['height'] );
 
-		$valid_positions = [ 'left', 'right', 'above', 'below', 'float-tl', 'float-tr', 'float-bl', 'float-br', 'none' ];
+		$valid_positions = [ 'left', 'right', 'float-tl', 'float-tr', 'float-bl', 'float-br', 'none' ];
 		$list_position   = in_array( $atts['list_position'], $valid_positions, true ) ? $atts['list_position'] : 'none';
 
 		$valid_zoom_pos = [ 'topleft', 'topright', 'bottomleft', 'bottomright' ];
@@ -83,7 +83,17 @@ class BMG_Shortcode {
 		$spacer_img_src = ''; // non-empty → render <img class="bmg-map-aspect-spacer">
 
 		if ( $dim_w && $dim_h ) {
-			$wrapper_style = 'width:' . $dim_w . ';height:' . $dim_h . ';';
+			// Both explicit — cap pixel widths at 100% with CSS min() and derive
+			// height via aspect-ratio so the map scales proportionally on narrow screens.
+			$w_is_px       = substr( $dim_w, -2 ) === 'px';
+			$h_is_px       = substr( $dim_h, -2 ) === 'px';
+			$w_css         = $w_is_px ? 'min(' . $dim_w . ',100%)' : $dim_w;
+			$wrapper_style = 'width:' . $w_css . ';';
+			if ( $w_is_px && $h_is_px ) {
+				$wrapper_style .= 'aspect-ratio:' . (int) $dim_w . '/' . (int) $dim_h . ';';
+			} else {
+				$wrapper_style .= 'height:' . $dim_h . ';';
+			}
 			$explicit_size = true;
 		} elseif ( $dim_h ) {
 			// Height only — pin width:100% inline so flex parents can't shrink it.
@@ -96,9 +106,9 @@ class BMG_Shortcode {
 			$img_h    = ! empty( $img_meta['height'] ) ? (int) $img_meta['height'] : 9;
 
 			if ( $dim_w && substr( $dim_w, -2 ) === 'px' ) {
-				// px width — derive exact px height so both are known.
-				$px_h          = (int) round( (int) $dim_w * $img_h / $img_w );
-				$wrapper_style = 'width:' . $dim_w . ';height:' . $px_h . 'px;';
+				// px width, no height — cap at viewport with min() and let aspect-ratio
+				// derive the height so it scales correctly on narrow screens.
+				$wrapper_style = 'width:min(' . $dim_w . ',100%);aspect-ratio:' . $img_w . '/' . $img_h . ';';
 				$explicit_size = true;
 			} else {
 				// % width or no width — SVG spacer creates the intrinsic height.
@@ -162,9 +172,8 @@ class BMG_Shortcode {
 
 		if ( $show_list ) {
 			echo '<div class="bmg-map-layout bmg-map-layout--list-' . esc_attr( $list_position ) . '">' . "\n";
-			// Non-floating left/above: list precedes the map in the DOM.
-			if ( ! $is_floating && in_array( $list_position, [ 'left', 'above' ], true ) ) {
-				echo self::render_location_list( $locations_data, $map->post_title, $show_search );
+			if ( ! $is_floating && $list_position === 'left' ) {
+				echo self::render_location_list( $locations_data, $map->post_title, $show_search, $list_position );
 			}
 		}
 		?>
@@ -184,14 +193,13 @@ class BMG_Shortcode {
 			</div>
 			<?php if ( $is_floating ) : ?>
 			<?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-			echo self::render_location_list( $locations_data, $map->post_title, $show_search ); ?>
+			echo self::render_location_list( $locations_data, $map->post_title, $show_search, $list_position ); ?>
 			<?php endif; ?>
 		</div>
 		<?php
 		if ( $show_list ) {
-			// Non-floating right/below: list follows the map in the DOM.
-			if ( ! $is_floating && in_array( $list_position, [ 'right', 'below' ], true ) ) {
-				echo self::render_location_list( $locations_data, $map->post_title, $show_search );
+			if ( ! $is_floating && $list_position === 'right' ) {
+				echo self::render_location_list( $locations_data, $map->post_title, $show_search, $list_position );
 			}
 			echo '</div>' . "\n"; // close .bmg-map-layout
 		}
@@ -199,8 +207,14 @@ class BMG_Shortcode {
 		return ob_get_clean();
 	}
 
-	private static function render_location_list( array $locations, string $map_title, bool $show_search = false ): string {
-		$html = '<nav class="bmg-location-list" aria-label="' . esc_attr( $map_title ) . ' locations">' . "\n";
+	private static function render_location_list( array $locations, string $map_title, bool $show_search = false, string $list_position = 'none' ): string {
+		$html = '<nav class="bmg-location-list" data-list-position="' . esc_attr( $list_position ) . '" aria-label="' . esc_attr( $map_title ) . ' locations">' . "\n";
+		$html .= '<div class="bmg-location-list__header">'
+			. '<span class="bmg-location-list__label">' . esc_html__( 'Locations', 'bmg-interactive-map' ) . '</span>'
+			. '<button class="bmg-location-list__toggle" type="button" aria-expanded="true" aria-label="' . esc_attr__( 'Collapse location list', 'bmg-interactive-map' ) . '">'
+			. '<span class="bmg-location-list__toggle-icon" aria-hidden="true"></span>'
+			. '</button>'
+			. '</div>' . "\n";
 
 		if ( $show_search ) {
 			$html .= '<div class="bmg-location-search-wrap">'
