@@ -82,8 +82,10 @@
 
 			requestAnimationFrame( function () {
 
-			// Per-map zoom position overrides the global setting.
+			// Per-map zoom position and zoom levels override global settings.
 			var zoomPos = el.dataset.zoomPosition || ZOOM_POSITION;
+			var minZoom = el.dataset.minZoom !== undefined && el.dataset.minZoom !== '' ? Number( el.dataset.minZoom ) : MIN_ZOOM;
+			var maxZoom = el.dataset.maxZoom !== undefined && el.dataset.maxZoom !== '' ? Number( el.dataset.maxZoom ) : MAX_ZOOM;
 
 			// Stash the Leaflet instance so the Elementor re-render hook can
 			// destroy it cleanly before re-initialising.
@@ -94,8 +96,8 @@
 
 			var map = L.map( el, {
 				crs              : L.CRS.Simple,
-				minZoom          : MIN_ZOOM,
-				maxZoom          : MAX_ZOOM,
+				minZoom          : minZoom,
+				maxZoom          : maxZoom,
 				zoomSnap         : 0,
 				zoomControl      : false, // added manually so position can be set
 				attributionControl: false,

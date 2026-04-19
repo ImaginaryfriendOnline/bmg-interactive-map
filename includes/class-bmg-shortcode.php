@@ -205,6 +205,8 @@ class BMG_Shortcode {
 		wp_enqueue_script( 'bmg-public' );
 
 		$container_id    = 'bmg-map-' . $map_id;
+		$map_min_zoom    = get_post_meta( $map_id, '_bmg_map_min_zoom', true );
+		$map_max_zoom    = get_post_meta( $map_id, '_bmg_map_max_zoom', true );
 		$show_list       = $list_position !== 'none';
 		$float_positions = [ 'float-tl', 'float-tr', 'float-bl', 'float-br' ];
 		$is_floating     = in_array( $list_position, $float_positions, true );
@@ -233,6 +235,8 @@ class BMG_Shortcode {
 				<?php echo $show_list ? 'data-show-list="1"' : ''; ?>
 				<?php echo ! empty( $atts['show_tooltips'] ) && $atts['show_tooltips'] !== '0' ? 'data-tooltips="1"' : ''; ?>
 				<?php echo $zoom_position ? 'data-zoom-position="' . esc_attr( $zoom_position ) . '"' : ''; ?>
+				<?php echo $map_min_zoom !== '' ? 'data-min-zoom="' . esc_attr( $map_min_zoom ) . '"' : ''; ?>
+				<?php echo $map_max_zoom !== '' ? 'data-max-zoom="' . esc_attr( $map_max_zoom ) . '"' : ''; ?>
 				<?php echo $close_icon_html ? 'data-close-icon="' . esc_attr( $close_icon_html ) . '"' : ''; ?>
 				aria-label="<?php echo esc_attr( $map->post_title ); ?>">
 			</div>

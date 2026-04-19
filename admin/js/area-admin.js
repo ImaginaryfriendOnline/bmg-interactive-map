@@ -172,10 +172,10 @@
 
 		wrap.style.aspectRatio = imgW + ' / ' + imgH;
 		wrap.innerHTML =
+			'<div id="bmg-area-editor" class="bmg-admin-area-editor"></div>' +
 			'<p class="description bmg-map-editor-hint">' +
 				'Click the map to add vertices. Drag a vertex to reposition it.' +
-			'</p>' +
-			'<div id="bmg-area-editor" class="bmg-admin-area-editor"></div>';
+			'</p>';
 
 		requestAnimationFrame( function () {
 			leafletMap = L.map( 'bmg-area-editor', {

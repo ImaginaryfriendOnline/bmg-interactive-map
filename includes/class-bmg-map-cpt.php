@@ -19,6 +19,8 @@ class BMG_Map_CPT {
 	public static function init(): void {
 		add_action( 'init',              [ __CLASS__, 'register_post_type' ] );
 		add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_admin_assets' ] );
+		add_action( 'add_meta_boxes',    [ __CLASS__, 'add_meta_boxes' ] );
+		add_action( 'save_post',         [ __CLASS__, 'save_meta' ] );
 
 		// Cascade operations to child locations.
 		add_action( 'wp_trash_post',     [ __CLASS__, 'trash_locations' ] );
@@ -50,12 +52,83 @@ class BMG_Map_CPT {
 			'show_ui'             => true,
 			'show_in_menu'        => true,
 			'menu_icon'           => 'dashicons-location-alt',
-			'supports'            => [ 'title', 'editor', 'thumbnail' ],
+			'supports'            => [ 'title', 'thumbnail' ],
 			'has_archive'         => false,
 			'rewrite'             => false,
 			'capability_type'     => 'post',
 			'show_in_rest'        => true,
 		] );
+	}
+
+	// -------------------------------------------------------------------------
+	// Zoom meta box
+	// -------------------------------------------------------------------------
+
+	public static function add_meta_boxes(): void {
+		add_meta_box(
+			'bmg_map_zoom',
+			__( 'Zoom Settings', 'bmg-interactive-map' ),
+			[ __CLASS__, 'render_meta_box' ],
+			'bmg_map',
+			'side',
+			'default'
+		);
+	}
+
+	public static function render_meta_box( WP_Post $post ): void {
+		wp_nonce_field( 'bmg_map_zoom_save', 'bmg_map_zoom_nonce' );
+
+		$min_zoom = get_post_meta( $post->ID, '_bmg_map_min_zoom', true );
+		$max_zoom = get_post_meta( $post->ID, '_bmg_map_max_zoom', true );
+		$s        = BMG_Settings::get();
+		?>
+		<p style="margin-bottom:6px;">
+			<label for="bmg_map_min_zoom"><strong><?php esc_html_e( 'Min Zoom', 'bmg-interactive-map' ); ?></strong></label><br>
+			<input type="number" id="bmg_map_min_zoom" name="bmg_map_min_zoom"
+				value="<?php echo esc_attr( $min_zoom ); ?>"
+				min="-5" max="0" style="width:70px;"
+				placeholder="<?php echo esc_attr( $s['min_zoom'] ); ?>" />
+		</p>
+		<p style="margin-bottom:6px;">
+			<label for="bmg_map_max_zoom"><strong><?php esc_html_e( 'Max Zoom', 'bmg-interactive-map' ); ?></strong></label><br>
+			<input type="number" id="bmg_map_max_zoom" name="bmg_map_max_zoom"
+				value="<?php echo esc_attr( $max_zoom ); ?>"
+				min="1" max="5" style="width:70px;"
+				placeholder="<?php echo esc_attr( $s['max_zoom'] ); ?>" />
+		</p>
+		<p class="description"><?php esc_html_e( 'Leave blank to use the global default.', 'bmg-interactive-map' ); ?></p>
+		<?php
+	}
+
+	public static function save_meta( int $post_id ): void {
+		if (
+			! isset( $_POST['bmg_map_zoom_nonce'] ) ||
+			! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['bmg_map_zoom_nonce'] ) ), 'bmg_map_zoom_save' )
+		) {
+			return;
+		}
+
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+			return;
+		}
+
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+			return;
+		}
+
+		$min_raw = trim( wp_unslash( $_POST['bmg_map_min_zoom'] ?? '' ) );
+		if ( $min_raw === '' ) {
+			delete_post_meta( $post_id, '_bmg_map_min_zoom' );
+		} else {
+			update_post_meta( $post_id, '_bmg_map_min_zoom', max( -5, min( 0, (int) $min_raw ) ) );
+		}
+
+		$max_raw = trim( wp_unslash( $_POST['bmg_map_max_zoom'] ?? '' ) );
+		if ( $max_raw === '' ) {
+			delete_post_meta( $post_id, '_bmg_map_max_zoom' );
+		} else {
+			update_post_meta( $post_id, '_bmg_map_max_zoom', max( 1, min( 5, (int) $max_raw ) ) );
+		}
 	}
 
 	/**
