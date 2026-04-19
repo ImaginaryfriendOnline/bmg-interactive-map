@@ -77,6 +77,7 @@ class BMG_Location_CPT {
 		$y             = get_post_meta( $post->ID, '_bmg_loc_y', true );
 		$default_color = BMG_Settings::get()['default_color'];
 		$color         = get_post_meta( $post->ID, '_bmg_loc_color', true ) ?: $default_color;
+		$icon_class    = get_post_meta( $post->ID, '_bmg_loc_icon', true );
 
 		// Fetch all published maps for the dropdown.
 		$maps = get_posts( [
@@ -139,6 +140,15 @@ class BMG_Location_CPT {
 					<input type="color" id="bmg_loc_color" name="bmg_loc_color"
 						value="<?php echo esc_attr( $color ); ?>" />
 				</label>
+				<label for="bmg_loc_icon"><?php esc_html_e( 'Icon (FA class)', 'bmg-interactive-map' ); ?>
+					<input type="text" id="bmg_loc_icon" name="bmg_loc_icon"
+						value="<?php echo esc_attr( $icon_class ); ?>"
+						placeholder="fas fa-location-dot"
+						style="width:160px;" />
+				</label>
+			</p>
+			<p class="description" style="margin-top:-8px;">
+				<?php esc_html_e( 'Optional Font Awesome class shown inside the marker circle, e.g. fas fa-home. Leave blank for the plain circle.', 'bmg-interactive-map' ); ?>
 			</p>
 
 		<!-- Popup preview -->
@@ -223,7 +233,7 @@ class BMG_Location_CPT {
 			}
 		}
 
-
+		update_post_meta( $post_id, '_bmg_loc_icon', sanitize_text_field( wp_unslash( $_POST['bmg_loc_icon'] ?? '' ) ) );
 	}
 
 	// -------------------------------------------------------------------------

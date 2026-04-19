@@ -139,6 +139,14 @@ class BMG_Elementor_Widget extends \Elementor\Widget_Base {
 			],
 		] );
 
+		$this->add_control( 'list_title', [
+			'label'       => esc_html__( 'List Title', 'bmg-interactive-map' ),
+			'type'        => \Elementor\Controls_Manager::TEXT,
+			'default'     => '',
+			'placeholder' => esc_html__( 'Locations', 'bmg-interactive-map' ),
+			'condition'   => [ 'list_position!' => 'none' ],
+		] );
+
 		$this->end_controls_section();
 
 		// ── Marker Tooltip Style ─────────────────────────────────────────────
@@ -210,6 +218,66 @@ class BMG_Elementor_Widget extends \Elementor\Widget_Base {
 			],
 		] );
 
+		$this->add_control( 'list_heading_title', [
+			'label'     => esc_html__( 'Title Bar', 'bmg-interactive-map' ),
+			'type'      => \Elementor\Controls_Manager::HEADING,
+			'separator' => 'before',
+		] );
+
+		$this->add_group_control(
+			\Elementor\Group_Control_Typography::get_type(),
+			[
+				'name'     => 'list_title_typography',
+				'selector' => '{{WRAPPER}} .bmg-location-list__label',
+			]
+		);
+
+		$this->add_control( 'list_title_color', [
+			'label'     => esc_html__( 'Color', 'bmg-interactive-map' ),
+			'type'      => \Elementor\Controls_Manager::COLOR,
+			'selectors' => [
+				'{{WRAPPER}} .bmg-location-list__label' => 'color: {{VALUE}};',
+			],
+		] );
+
+		$this->add_control( 'list_title_bg', [
+			'label'     => esc_html__( 'Background', 'bmg-interactive-map' ),
+			'type'      => \Elementor\Controls_Manager::COLOR,
+			'selectors' => [
+				'{{WRAPPER}} .bmg-location-list__header' => 'background-color: {{VALUE}};',
+			],
+		] );
+
+		$this->add_control( 'list_heading_search', [
+			'label'     => esc_html__( 'Search Field', 'bmg-interactive-map' ),
+			'type'      => \Elementor\Controls_Manager::HEADING,
+			'separator' => 'before',
+		] );
+
+		$this->add_group_control(
+			\Elementor\Group_Control_Typography::get_type(),
+			[
+				'name'     => 'list_search_typography',
+				'selector' => '{{WRAPPER}} .bmg-location-search',
+			]
+		);
+
+		$this->add_control( 'list_search_color', [
+			'label'     => esc_html__( 'Text Color', 'bmg-interactive-map' ),
+			'type'      => \Elementor\Controls_Manager::COLOR,
+			'selectors' => [
+				'{{WRAPPER}} .bmg-location-search' => 'color: {{VALUE}};',
+			],
+		] );
+
+		$this->add_control( 'list_search_bg', [
+			'label'     => esc_html__( 'Background', 'bmg-interactive-map' ),
+			'type'      => \Elementor\Controls_Manager::COLOR,
+			'selectors' => [
+				'{{WRAPPER}} .bmg-location-search' => 'background-color: {{VALUE}};',
+			],
+		] );
+
 		$this->add_control( 'list_heading_items', [
 			'label'     => esc_html__( 'Items', 'bmg-interactive-map' ),
 			'type'      => \Elementor\Controls_Manager::HEADING,
@@ -259,70 +327,19 @@ class BMG_Elementor_Widget extends \Elementor\Widget_Base {
 
 		$this->end_controls_section();
 
-		// ── Popup Title Style ─────────────────────────────────────────────────
+		// ── Popup Style ───────────────────────────────────────────────────────
 		// Leaflet appends popups to <body>, outside the widget wrapper, so
 		// {{WRAPPER}} cannot be used here — selectors target the popup classes directly.
-		$this->start_controls_section( 'section_style_title', [
-			'label' => esc_html__( 'Popup Title', 'bmg-interactive-map' ),
-			'tab'   => \Elementor\Controls_Manager::TAB_STYLE,
-		] );
-
-		$this->add_group_control(
-			\Elementor\Group_Control_Typography::get_type(),
-			[
-				'name'     => 'popup_title_typography',
-				'selector' => '.bmg-leaflet-popup .bmg-popup-title',
-			]
-		);
-
-		$this->add_control( 'popup_title_color', [
-			'label'     => esc_html__( 'Color', 'bmg-interactive-map' ),
-			'type'      => \Elementor\Controls_Manager::COLOR,
-			'selectors' => [
-				'.bmg-leaflet-popup .bmg-popup-title' => 'color: {{VALUE}};',
-			],
-		] );
-
-		$this->end_controls_section();
-
-		// ── Popup Body Style ─────────────────────────────────────────────────
-		$this->start_controls_section( 'section_style_popup_body', [
-			'label' => esc_html__( 'Popup Body', 'bmg-interactive-map' ),
-			'tab'   => \Elementor\Controls_Manager::TAB_STYLE,
-		] );
-
-		$this->add_group_control(
-			\Elementor\Group_Control_Typography::get_type(),
-			[
-				'name'     => 'popup_body_typography',
-				'selector' => '.bmg-leaflet-popup .bmg-popup-body',
-			]
-		);
-
-		$this->add_control( 'popup_body_color', [
-			'label'     => esc_html__( 'Color', 'bmg-interactive-map' ),
-			'type'      => \Elementor\Controls_Manager::COLOR,
-			'selectors' => [
-				'.bmg-leaflet-popup .bmg-popup-body' => 'color: {{VALUE}};',
-			],
-		] );
-
-		$this->end_controls_section();
-
-		// ── Popup Style ───────────────────────────────────────────────────────
 		$this->start_controls_section( 'section_style_popup', [
 			'label' => esc_html__( 'Popup', 'bmg-interactive-map' ),
 			'tab'   => \Elementor\Controls_Manager::TAB_STYLE,
 		] );
 
-		$this->add_group_control(
-			\Elementor\Group_Control_Typography::get_type(),
-			[
-				'name'     => 'popup_typography',
-				'label'    => esc_html__( 'Font', 'bmg-interactive-map' ),
-				'selector' => '.bmg-leaflet-popup .leaflet-popup-content-wrapper',
-			]
-		);
+		// Container
+		$this->add_control( 'popup_heading_container', [
+			'label' => esc_html__( 'Container', 'bmg-interactive-map' ),
+			'type'  => \Elementor\Controls_Manager::HEADING,
+		] );
 
 		$this->add_control( 'popup_bg_color', [
 			'label'     => esc_html__( 'Background Color', 'bmg-interactive-map' ),
@@ -355,12 +372,57 @@ class BMG_Elementor_Widget extends \Elementor\Widget_Base {
 			],
 		] );
 
-		$this->end_controls_section();
+		// Title
+		$this->add_control( 'popup_heading_title', [
+			'label'     => esc_html__( 'Title', 'bmg-interactive-map' ),
+			'type'      => \Elementor\Controls_Manager::HEADING,
+			'separator' => 'before',
+		] );
 
-		// ── Popup Close Button Style ──────────────────────────────────────────
-		$this->start_controls_section( 'section_style_close_button', [
-			'label' => esc_html__( 'Popup Close Button', 'bmg-interactive-map' ),
-			'tab'   => \Elementor\Controls_Manager::TAB_STYLE,
+		$this->add_group_control(
+			\Elementor\Group_Control_Typography::get_type(),
+			[
+				'name'     => 'popup_title_typography',
+				'selector' => '.bmg-leaflet-popup .bmg-popup-title',
+			]
+		);
+
+		$this->add_control( 'popup_title_color', [
+			'label'     => esc_html__( 'Color', 'bmg-interactive-map' ),
+			'type'      => \Elementor\Controls_Manager::COLOR,
+			'selectors' => [
+				'.bmg-leaflet-popup .bmg-popup-title' => 'color: {{VALUE}};',
+			],
+		] );
+
+		// Body
+		$this->add_control( 'popup_heading_body', [
+			'label'     => esc_html__( 'Body', 'bmg-interactive-map' ),
+			'type'      => \Elementor\Controls_Manager::HEADING,
+			'separator' => 'before',
+		] );
+
+		$this->add_group_control(
+			\Elementor\Group_Control_Typography::get_type(),
+			[
+				'name'     => 'popup_body_typography',
+				'selector' => '.bmg-leaflet-popup .bmg-popup-body',
+			]
+		);
+
+		$this->add_control( 'popup_body_color', [
+			'label'     => esc_html__( 'Color', 'bmg-interactive-map' ),
+			'type'      => \Elementor\Controls_Manager::COLOR,
+			'selectors' => [
+				'.bmg-leaflet-popup .bmg-popup-body' => 'color: {{VALUE}};',
+			],
+		] );
+
+		// Close Button
+		$this->add_control( 'popup_heading_close', [
+			'label'     => esc_html__( 'Close Button', 'bmg-interactive-map' ),
+			'type'      => \Elementor\Controls_Manager::HEADING,
+			'separator' => 'before',
 		] );
 
 		$this->add_control( 'popup_close_icon', [
@@ -455,6 +517,7 @@ class BMG_Elementor_Widget extends \Elementor\Widget_Base {
 			'list_position' => $settings['list_position'] ?? 'none',
 			'zoom_position' => $settings['zoom_position'] ?? '',
 			'show_tooltips' => ( $settings['show_tooltips'] ?? '' ) === '1' ? '1' : '0',
+			'list_title'    => $settings['list_title'] ?? '',
 		] );
 	}
 }

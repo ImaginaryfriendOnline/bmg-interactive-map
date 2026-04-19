@@ -41,7 +41,7 @@ class BMG_Shortcode {
 		$close_icon_html               = self::$pending_close_icon_html;
 		self::$pending_close_icon_html = '';
 
-		$atts   = shortcode_atts( [ 'id' => 0, 'width' => '', 'height' => '', 'list_position' => 'none', 'zoom_position' => '', 'show_tooltips' => '0' ], $atts, 'bmg_map' );
+		$atts   = shortcode_atts( [ 'id' => 0, 'width' => '', 'height' => '', 'list_position' => 'none', 'zoom_position' => '', 'show_tooltips' => '0', 'list_title' => '' ], $atts, 'bmg_map' );
 		$map_id = absint( $atts['id'] );
 		$dim_w  = self::sanitize_dimension( $atts['width'] );
 		$dim_h  = self::sanitize_dimension( $atts['height'] );
@@ -51,6 +51,7 @@ class BMG_Shortcode {
 
 		$valid_zoom_pos = [ 'topleft', 'topright', 'bottomleft', 'bottomright' ];
 		$zoom_position  = in_array( $atts['zoom_position'], $valid_zoom_pos, true ) ? $atts['zoom_position'] : '';
+		$list_title     = sanitize_text_field( $atts['list_title'] );
 
 		if ( ! $map_id ) {
 			return '<!-- bmg_map: no id provided -->';
@@ -69,20 +70,23 @@ class BMG_Shortcode {
 		// Build the wrapper inline style.
 		//
 		// Height strategy:
-		//   • Both dimensions explicit  → set both inline; Leaflet sees a known size.
-		//   • Height only               → set width:100% + height inline.
-		//   • px width, no height       → derive exact px height from image ratio.
-		//   • % width or no dimensions  → inline SVG <img> spacer.
+		//   • Both px dimensions explicit → aspect-ratio from the specified W×H + SVG spacer, capped by max-width.
+		//   • Mixed units (% + px)        → set both inline.
+		//   • Height only                 → set width:100% + height inline.
+		//   • px width, no height         → aspect-ratio from image metadata + SVG spacer, capped by max-width.
+		//   • % width or no dimensions    → aspect-ratio from image metadata + SVG spacer.
 		//
-		// The SVG spacer is the most reliable auto-height technique: an <img> with
-		// width:100%; height:auto always derives its height from its intrinsic aspect
-		// ratio, even inside Elementor flex/grid columns.  A plain div with
-		// padding-top:X% is fragile because browsers may compute the percentage
-		// against the flex container's height instead of its width.
+		// Two complementary mechanisms are used together:
+		//   1. CSS aspect-ratio (inline) — derives height from width automatically in all layout contexts.
+		//      JS corrects it to the image's exact natural dimensions after load.
+		//   2. SVG spacer <img> — an in-flow element that prevents the wrapper from collapsing to 0×0
+		//      inside Elementor Flexbox Containers, where a wrapper with only absolutely-positioned
+		//      content is treated as having no content and collapses.  Its viewBox is also corrected
+		//      by JS after the image loads.
 		$explicit_size  = false;
 		$spacer_img_src = ''; // non-empty → render <img class="bmg-map-aspect-spacer">
 
-		// Image metadata — needed for SVG spacer in all non-explicit-height paths.
+		// Image metadata — used as the server-side aspect-ratio hint.
 		$thumb_id = get_post_thumbnail_id( $map_id );
 		$img_meta = wp_get_attachment_metadata( $thumb_id );
 		$img_w    = ! empty( $img_meta['width'] )  ? (int) $img_meta['width']  : 16;
@@ -93,12 +97,10 @@ class BMG_Shortcode {
 			$h_is_px = substr( $dim_h, -2 ) === 'px';
 
 			if ( $w_is_px && $h_is_px ) {
-				// Both pixel dims: cap width with max-width and use an SVG spacer to
-				// preserve the user's requested aspect ratio.  This works in all browsers
-				// and is fully responsive — the SVG scales with the container width.
+				// Both pixel dims: cap with max-width; aspect-ratio keeps the correct ratio responsively.
 				$svg            = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' . (int) $dim_w . ' ' . (int) $dim_h . '"/>';
 				$spacer_img_src = 'data:image/svg+xml,' . rawurlencode( $svg );
-				$wrapper_style  = 'max-width:' . $dim_w . ';';
+				$wrapper_style  = 'width:100%;max-width:' . $dim_w . ';aspect-ratio:' . (int) $dim_w . '/' . (int) $dim_h . ';';
 				$explicit_size  = true; // JS must not override the user-specified ratio
 			} else {
 				// Mixed units (e.g. %-width + px-height): inline both.
@@ -112,19 +114,17 @@ class BMG_Shortcode {
 			$explicit_size = true;
 		} else {
 			if ( $dim_w && substr( $dim_w, -2 ) === 'px' ) {
-				// px width, no height: cap with max-width; SVG spacer from image metadata
-				// establishes the correct aspect-ratio height in all browsers.
+				// px width, no height: cap with max-width; aspect-ratio derives height from image ratio.
 				$svg            = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' . $img_w . ' ' . $img_h . '"/>';
 				$spacer_img_src = 'data:image/svg+xml,' . rawurlencode( $svg );
-				$wrapper_style  = 'max-width:' . $dim_w . ';';
-				// explicit_size stays false: JS will correct the SVG viewBox to the
-				// image's exact natural dimensions after it loads.
+				$wrapper_style  = 'width:100%;max-width:' . $dim_w . ';aspect-ratio:' . $img_w . '/' . $img_h . ';';
 			} else {
-				// % width or no width — SVG spacer creates the intrinsic height.
-				$wrapper_style  = $dim_w ? 'width:' . $dim_w . ';' : '';
+				// % width or no width: aspect-ratio creates the intrinsic height from image ratio.
 				$svg            = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' . $img_w . ' ' . $img_h . '"/>';
 				$spacer_img_src = 'data:image/svg+xml,' . rawurlencode( $svg );
+				$wrapper_style  = ( $dim_w ? 'width:' . $dim_w . ';' : 'width:100%;' ) . 'aspect-ratio:' . $img_w . '/' . $img_h . ';';
 			}
+			// JS corrects both aspect-ratio and the SVG spacer viewBox to the image's exact dimensions.
 		}
 
 		// Fetch all published locations for this map.
@@ -161,6 +161,41 @@ class BMG_Shortcode {
 				'x'           => (float) $x,
 				'y'           => (float) $y,
 				'color'       => $color,
+				'icon'        => sanitize_text_field( get_post_meta( $loc->ID, '_bmg_loc_icon', true ) ),
+			];
+		}
+
+		// Fetch all published areas for this map.
+		$area_posts = get_posts( [
+			'post_type'      => 'bmg_area',
+			'post_status'    => 'publish',
+			'posts_per_page' => -1,
+			'orderby'        => 'title',
+			'order'          => 'ASC',
+			'meta_query'     => [
+				[
+					'key'   => '_bmg_area_map_id',
+					'value' => $map_id,
+					'type'  => 'NUMERIC',
+				],
+			],
+		] );
+
+		$areas_data = [];
+		foreach ( $area_posts as $area ) {
+			$points_raw = get_post_meta( $area->ID, '_bmg_area_points', true );
+			$points     = json_decode( $points_raw, true );
+			if ( ! is_array( $points ) || count( $points ) < 3 ) {
+				continue;
+			}
+
+			$areas_data[] = [
+				'title'       => $area->post_title,
+				'description' => wp_kses_post( wpautop( do_shortcode( $area->post_content ) ) ),
+				'points'      => $points,
+				'color'       => get_post_meta( $area->ID, '_bmg_area_color',        true ) ?: '#3388ff',
+				'fillColor'   => get_post_meta( $area->ID, '_bmg_area_fill_color',   true ) ?: '#3388ff',
+				'fillOpacity' => (float) ( get_post_meta( $area->ID, '_bmg_area_fill_opacity', true ) ?: 0.2 ),
 			];
 		}
 
@@ -182,7 +217,7 @@ class BMG_Shortcode {
 		if ( $show_list ) {
 			echo '<div class="bmg-map-layout bmg-map-layout--list-' . esc_attr( $list_position ) . '">' . "\n";
 			if ( ! $is_floating && $list_position === 'left' ) {
-				echo self::render_location_list( $locations_data, $map->post_title, $show_search, $list_position );
+				echo self::render_location_list( $locations_data, $map->post_title, $show_search, $list_position, $list_title );
 			}
 		}
 		?>
@@ -194,6 +229,7 @@ class BMG_Shortcode {
 				id="<?php echo esc_attr( $container_id ); ?>"
 				data-image="<?php echo esc_url( $image_url ); ?>"
 				data-locations="<?php echo esc_attr( wp_json_encode( $locations_data, JSON_INVALID_UTF8_SUBSTITUTE ) ?: '[]' ); ?>"
+				data-areas="<?php echo esc_attr( wp_json_encode( $areas_data, JSON_INVALID_UTF8_SUBSTITUTE ) ?: '[]' ); ?>"
 				<?php echo $show_list ? 'data-show-list="1"' : ''; ?>
 				<?php echo ! empty( $atts['show_tooltips'] ) && $atts['show_tooltips'] !== '0' ? 'data-tooltips="1"' : ''; ?>
 				<?php echo $zoom_position ? 'data-zoom-position="' . esc_attr( $zoom_position ) . '"' : ''; ?>
@@ -202,13 +238,13 @@ class BMG_Shortcode {
 			</div>
 			<?php if ( $is_floating ) : ?>
 			<?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-			echo self::render_location_list( $locations_data, $map->post_title, $show_search, $list_position ); ?>
+			echo self::render_location_list( $locations_data, $map->post_title, $show_search, $list_position, $list_title ); ?>
 			<?php endif; ?>
 		</div>
 		<?php
 		if ( $show_list ) {
 			if ( ! $is_floating && $list_position === 'right' ) {
-				echo self::render_location_list( $locations_data, $map->post_title, $show_search, $list_position );
+				echo self::render_location_list( $locations_data, $map->post_title, $show_search, $list_position, $list_title );
 			}
 			echo '</div>' . "\n"; // close .bmg-map-layout
 		}
@@ -216,10 +252,11 @@ class BMG_Shortcode {
 		return ob_get_clean();
 	}
 
-	private static function render_location_list( array $locations, string $map_title, bool $show_search = false, string $list_position = 'none' ): string {
-		$html = '<nav class="bmg-location-list" data-list-position="' . esc_attr( $list_position ) . '" aria-label="' . esc_attr( $map_title ) . ' locations">' . "\n";
+	private static function render_location_list( array $locations, string $map_title, bool $show_search = false, string $list_position = 'none', string $list_title = '' ): string {
+		$label = $list_title !== '' ? $list_title : __( 'Locations', 'bmg-interactive-map' );
+		$html  = '<nav class="bmg-location-list" data-list-position="' . esc_attr( $list_position ) . '" aria-label="' . esc_attr( $map_title ) . ' locations">' . "\n";
 		$html .= '<div class="bmg-location-list__header">'
-			. '<span class="bmg-location-list__label">' . esc_html__( 'Locations', 'bmg-interactive-map' ) . '</span>'
+			. '<span class="bmg-location-list__label">' . esc_html( $label ) . '</span>'
 			. '<button class="bmg-location-list__toggle" type="button" aria-expanded="true" aria-label="' . esc_attr__( 'Collapse location list', 'bmg-interactive-map' ) . '">'
 			. '<span class="bmg-location-list__toggle-icon" aria-hidden="true"></span>'
 			. '</button>'

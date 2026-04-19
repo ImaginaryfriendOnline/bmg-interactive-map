@@ -1,10 +1,24 @@
 /* BMG Interactive Map — Frontend styles */
 
-/* Aspect-ratio wrapper — aspect-ratio is set inline by JS once the image
-   natural dimensions are known; the server-side value is a best-effort hint.
+/* Elementor Flexbox Container fix — when no explicit width is set on the widget
+   in the Elementor editor, the widget flex item sizes itself to its content.
+   The SVG spacer's intrinsic width (300 px, CSS default for replaced elements
+   with no explicit width) then "wins" and locks the whole chain at 300 px.
+   Setting width:100% here gives the flex item a definite width from the container,
+   breaking the circular dependency.  Elementor's own responsive-width inline
+   styles (set when the user picks a specific % width in the editor) have higher
+   specificity and still override this. */
+.elementor-widget-bmg-interactive-map {
+	width: 100%;
+	min-width: 0;
+}
+
+/* Aspect-ratio wrapper — aspect-ratio is set inline by PHP (from WP metadata)
+   as a best-effort hint and corrected by JS once the image's natural dimensions
+   are known.  CSS aspect-ratio derives height from width automatically in all
+   flex/grid layouts, eliminating the need for JS height measurement.
    position:relative makes this the containing block for the absolutely
-   positioned map container, which is more reliable than height:100% in
-   flex/grid layouts (e.g. Elementor columns). */
+   positioned map container. */
 .bmg-map-aspect-wrapper {
 	display: block;
 	width: 100%;
@@ -12,10 +26,12 @@
 	position: relative;
 }
 
-/* Inline SVG <img> that gives the wrapper its intrinsic height.
-   width:100% + height:auto with a known SVG viewBox always derives the correct
-   height from the aspect ratio — even inside Elementor's flex/grid columns where
-   padding-top % on a flex item can be computed against the wrong axis. */
+/* In-flow spacer that prevents the wrapper from collapsing to 0×0 inside
+   Elementor Flexbox Containers (where a wrapper with only absolutely-positioned
+   content is treated as having no content).  CSS aspect-ratio on the wrapper
+   handles the correct height; this img just ensures the wrapper has in-flow
+   content so the flex container doesn't ignore it.  It is invisible and
+   non-interactive; its SVG viewBox is corrected by JS after the image loads. */
 .bmg-map-aspect-spacer {
 	display: block;
 	width: 100%;
@@ -49,6 +65,16 @@
 	box-shadow: 0 2px 8px rgba( 0, 0, 0, .4 );
 	cursor: pointer;
 	transition: transform 0.12s ease, box-shadow 0.12s ease;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.bmg-pin__icon {
+	font-size: 9px;
+	color: #fff;
+	line-height: 1;
+	pointer-events: none;
 }
 
 .bmg-pin:hover {

@@ -63,15 +63,15 @@
 			var H = img.naturalHeight;
 			if ( ! W || ! H ) return; // broken / zero-size image
 
-			// Unless explicit px dimensions were set server-side, correct the
-			// aspect-ratio wrapper to the image's exact natural proportions.
-			// Then defer Leaflet init to the next animation frame so the browser
-			// has time to reflow before Leaflet measures the container for fitBounds.
+			// Unless explicit dimensions were set server-side, correct the wrapper to
+			// the image's exact natural proportions before Leaflet initialises.
+			// Two mechanisms are corrected together: the CSS aspect-ratio (primary,
+			// handles responsive height) and the SVG spacer viewBox (fallback that
+			// prevents the wrapper collapsing in Elementor Flexbox Containers).
 			var wrapper = el.parentElement;
 			if ( wrapper && wrapper.classList.contains( 'bmg-map-aspect-wrapper' )
 					&& ! wrapper.dataset.explicitSize ) {
-				// Correct the server-side aspect ratio (from WP metadata) to the
-				// image's exact natural dimensions by updating the SVG viewBox.
+				wrapper.style.aspectRatio = W + ' / ' + H;
 				var spacer = wrapper.querySelector( '.bmg-map-aspect-spacer' );
 				if ( spacer ) {
 					spacer.src = 'data:image/svg+xml,' + encodeURIComponent(
@@ -108,7 +108,13 @@
 
 			var bounds = [ [ 0, 0 ], [ H, W ] ];
 			L.imageOverlay( imageUrl, bounds ).addTo( map );
-			map.fitBounds( bounds, { padding: [ 0, 0 ] } );
+
+			// Only fit immediately if the container has non-zero dimensions.
+			// Calling fitBounds on a 0×0 container corrupts Leaflet's internal zoom
+			// state; the delayed retries below recover once the container has a size.
+			if ( el.offsetWidth > 0 && el.offsetHeight > 0 ) {
+				map.fitBounds( bounds, { padding: [ 0, 0 ] } );
+			}
 
 			// Re-measure at increasing delays.  Elementor columns, CSS entry
 			// animations, and sticky headers can all keep the container at 0px
@@ -127,7 +133,7 @@
 			function fitIfUntouched() {
 				if ( el._bmgMap !== map ) return;
 				map.invalidateSize();
-				if ( ! userInteracted ) {
+				if ( ! userInteracted && el.offsetWidth > 0 && el.offsetHeight > 0 ) {
 					map.fitBounds( bounds, { padding: [ 0, 0 ] } );
 				}
 			}
@@ -136,29 +142,15 @@
 				setTimeout( fitIfUntouched, delay );
 			} );
 
-			// Directly set the wrapper height from measured width × image ratio.
-			// This is more reliable than the SVG spacer in flex/grid contexts
-			// (e.g. Elementor columns) where percentage heights can silently
-			// resolve to 0 — leaving the map container with no height to fill.
-			function layoutWrapper() {
-				if ( ! wrapper || wrapper.dataset.explicitSize ) return;
-				var ww = wrapper.offsetWidth;
-				if ( ww > 0 ) {
-					wrapper.style.height = Math.round( ww * H / W ) + 'px';
-				}
-			}
-			layoutWrapper();
-
 			// ResizeObserver on the WRAPPER (not the container): fires whenever
-			// the column/layout width changes, so we can re-derive the height and
-			// re-fit Leaflet.  Observing the wrapper instead of el means we catch
-			// width changes that happen before the wrapper has any height at all.
+			// the column/layout width changes.  CSS aspect-ratio automatically derives
+			// the correct height from the wrapper's width, so we only need to tell
+			// Leaflet that its container has changed.
 			if ( window.ResizeObserver ) {
 				var wrapperObserver = new ResizeObserver( function () {
 					if ( el._bmgMap !== map ) { wrapperObserver.disconnect(); return; }
-					layoutWrapper();
 					map.invalidateSize();
-					if ( ! userInteracted ) {
+					if ( ! userInteracted && el.offsetWidth > 0 && el.offsetHeight > 0 ) {
 						map.fitBounds( bounds, { padding: [ 0, 0 ] } );
 					}
 				} );
@@ -187,6 +179,7 @@
 						+ ' tabindex="0"'
 						+ ' aria-label="' + label + '"'
 						+ ' style="background:' + color + ';">'
+						+ ( loc.icon ? '<i class="' + escAttr( loc.icon ) + ' bmg-pin__icon" aria-hidden="true"></i>' : '' )
 						+ '</div>',
 				} );
 
@@ -226,6 +219,40 @@
 							leafletMarker.openPopup();
 						}
 					} );
+				} );
+			} );
+
+			// Render polygon areas.
+			var areasRaw = el.getAttribute( 'data-areas' );
+			var areas;
+			try {
+				areas = areasRaw ? JSON.parse( areasRaw ) : [];
+			} catch ( e ) {
+				areas = [];
+			}
+
+			areas.forEach( function ( area ) {
+				var latlngs = area.points.map( function ( p ) {
+					return [ H - ( p.y / 100 ) * H, ( p.x / 100 ) * W ];
+				} );
+
+				var poly = L.polygon( latlngs, {
+					color      : area.color,
+					fillColor  : area.fillColor,
+					fillOpacity: area.fillOpacity,
+					weight     : 2,
+				} ).addTo( map );
+
+				poly.on( 'click', function ( e ) {
+					L.DomEvent.stopPropagation( e );
+					var popupHtml = '<h3 class="bmg-popup-title">' + escHtml( area.title ) + '</h3>';
+					if ( area.description ) {
+						popupHtml += '<div class="bmg-popup-body">' + area.description + '</div>';
+					}
+					L.popup( { className: 'bmg-leaflet-popup', closeButton: true } )
+						.setLatLng( e.latlng )
+						.setContent( popupHtml )
+						.openOn( map );
 				} );
 			} );
 

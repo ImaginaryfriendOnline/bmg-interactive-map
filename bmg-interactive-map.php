@@ -2,7 +2,7 @@
 /**
  * Plugin Name: BMG Interactive Map
  * Description: Renders interactive custom image-based maps with clickable location markers, managed via custom post types.
- * Version:     2.0.23
+ * Version:     2.0.31
  * Author:      BMG
  * License:     GPL-2.0-or-later
  * Text Domain: bmg-interactive-map
@@ -15,13 +15,14 @@ if ( defined( 'BMG_MAP_VERSION' ) ) {
 	return;
 }
 
-define( 'BMG_MAP_VERSION',    '2.0.23' );
+define( 'BMG_MAP_VERSION',    '2.0.31' );
 define( 'BMG_MAP_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'BMG_MAP_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
 require_once BMG_MAP_PLUGIN_DIR . 'includes/class-bmg-settings.php';
 require_once BMG_MAP_PLUGIN_DIR . 'includes/class-bmg-map-cpt.php';
 require_once BMG_MAP_PLUGIN_DIR . 'includes/class-bmg-location-cpt.php';
+require_once BMG_MAP_PLUGIN_DIR . 'includes/class-bmg-area-cpt.php';
 require_once BMG_MAP_PLUGIN_DIR . 'includes/class-bmg-shortcode.php';
 require_once BMG_MAP_PLUGIN_DIR . 'includes/class-bmg-block.php';
 require_once BMG_MAP_PLUGIN_DIR . 'includes/class-bmg-help.php';
@@ -30,6 +31,7 @@ add_action( 'plugins_loaded', function () {
 	BMG_Settings::init();
 	BMG_Map_CPT::init();
 	BMG_Location_CPT::init();
+	BMG_Area_CPT::init();
 	BMG_Shortcode::init();
 	BMG_Block::init();
 	BMG_Help::init();
