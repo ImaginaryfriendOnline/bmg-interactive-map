@@ -1,0 +1,60 @@
+/* BMG Interactive Map — Admin styles */
+
+.bmg-meta-wrap {
+	padding: 4px 0;
+}
+
+/* Leaflet editor wrapper — aspect-ratio set by JS to match the image */
+#bmg-map-editor-wrap {
+	width: 100%;
+	max-height: 500px;
+}
+
+/* Leaflet editor container fills the wrapper */
+.bmg-admin-map-editor {
+	width: 100%;
+	height: 100%;
+	border: 1px solid #c3c4c7;
+	border-radius: 3px;
+	background: #f0f0f1;
+}
+
+.bmg-map-editor-hint {
+	margin-top: 8px;
+	margin-bottom: 50vh;
+}
+
+/* DivIcon wrapper reset — Leaflet adds an outline by default */
+.bmg-admin-marker-icon {
+	background: transparent !important;
+	border: none !important;
+}
+
+/* Popup preview panel */
+.bmg-admin-popup-preview {
+	display: inline-block;
+	min-width: 200px;
+	max-width: 400px;
+	padding: 14px 15px 15px;
+	border: 2px solid #000;
+	border-radius: 8px;
+	box-shadow: 0 8px 20px 6px rgba( 0, 0, 0, .2 );
+	background: #fff;
+	font-size: 1.6em;
+	line-height: 1.45;
+}
+
+.bmg-admin-popup-preview .bmg-popup-title {
+	margin: 0;
+	padding: 0 30px 8px 0;
+	font-size: 1.6em;
+	font-weight: 700;
+	border-bottom: 1px solid #000;
+	line-height: 1.2;
+}
+
+.bmg-admin-popup-preview .bmg-popup-body {
+	margin: 8px 0 0;
+	font-size: 0.875em;
+	color: #444;
+}
