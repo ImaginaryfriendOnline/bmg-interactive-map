@@ -17,7 +17,7 @@ PLUGIN_DIR  = SCRIPT_DIR
 PLUGIN_FILE = os.path.join( PLUGIN_DIR, 'bmg-interactive-map.php' )
 ZIP_OUT     = None  # set after version is determined
 
-EXCLUDE_DIRS  = { '.claude', 'lib' }
+EXCLUDE_DIRS  = { '.claude', 'lib', 'releases' }
 EXCLUDE_EXTS  = { '.zip' }
 EXCLUDE_FILES = { 'repackage.py' }
 
@@ -44,8 +44,10 @@ elif '--minor' in sys.argv:
 else:
     patch += 1
 
-new_version = f'{major}.{minor}.{patch}'
-ZIP_OUT     = f'bmg-interactive-map-{new_version}.zip'
+new_version  = f'{major}.{minor}.{patch}'
+releases_dir = os.path.join( PLUGIN_DIR, 'releases' )
+os.makedirs( releases_dir, exist_ok=True )
+ZIP_OUT      = os.path.join( releases_dir, f'bmg-interactive-map-{new_version}.zip' )
 
 # ── 3. Write updated version into the PHP file ────────────────────────────────
 
