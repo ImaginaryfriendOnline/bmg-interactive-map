@@ -7,7 +7,7 @@
 /* Leaflet editor wrapper — aspect-ratio set by JS to match the image */
 #bmg-map-editor-wrap {
 	width: 100%;
-	max-height: 500px;
+	max-height: 70vh;
 }
 
 /* Leaflet editor container fills the wrapper */
@@ -21,7 +21,7 @@
 
 .bmg-map-editor-hint {
 	margin-top: 8px;
-	margin-bottom: 75vh;
+	margin-bottom: 100vh;
 }
 
 /* DivIcon wrapper reset — Leaflet adds an outline by default */
@@ -33,7 +33,7 @@
 /* Area polygon editor wrapper */
 #bmg-area-editor-wrap {
 	width: 100%;
-	max-height: 500px;
+	max-height: 70vh;
 }
 
 .bmg-admin-area-editor {
