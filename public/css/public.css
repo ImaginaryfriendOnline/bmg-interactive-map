@@ -712,3 +712,94 @@
 		border-top: none;
 	}
 }
+
+/* ── Toolbar ──────────────────────────────────────────────────────────────── */
+
+.bmg-map-toolbar {
+	position: absolute;
+	top: 8px;
+	left: 50%;
+	transform: translateX(-50%);
+	z-index: 600;
+	display: flex;
+	gap: 4px;
+	pointer-events: none;
+}
+
+.bmg-toolbar-btn {
+	pointer-events: all;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	padding: 0;
+	background: rgba(255,255,255,0.9);
+	border: 1px solid rgba(0,0,0,0.2);
+	border-radius: 4px;
+	cursor: pointer;
+	box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+	transition: background 0.12s;
+}
+
+.bmg-toolbar-btn:hover {
+	background: rgba(255,255,255,1);
+}
+
+.bmg-toolbar-btn[aria-pressed="true"] {
+	background: rgba(0,0,0,0.12);
+}
+
+.bmg-toolbar-icon {
+	display: block;
+	width: 14px;
+	height: 14px;
+	background-repeat: no-repeat;
+	background-size: contain;
+	background-position: center;
+}
+
+/* Location list icon: bulleted list with dot markers */
+.bmg-toolbar-icon--loc {
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='3' cy='4' r='2' fill='%23333'/%3E%3Ccircle cx='3' cy='8' r='2' fill='%23333'/%3E%3Ccircle cx='3' cy='12' r='2' fill='%23333'/%3E%3Crect x='7' y='3' width='8' height='2' rx='1' fill='%23333'/%3E%3Crect x='7' y='7' width='8' height='2' rx='1' fill='%23333'/%3E%3Crect x='7' y='11' width='8' height='2' rx='1' fill='%23333'/%3E%3C/svg%3E");
+}
+
+/* Area list icon: polygon outline */
+.bmg-toolbar-icon--area {
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpolygon points='8,1 15,6 12,14 4,14 1,6' fill='none' stroke='%23333' stroke-width='1.5'/%3E%3C/svg%3E");
+}
+
+/* Fullscreen: expand arrows */
+.bmg-toolbar-icon--fs {
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M1 1h5v2H3v3H1zm9 0h5v5h-2V3h-3zm5 9h-2v3h-3v2h5zM1 10h2v3h3v2H1z' fill='%23333'/%3E%3C/svg%3E");
+}
+
+/* Fullscreen: collapse arrows (when layout is fullscreen) */
+.bmg-map-layout--fullscreen .bmg-toolbar-icon--fs {
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M6 1v5H1V4h3V1zm4 0h2v3h3v2h-5zm5 9v2h-3v3h-2v-5zm-14 0h5v5H4v-3H1z' fill='%23333'/%3E%3C/svg%3E");
+}
+
+/* ── Fullscreen layout ────────────────────────────────────────────────────── */
+
+.bmg-map-layout--fullscreen,
+.bmg-map-layout:fullscreen,
+.bmg-map-layout:-webkit-full-screen {
+	display: flex !important;
+	width: 100vw !important;
+	height: 100vh !important;
+	background: #000;
+}
+
+.bmg-map-layout--fullscreen .bmg-map-aspect-wrapper,
+.bmg-map-layout:fullscreen .bmg-map-aspect-wrapper,
+.bmg-map-layout:-webkit-full-screen .bmg-map-aspect-wrapper {
+	flex: 1 1 auto !important;
+	height: 100% !important;
+	aspect-ratio: unset !important;
+}
+
+.bmg-map-layout--fullscreen .bmg-map-aspect-spacer,
+.bmg-map-layout:fullscreen .bmg-map-aspect-spacer,
+.bmg-map-layout:-webkit-full-screen .bmg-map-aspect-spacer {
+	display: none !important;
+}

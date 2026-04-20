@@ -269,6 +269,33 @@ class BMG_Shortcode {
 			<?php if ( $spacer_img_src ) : ?>
 			<img class="bmg-map-aspect-spacer" src="<?php echo esc_attr( $spacer_img_src ); ?>" alt="" aria-hidden="true">
 			<?php endif; ?>
+			<?php
+			$toolbar_buttons = '';
+			if ( $list_position !== 'none' ) {
+				$toolbar_buttons .= '<button class="bmg-toolbar-btn bmg-toolbar-btn--loc-list" type="button"'
+					. ' aria-pressed="false"'
+					. ' title="' . esc_attr__( 'Toggle location list', 'bmg-interactive-map' ) . '"'
+					. ' aria-label="' . esc_attr__( 'Toggle location list', 'bmg-interactive-map' ) . '">'
+					. '<span class="bmg-toolbar-icon bmg-toolbar-icon--loc" aria-hidden="true"></span>'
+					. '</button>';
+			}
+			if ( $area_list_position !== 'none' ) {
+				$toolbar_buttons .= '<button class="bmg-toolbar-btn bmg-toolbar-btn--area-list" type="button"'
+					. ' aria-pressed="false"'
+					. ' title="' . esc_attr__( 'Toggle area list', 'bmg-interactive-map' ) . '"'
+					. ' aria-label="' . esc_attr__( 'Toggle area list', 'bmg-interactive-map' ) . '">'
+					. '<span class="bmg-toolbar-icon bmg-toolbar-icon--area" aria-hidden="true"></span>'
+					. '</button>';
+			}
+			$toolbar_buttons .= '<button class="bmg-toolbar-btn bmg-toolbar-btn--fullscreen" type="button"'
+				. ' aria-pressed="false"'
+				. ' title="' . esc_attr__( 'Enter fullscreen', 'bmg-interactive-map' ) . '"'
+				. ' aria-label="' . esc_attr__( 'Enter fullscreen', 'bmg-interactive-map' ) . '">'
+				. '<span class="bmg-toolbar-icon bmg-toolbar-icon--fs" aria-hidden="true"></span>'
+				. '</button>';
+			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			echo '<div class="bmg-map-toolbar">' . $toolbar_buttons . '</div>';
+			?>
 			<div class="bmg-map-container"
 				id="<?php echo esc_attr( $container_id ); ?>"
 				data-image="<?php echo esc_url( $image_url ); ?>"

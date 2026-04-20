@@ -336,6 +336,8 @@
 				initAreaList( el, map, polys, areas );
 			}
 
+			initToolbar( el, map, el.closest( '.bmg-map-layout' ) );
+
 			} ); // requestAnimationFrame
 		};
 		img.src = imageUrl;
@@ -584,6 +586,70 @@
 				setActive( -1 );
 			} );
 		} );
+	}
+
+	// ------------------------------------------------------------------
+	// Toolbar — list toggles + fullscreen
+	// ------------------------------------------------------------------
+
+	function initToolbar( el, map, layoutEl ) {
+		var wrapperEl = el.closest( '.bmg-map-aspect-wrapper' );
+		if ( ! wrapperEl ) return;
+		var toolbar = wrapperEl.querySelector( '.bmg-map-toolbar' );
+		if ( ! toolbar ) return;
+
+		// Location list toggle — delegate to the existing inner toggle button
+		// so all its logic (maxHeight save/restore, aria, syncListHeight) runs.
+		var locBtn = toolbar.querySelector( '.bmg-toolbar-btn--loc-list' );
+		if ( locBtn ) {
+			var locList  = layoutEl.querySelector( '.bmg-location-list' );
+			var locInner = locList && locList.querySelector( '.bmg-location-list__toggle' );
+			locBtn.addEventListener( 'click', function () {
+				if ( locInner ) locInner.click();
+				locBtn.setAttribute( 'aria-pressed',
+					locList && locList.classList.contains( 'bmg-location-list--collapsed' )
+						? 'true' : 'false' );
+			} );
+		}
+
+		// Area list toggle
+		var areaBtn = toolbar.querySelector( '.bmg-toolbar-btn--area-list' );
+		if ( areaBtn ) {
+			var areaList  = layoutEl.querySelector( '.bmg-area-list' );
+			var areaInner = areaList && areaList.querySelector( '.bmg-location-list__toggle' );
+			areaBtn.addEventListener( 'click', function () {
+				if ( areaInner ) areaInner.click();
+				areaBtn.setAttribute( 'aria-pressed',
+					areaList && areaList.classList.contains( 'bmg-area-list--collapsed' )
+						? 'true' : 'false' );
+			} );
+		}
+
+		// Fullscreen toggle
+		var fsBtn = toolbar.querySelector( '.bmg-toolbar-btn--fullscreen' );
+		if ( fsBtn ) {
+			fsBtn.addEventListener( 'click', function () {
+				if ( ! document.fullscreenElement ) {
+					( layoutEl.requestFullscreen || layoutEl.webkitRequestFullscreen
+						|| function () {} ).call( layoutEl );
+				} else {
+					( document.exitFullscreen || document.webkitExitFullscreen
+						|| function () {} ).call( document );
+				}
+			} );
+
+			function onFsChange() {
+				var isFs = !! document.fullscreenElement;
+				layoutEl.classList.toggle( 'bmg-map-layout--fullscreen', isFs );
+				fsBtn.setAttribute( 'aria-pressed', isFs ? 'true' : 'false' );
+				fsBtn.setAttribute( 'aria-label',
+					isFs ? 'Exit fullscreen' : 'Enter fullscreen' );
+				fsBtn.title = isFs ? 'Exit fullscreen' : 'Enter fullscreen';
+				setTimeout( function () { map.invalidateSize(); }, 50 );
+			}
+			document.addEventListener( 'fullscreenchange',       onFsChange );
+			document.addEventListener( 'webkitfullscreenchange', onFsChange );
+		}
 	}
 
 	// ------------------------------------------------------------------

@@ -177,6 +177,19 @@ class BMG_Elementor_Widget extends \Elementor\Widget_Base {
 			'condition'   => [ 'area_list_position!' => 'none' ],
 		] );
 
+		$this->add_responsive_control( 'toolbar_hide', [
+			'label'        => esc_html__( 'Hide Toolbar', 'bmg-interactive-map' ),
+			'type'         => \Elementor\Controls_Manager::SWITCHER,
+			'label_on'     => esc_html__( 'Hidden', 'bmg-interactive-map' ),
+			'label_off'    => esc_html__( 'Shown',  'bmg-interactive-map' ),
+			'return_value' => 'yes',
+			'default'      => '',
+			'separator'    => 'before',
+			'selectors'    => [
+				'{{WRAPPER}} .bmg-map-toolbar' => 'display: none !important;',
+			],
+		] );
+
 		$this->add_responsive_control( 'list_hide', [
 			'label'        => esc_html__( 'Hide List', 'bmg-interactive-map' ),
 			'type'         => \Elementor\Controls_Manager::SWITCHER,
@@ -271,6 +284,38 @@ class BMG_Elementor_Widget extends \Elementor\Widget_Base {
 			'default'   => '#e8e8e8',
 			'selectors' => [
 				'{{WRAPPER}} .bmg-map-container' => 'background-color: {{VALUE}};',
+			],
+		] );
+
+		$this->end_controls_section();
+
+		// ── Toolbar Style ─────────────────────────────────────────────────────
+		$this->start_controls_section( 'section_style_toolbar', [
+			'label' => esc_html__( 'Toolbar', 'bmg-interactive-map' ),
+			'tab'   => \Elementor\Controls_Manager::TAB_STYLE,
+		] );
+
+		$this->add_control( 'toolbar_btn_bg', [
+			'label'     => esc_html__( 'Button Background', 'bmg-interactive-map' ),
+			'type'      => \Elementor\Controls_Manager::COLOR,
+			'selectors' => [
+				'{{WRAPPER}} .bmg-toolbar-btn' => 'background-color: {{VALUE}};',
+			],
+		] );
+
+		$this->add_control( 'toolbar_btn_bg_hover', [
+			'label'     => esc_html__( 'Button Background (Hover)', 'bmg-interactive-map' ),
+			'type'      => \Elementor\Controls_Manager::COLOR,
+			'selectors' => [
+				'{{WRAPPER}} .bmg-toolbar-btn:hover' => 'background-color: {{VALUE}};',
+			],
+		] );
+
+		$this->add_control( 'toolbar_btn_bg_active', [
+			'label'     => esc_html__( 'Button Background (Active)', 'bmg-interactive-map' ),
+			'type'      => \Elementor\Controls_Manager::COLOR,
+			'selectors' => [
+				'{{WRAPPER}} .bmg-toolbar-btn[aria-pressed="true"]' => 'background-color: {{VALUE}};',
 			],
 		] );
 
