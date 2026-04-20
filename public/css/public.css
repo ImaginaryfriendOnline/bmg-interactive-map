@@ -800,10 +800,49 @@
 	mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M1 1h5v2H3v3H1zm9 0h5v5h-2V3h-3zm5 9h-2v3h-3v2h5zM1 10h2v3h3v2H1z'/%3E%3C/svg%3E");
 }
 
-/* Fullscreen: collapse arrows (when layout is fullscreen) */
-.bmg-map-layout--fullscreen .bmg-toolbar-icon--fs {
+/* Fullscreen: collapse arrows (when layout is fullscreen or full-window) */
+.bmg-map-layout--fullscreen .bmg-toolbar-icon--fs,
+.bmg-map-layout--full-window .bmg-toolbar-icon--fs {
 	-webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M6 1v5H1V4h3V1zm4 0h2v3h3v2h-5zm5 9v2h-3v3h-2v-5zm-14 0h5v5H4v-3H1z'/%3E%3C/svg%3E");
 	mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M6 1v5H1V4h3V1zm4 0h2v3h3v2h-5zm5 9v2h-3v3h-2v-5zm-14 0h5v5H4v-3H1z'/%3E%3C/svg%3E");
+}
+
+/* Full-window icon: window frame (outer rect + hollow inner) */
+.bmg-toolbar-icon--fw {
+	-webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M1 3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1zm2 2v6h10V5z'/%3E%3C/svg%3E");
+	mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M1 3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1zm2 2v6h10V5z'/%3E%3C/svg%3E");
+}
+
+/* Full-window icon: filled rect when active */
+.bmg-map-layout--full-window .bmg-toolbar-icon--fw {
+	-webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='1' y='3' width='14' height='10' rx='1'/%3E%3C/svg%3E");
+	mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='1' y='3' width='14' height='10' rx='1'/%3E%3C/svg%3E");
+}
+
+/* ── Full-window mode (CSS position:fixed, no browser API) ─────────────── */
+
+.bmg-map-layout--full-window {
+	position: fixed !important;
+	top: 0 !important;
+	left: 0 !important;
+	width: 100vw !important;
+	height: 100vh !important;
+	z-index: 9998 !important;
+	background: #000;
+}
+
+.bmg-map-layout--full-window .bmg-map-aspect-wrapper {
+	flex: 1 1 auto !important;
+	height: 100% !important;
+	aspect-ratio: unset !important;
+}
+
+.bmg-map-layout--full-window .bmg-map-aspect-spacer {
+	display: none !important;
+}
+
+.bmg-map-layout--full-window .bmg-fs-exit-btn {
+	display: flex;
 }
 
 /* ── Fullscreen layout ────────────────────────────────────────────────────── */

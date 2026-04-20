@@ -633,18 +633,49 @@
 			} );
 		}
 
-		// Fullscreen toggle (toolbar icon) + dedicated exit button.
-		var fsBtn    = toolbar.querySelector( '.bmg-toolbar-btn--fullscreen' );
+		// Full-window toggle (CSS position:fixed, no browser API).
+		var fwBtn = toolbar.querySelector( '.bmg-toolbar-btn--fullwindow' );
+		var inFullWindow = false;
+
+		function enterFullWindow() {
+			inFullWindow = true;
+			layoutEl.classList.add( 'bmg-map-layout--full-window' );
+			document.body.style.overflow = 'hidden';
+			if ( fwBtn ) {
+				fwBtn.setAttribute( 'aria-pressed', 'true' );
+				fwBtn.setAttribute( 'aria-label', 'Exit full window' );
+				fwBtn.title = 'Exit full window';
+			}
+			setTimeout( function () { map.invalidateSize(); }, 50 );
+			document.addEventListener( 'keydown', onFwKey );
+		}
+
+		function exitFullWindow() {
+			inFullWindow = false;
+			layoutEl.classList.remove( 'bmg-map-layout--full-window' );
+			document.body.style.overflow = '';
+			if ( fwBtn ) {
+				fwBtn.setAttribute( 'aria-pressed', 'false' );
+				fwBtn.setAttribute( 'aria-label', 'Fill window' );
+				fwBtn.title = 'Fill window';
+			}
+			setTimeout( function () { map.invalidateSize(); }, 50 );
+			document.removeEventListener( 'keydown', onFwKey );
+		}
+
+		function onFwKey( e ) {
+			if ( e.key === 'Escape' ) exitFullWindow();
+		}
+
+		if ( fwBtn ) {
+			fwBtn.addEventListener( 'click', function () {
+				inFullWindow ? exitFullWindow() : enterFullWindow();
+			} );
+		}
+
+		// Native fullscreen toggle.
+		var fsBtn     = toolbar.querySelector( '.bmg-toolbar-btn--fullscreen' );
 		var fsExitBtn = wrapperEl.querySelector( '.bmg-fs-exit-btn' );
-
-		function exitFs() {
-			( document.exitFullscreen || document.webkitExitFullscreen
-				|| function () {} ).call( document );
-		}
-
-		if ( fsExitBtn ) {
-			fsExitBtn.addEventListener( 'click', exitFs );
-		}
 
 		if ( fsBtn ) {
 			fsBtn.addEventListener( 'click', function () {
@@ -652,7 +683,8 @@
 					( layoutEl.requestFullscreen || layoutEl.webkitRequestFullscreen
 						|| function () {} ).call( layoutEl );
 				} else {
-					exitFs();
+					( document.exitFullscreen || document.webkitExitFullscreen
+						|| function () {} ).call( document );
 				}
 			} );
 
@@ -666,6 +698,18 @@
 			}
 			document.addEventListener( 'fullscreenchange',       onFsChange );
 			document.addEventListener( 'webkitfullscreenchange', onFsChange );
+		}
+
+		// Shared exit button — exits whichever mode is active.
+		if ( fsExitBtn ) {
+			fsExitBtn.addEventListener( 'click', function () {
+				if ( document.fullscreenElement ) {
+					( document.exitFullscreen || document.webkitExitFullscreen
+						|| function () {} ).call( document );
+				} else if ( inFullWindow ) {
+					exitFullWindow();
+				}
+			} );
 		}
 	}
 
