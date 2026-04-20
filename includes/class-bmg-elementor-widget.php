@@ -91,12 +91,19 @@ class BMG_Elementor_Widget extends \Elementor\Widget_Base {
 			'description' => esc_html__( 'px or % — e.g. 800px or 100%. Leave blank to fill the column.', 'bmg-interactive-map' ),
 		] );
 
-		$this->add_control( 'height', [
-			'label'       => esc_html__( 'Height', 'bmg-interactive-map' ),
-			'type'        => \Elementor\Controls_Manager::TEXT,
-			'default'     => '',
-			'placeholder' => '600px',
-			'description' => esc_html__( 'px or % — e.g. 600px or 50%. Leave blank to use the image aspect ratio.', 'bmg-interactive-map' ),
+		$this->add_responsive_control( 'map_height', [
+			'label'       => esc_html__( 'Map Height', 'bmg-interactive-map' ),
+			'type'        => \Elementor\Controls_Manager::SLIDER,
+			'size_units'  => [ 'px', 'vh' ],
+			'range'       => [
+				'px' => [ 'min' => 100, 'max' => 1200, 'step' => 10 ],
+				'vh' => [ 'min' => 10,  'max' => 100,  'step' => 1  ],
+			],
+			'default'     => [ 'size' => '', 'unit' => 'px' ],
+			'selectors'   => [
+				'{{WRAPPER}} .bmg-map-aspect-wrapper' => 'height: {{SIZE}}{{UNIT}};',
+			],
+			'description' => esc_html__( 'Leave blank to use the image aspect ratio.', 'bmg-interactive-map' ),
 		] );
 
 		$this->add_control( 'zoom_position', [
@@ -147,7 +154,20 @@ class BMG_Elementor_Widget extends \Elementor\Widget_Base {
 			'condition'   => [ 'list_position!' => 'none' ],
 		] );
 
-		$this->add_control( 'start_zoom', [
+		$this->add_responsive_control( 'list_hide', [
+			'label'        => esc_html__( 'Hide List', 'bmg-interactive-map' ),
+			'type'         => \Elementor\Controls_Manager::SWITCHER,
+			'label_on'     => esc_html__( 'Hidden', 'bmg-interactive-map' ),
+			'label_off'    => esc_html__( 'Shown',  'bmg-interactive-map' ),
+			'return_value' => 'yes',
+			'default'      => '',
+			'selectors'    => [
+				'{{WRAPPER}} .bmg-location-list' => 'display: none !important;',
+			],
+			'condition'    => [ 'list_position!' => 'none' ],
+		] );
+
+		$this->add_responsive_control( 'start_zoom', [
 			'label'       => esc_html__( 'Starting Zoom', 'bmg-interactive-map' ),
 			'type'        => \Elementor\Controls_Manager::NUMBER,
 			'min'         => -5,
@@ -159,7 +179,7 @@ class BMG_Elementor_Widget extends \Elementor\Widget_Base {
 			'separator'   => 'before',
 		] );
 
-		$this->add_control( 'start_x', [
+		$this->add_responsive_control( 'start_x', [
 			'label'       => esc_html__( 'Starting Center X %', 'bmg-interactive-map' ),
 			'type'        => \Elementor\Controls_Manager::NUMBER,
 			'min'         => 0,
@@ -167,10 +187,9 @@ class BMG_Elementor_Widget extends \Elementor\Widget_Base {
 			'step'        => 0.1,
 			'default'     => '',
 			'placeholder' => '50',
-			'condition'   => [ 'start_zoom!' => '' ],
 		] );
 
-		$this->add_control( 'start_y', [
+		$this->add_responsive_control( 'start_y', [
 			'label'       => esc_html__( 'Starting Center Y %', 'bmg-interactive-map' ),
 			'type'        => \Elementor\Controls_Manager::NUMBER,
 			'min'         => 0,
@@ -178,7 +197,6 @@ class BMG_Elementor_Widget extends \Elementor\Widget_Base {
 			'step'        => 0.1,
 			'default'     => '',
 			'placeholder' => '50',
-			'condition'   => [ 'start_zoom!' => '' ],
 		] );
 
 		$this->end_controls_section();
@@ -543,18 +561,31 @@ class BMG_Elementor_Widget extends \Elementor\Widget_Base {
 			BMG_Shortcode::set_close_icon_html( (string) ob_get_clean() );
 		}
 
+		// Build per-breakpoint starting view JSON.
+		$make_bp = function ( $suffix ) use ( $settings ) {
+			$sfx  = $suffix ? '_' . $suffix : '';
+			return [
+				'zoom' => (string) ( $settings[ 'start_zoom' . $sfx ] ?? '' ),
+				'x'    => (string) ( $settings[ 'start_x'    . $sfx ] ?? '' ),
+				'y'    => (string) ( $settings[ 'start_y'    . $sfx ] ?? '' ),
+			];
+		};
+		$responsive_start = wp_json_encode( [
+			'desktop' => $make_bp( '' ),
+			'tablet'  => $make_bp( 'tablet' ),
+			'mobile'  => $make_bp( 'mobile' ),
+		] );
+
 		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo BMG_Shortcode::render( [
-			'id'            => $map_id,
-			'width'         => (string) ( $settings['width']  ?? '' ),
-			'height'        => (string) ( $settings['height'] ?? '' ),
-			'list_position' => $settings['list_position'] ?? 'none',
-			'zoom_position' => $settings['zoom_position'] ?? '',
-			'show_tooltips' => ( $settings['show_tooltips'] ?? '' ) === '1' ? '1' : '0',
-			'list_title'    => $settings['list_title'] ?? '',
-			'start_zoom'    => (string) ( $settings['start_zoom'] ?? '' ),
-			'start_x'       => (string) ( $settings['start_x']    ?? '' ),
-			'start_y'       => (string) ( $settings['start_y']    ?? '' ),
+			'id'               => $map_id,
+			'width'            => (string) ( $settings['width'] ?? '' ),
+			'height'           => '',
+			'list_position'    => $settings['list_position'] ?? 'none',
+			'zoom_position'    => $settings['zoom_position'] ?? '',
+			'show_tooltips'    => ( $settings['show_tooltips'] ?? '' ) === '1' ? '1' : '0',
+			'list_title'       => $settings['list_title'] ?? '',
+			'responsive_start' => $responsive_start,
 		] );
 	}
 }

@@ -41,7 +41,7 @@ class BMG_Shortcode {
 		$close_icon_html               = self::$pending_close_icon_html;
 		self::$pending_close_icon_html = '';
 
-		$atts   = shortcode_atts( [ 'id' => 0, 'width' => '', 'height' => '', 'list_position' => 'none', 'zoom_position' => '', 'show_tooltips' => '0', 'list_title' => '', 'start_zoom' => '', 'start_x' => '', 'start_y' => '' ], $atts, 'bmg_map' );
+		$atts   = shortcode_atts( [ 'id' => 0, 'width' => '', 'height' => '', 'list_position' => 'none', 'zoom_position' => '', 'show_tooltips' => '0', 'list_title' => '', 'start_zoom' => '', 'start_x' => '', 'start_y' => '', 'responsive_start' => '' ], $atts, 'bmg_map' );
 		$map_id = absint( $atts['id'] );
 		$dim_w  = self::sanitize_dimension( $atts['width'] );
 		$dim_h  = self::sanitize_dimension( $atts['height'] );
@@ -57,6 +57,14 @@ class BMG_Shortcode {
 		$start_x    = $atts['start_x']    !== '' ? min( 100.0, max( 0.0, (float) $atts['start_x'] ) ) : '';
 		$start_y    = $atts['start_y']    !== '' ? min( 100.0, max( 0.0, (float) $atts['start_y'] ) ) : '';
 		$has_start  = $start_zoom !== '' && $start_x !== '' && $start_y !== '';
+
+		$responsive_start_json = '';
+		if ( $atts['responsive_start'] !== '' ) {
+			$rs_decoded = json_decode( wp_unslash( $atts['responsive_start'] ), true );
+			if ( is_array( $rs_decoded ) ) {
+				$responsive_start_json = wp_json_encode( $rs_decoded, JSON_INVALID_UTF8_SUBSTITUTE );
+			}
+		}
 
 		if ( ! $map_id ) {
 			return '<!-- bmg_map: no id provided -->';
@@ -247,6 +255,7 @@ class BMG_Shortcode {
 				data-start-x="<?php echo esc_attr( $start_x ); ?>"
 				data-start-y="<?php echo esc_attr( $start_y ); ?>"
 				<?php endif; ?>
+				<?php echo $responsive_start_json ? 'data-responsive-start="' . esc_attr( $responsive_start_json ) . '"' : ''; ?>
 				<?php echo $close_icon_html ? 'data-close-icon="' . esc_attr( $close_icon_html ) . '"' : ''; ?>
 				aria-label="<?php echo esc_attr( $map->post_title ); ?>">
 			</div>

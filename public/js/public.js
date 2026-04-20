@@ -31,6 +31,41 @@
 	}
 
 	// ------------------------------------------------------------------
+	// Pick the starting view for the current viewport.
+	// Reads data-responsive-start JSON (Elementor widget) with fallback
+	// to legacy flat data-start-* attributes (direct shortcode usage).
+	// Returns {zoom, x, y} or null (→ fitBounds).
+	// ------------------------------------------------------------------
+
+	function pickStartView( el ) {
+		var raw = el.dataset.responsiveStart;
+		if ( ! raw ) {
+			var zoom = el.dataset.startZoom;
+			var x    = el.dataset.startX;
+			var y    = el.dataset.startY;
+			if ( zoom !== undefined && zoom !== '' && x !== undefined && x !== '' && y !== undefined && y !== '' ) {
+				return { zoom: parseFloat( zoom ), x: parseFloat( x ), y: parseFloat( y ) };
+			}
+			return null;
+		}
+		var data;
+		try { data = JSON.parse( raw ); } catch ( e ) { return null; }
+
+		var w     = window.innerWidth;
+		var order = w < 768  ? [ 'mobile', 'tablet', 'desktop' ]
+		          : w < 1025 ? [ 'tablet', 'desktop' ]
+		          :             [ 'desktop' ];
+
+		for ( var i = 0; i < order.length; i++ ) {
+			var bp = data[ order[ i ] ];
+			if ( bp && bp.zoom !== '' && bp.x !== '' && bp.y !== '' ) {
+				return { zoom: parseFloat( bp.zoom ), x: parseFloat( bp.x ), y: parseFloat( bp.y ) };
+			}
+		}
+		return null;
+	}
+
+	// ------------------------------------------------------------------
 	// Initialise one map container
 	// ------------------------------------------------------------------
 
@@ -86,9 +121,8 @@
 			var zoomPos   = el.dataset.zoomPosition || ZOOM_POSITION;
 			var minZoom   = el.dataset.minZoom !== undefined && el.dataset.minZoom !== '' ? Number( el.dataset.minZoom ) : MIN_ZOOM;
 			var maxZoom   = el.dataset.maxZoom !== undefined && el.dataset.maxZoom !== '' ? Number( el.dataset.maxZoom ) : MAX_ZOOM;
-			var hasStart  = el.dataset.startZoom !== undefined && el.dataset.startZoom !== ''
-			                && el.dataset.startX !== undefined && el.dataset.startX !== ''
-			                && el.dataset.startY !== undefined && el.dataset.startY !== '';
+			var startView = pickStartView( el );
+			var hasStart  = startView !== null;
 
 			// Stash the Leaflet instance so the Elementor re-render hook can
 			// destroy it cleanly before re-initialising.
@@ -116,10 +150,7 @@
 
 			// Apply starting view or fit-all, depending on whether a start view is set.
 			if ( hasStart ) {
-				map.setView(
-					toLatLng( parseFloat( el.dataset.startX ), parseFloat( el.dataset.startY ), W, H ),
-					parseFloat( el.dataset.startZoom )
-				);
+				map.setView( toLatLng( startView.x, startView.y, W, H ), startView.zoom );
 			} else if ( el.offsetWidth > 0 && el.offsetHeight > 0 ) {
 				map.fitBounds( bounds, { padding: [ 0, 0 ] } );
 			}
