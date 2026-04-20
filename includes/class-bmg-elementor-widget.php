@@ -315,6 +315,25 @@ $this->add_responsive_control( 'start_zoom', [
 			],
 		] );
 
+		$this->add_responsive_control( 'toolbar_orientation', [
+			'label'     => esc_html__( 'Orientation', 'bmg-interactive-map' ),
+			'type'      => \Elementor\Controls_Manager::CHOOSE,
+			'separator' => 'before',
+			'options'   => [
+				'row'    => [
+					'title' => esc_html__( 'Horizontal', 'bmg-interactive-map' ),
+					'icon'  => 'eicon-navigation-horizontal',
+				],
+				'column' => [
+					'title' => esc_html__( 'Vertical', 'bmg-interactive-map' ),
+					'icon'  => 'eicon-navigation-vertical',
+				],
+			],
+			'selectors' => [
+				'{{WRAPPER}} .bmg-map-toolbar' => 'flex-direction: {{VALUE}};',
+			],
+		] );
+
 		$this->end_controls_section();
 
 		// ── Location List Style ───────────────────────────────────────────────

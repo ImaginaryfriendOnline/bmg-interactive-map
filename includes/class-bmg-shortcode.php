@@ -287,6 +287,12 @@ class BMG_Shortcode {
 					. '<span class="bmg-toolbar-icon bmg-toolbar-icon--area" aria-hidden="true"></span>'
 					. '</button>';
 			}
+			$toolbar_buttons .= '<button class="bmg-toolbar-btn bmg-toolbar-btn--area-highlight" type="button"'
+					. ' aria-pressed="false"'
+					. ' title="' . esc_attr__( 'Toggle area highlights', 'bmg-interactive-map' ) . '"'
+					. ' aria-label="' . esc_attr__( 'Toggle area highlights', 'bmg-interactive-map' ) . '">'
+					. '<span class="bmg-toolbar-icon bmg-toolbar-icon--highlight" aria-hidden="true"></span>'
+					. '</button>';
 			$toolbar_buttons .= '<button class="bmg-toolbar-btn bmg-toolbar-btn--fullwindow" type="button"'
 				. ' aria-pressed="false"'
 				. ' title="' . esc_attr__( 'Fill window', 'bmg-interactive-map' ) . '"'

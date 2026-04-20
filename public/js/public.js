@@ -307,7 +307,9 @@
 				} );
 
 				poly.on( 'mouseout', function () {
-					poly.setStyle( { fillOpacity: 0 } );
+					if ( el.dataset.areasHighlighted !== '1' ) {
+						poly.setStyle( { fillOpacity: 0 } );
+					}
 				} );
 
 				poly.on( 'click', function ( e ) {
@@ -336,7 +338,7 @@
 				initAreaList( el, map, polys, areas );
 			}
 
-			initToolbar( el, map, el.closest( '.bmg-map-layout' ) );
+			initToolbar( el, map, el.closest( '.bmg-map-layout' ), polys, areas );
 
 			} ); // requestAnimationFrame
 		};
@@ -569,7 +571,9 @@
 			item.addEventListener( 'mouseleave', function () {
 				var idx = parseInt( item.dataset.index, 10 );
 				if ( ! isNaN( idx ) && polys[ idx ] && ! polys[ idx ].isPopupOpen() ) {
-					polys[ idx ].setStyle( { fillOpacity: 0 } );
+					if ( mapEl.dataset.areasHighlighted !== '1' ) {
+						polys[ idx ].setStyle( { fillOpacity: 0 } );
+					}
 				}
 			} );
 		} );
@@ -592,7 +596,7 @@
 	// Toolbar — list toggles + fullscreen
 	// ------------------------------------------------------------------
 
-	function initToolbar( el, map, layoutEl ) {
+	function initToolbar( el, map, layoutEl, polys, areas ) {
 		if ( ! layoutEl ) return;
 		var wrapperEl = el.closest( '.bmg-map-aspect-wrapper' );
 		if ( ! wrapperEl ) return;
@@ -631,6 +635,23 @@
 				updatePanelVisibility();
 				setTimeout( function () { map.invalidateSize(); }, 50 );
 			} );
+		}
+
+		// Area highlight toggle — keeps all polygon fills visible continuously.
+		var highlightBtn = toolbar.querySelector( '.bmg-toolbar-btn--area-highlight' );
+		if ( highlightBtn ) {
+			if ( ! polys || ! polys.length ) {
+				highlightBtn.style.display = 'none';
+			} else {
+				highlightBtn.addEventListener( 'click', function () {
+					var on = el.dataset.areasHighlighted !== '1';
+					el.dataset.areasHighlighted = on ? '1' : '0';
+					highlightBtn.setAttribute( 'aria-pressed', on ? 'true' : 'false' );
+					polys.forEach( function ( poly, idx ) {
+						poly.setStyle( { fillOpacity: on ? areas[ idx ].fillOpacity : 0 } );
+					} );
+				} );
+			}
 		}
 
 		// Full-window toggle (CSS position:fixed, no browser API).
