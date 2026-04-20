@@ -402,6 +402,131 @@ class BMG_Elementor_Widget extends \Elementor\Widget_Base {
 
 		$this->end_controls_section();
 
+		// ── Area List Style ───────────────────────────────────────────────────
+		$this->start_controls_section( 'section_style_area_list', [
+			'label'     => esc_html__( 'Area List', 'bmg-interactive-map' ),
+			'tab'       => \Elementor\Controls_Manager::TAB_STYLE,
+			'condition' => [ 'area_list_position!' => 'none' ],
+		] );
+
+		$this->add_control( 'area_list_bg_color', [
+			'label'     => esc_html__( 'Panel Background', 'bmg-interactive-map' ),
+			'type'      => \Elementor\Controls_Manager::COLOR,
+			'default'   => '#ffffff',
+			'selectors' => [
+				'{{WRAPPER}} .bmg-area-list' => 'background-color: {{VALUE}};',
+			],
+		] );
+
+		$this->add_control( 'area_list_heading_title', [
+			'label'     => esc_html__( 'Title Bar', 'bmg-interactive-map' ),
+			'type'      => \Elementor\Controls_Manager::HEADING,
+			'separator' => 'before',
+		] );
+
+		$this->add_group_control(
+			\Elementor\Group_Control_Typography::get_type(),
+			[
+				'name'     => 'area_list_title_typography',
+				'selector' => '{{WRAPPER}} .bmg-area-list .bmg-location-list__label',
+			]
+		);
+
+		$this->add_control( 'area_list_title_color', [
+			'label'     => esc_html__( 'Color', 'bmg-interactive-map' ),
+			'type'      => \Elementor\Controls_Manager::COLOR,
+			'selectors' => [
+				'{{WRAPPER}} .bmg-area-list .bmg-location-list__label' => 'color: {{VALUE}};',
+			],
+		] );
+
+		$this->add_control( 'area_list_title_bg', [
+			'label'     => esc_html__( 'Background', 'bmg-interactive-map' ),
+			'type'      => \Elementor\Controls_Manager::COLOR,
+			'selectors' => [
+				'{{WRAPPER}} .bmg-area-list .bmg-location-list__header' => 'background-color: {{VALUE}};',
+			],
+		] );
+
+		$this->add_control( 'area_list_heading_search', [
+			'label'     => esc_html__( 'Search Field', 'bmg-interactive-map' ),
+			'type'      => \Elementor\Controls_Manager::HEADING,
+			'separator' => 'before',
+		] );
+
+		$this->add_group_control(
+			\Elementor\Group_Control_Typography::get_type(),
+			[
+				'name'     => 'area_list_search_typography',
+				'selector' => '{{WRAPPER}} .bmg-area-list .bmg-location-search',
+			]
+		);
+
+		$this->add_control( 'area_list_search_color', [
+			'label'     => esc_html__( 'Text Color', 'bmg-interactive-map' ),
+			'type'      => \Elementor\Controls_Manager::COLOR,
+			'selectors' => [
+				'{{WRAPPER}} .bmg-area-list .bmg-location-search' => 'color: {{VALUE}};',
+			],
+		] );
+
+		$this->add_control( 'area_list_search_bg', [
+			'label'     => esc_html__( 'Background', 'bmg-interactive-map' ),
+			'type'      => \Elementor\Controls_Manager::COLOR,
+			'selectors' => [
+				'{{WRAPPER}} .bmg-area-list .bmg-location-search' => 'background-color: {{VALUE}};',
+			],
+		] );
+
+		$this->add_control( 'area_list_heading_items', [
+			'label'     => esc_html__( 'Items', 'bmg-interactive-map' ),
+			'type'      => \Elementor\Controls_Manager::HEADING,
+			'separator' => 'before',
+		] );
+
+		$this->add_group_control(
+			\Elementor\Group_Control_Typography::get_type(),
+			[
+				'name'     => 'area_list_item_typography',
+				'selector' => '{{WRAPPER}} .bmg-area-list .bmg-location-list__title',
+			]
+		);
+
+		$this->add_control( 'area_list_item_color', [
+			'label'     => esc_html__( 'Text Color', 'bmg-interactive-map' ),
+			'type'      => \Elementor\Controls_Manager::COLOR,
+			'selectors' => [
+				'{{WRAPPER}} .bmg-area-list .bmg-location-list__title' => 'color: {{VALUE}};',
+			],
+		] );
+
+		$this->add_control( 'area_list_item_bg', [
+			'label'     => esc_html__( 'Item Background', 'bmg-interactive-map' ),
+			'type'      => \Elementor\Controls_Manager::COLOR,
+			'selectors' => [
+				'{{WRAPPER}} .bmg-area-list .bmg-location-list__item' => 'background-color: {{VALUE}};',
+			],
+		] );
+
+		$this->add_control( 'area_list_item_bg_hover', [
+			'label'     => esc_html__( 'Item Background (Hover)', 'bmg-interactive-map' ),
+			'type'      => \Elementor\Controls_Manager::COLOR,
+			'selectors' => [
+				'{{WRAPPER}} .bmg-area-list .bmg-location-list__item:hover,
+				 {{WRAPPER}} .bmg-area-list .bmg-location-list__item:focus' => 'background-color: {{VALUE}};',
+			],
+		] );
+
+		$this->add_control( 'area_list_item_bg_active', [
+			'label'     => esc_html__( 'Item Background (Active)', 'bmg-interactive-map' ),
+			'type'      => \Elementor\Controls_Manager::COLOR,
+			'selectors' => [
+				'{{WRAPPER}} .bmg-area-list .bmg-location-list__item--active' => 'background-color: {{VALUE}};',
+			],
+		] );
+
+		$this->end_controls_section();
+
 		// ── Popup Style ───────────────────────────────────────────────────────
 		// Leaflet appends popups to <body>, outside the widget wrapper, so
 		// {{WRAPPER}} cannot be used here — selectors target the popup classes directly.
