@@ -44,7 +44,7 @@ class BMG_Help {
 			</h1>
 
 			<p class="bmg-help-intro">
-				<?php esc_html_e( 'Follow the three steps below to create a map, add locations to it, and display it on any page or post. Additional reference sections follow.', 'bmg-interactive-map' ); ?>
+				<?php esc_html_e( 'Follow the steps below to create a map, add locations and areas to it, and display it on any page or post. Additional reference sections follow.', 'bmg-interactive-map' ); ?>
 			</p>
 
 			<!-- ── Step 1 ─────────────────────────────────────────────── -->
@@ -65,9 +65,9 @@ class BMG_Help {
 							?>
 						</li>
 						<li><?php esc_html_e( 'Give the map a title (e.g. "World Map" or "Dungeon Level 1").', 'bmg-interactive-map' ); ?></li>
-						<li><?php esc_html_e( 'Set a Featured Image — this is the background image markers are placed on. Use any image: a photo, a hand-drawn map, a floor plan, etc.', 'bmg-interactive-map' ); ?></li>
-						<li><?php esc_html_e( '(Optional) Add a description in the content area.', 'bmg-interactive-map' ); ?></li>
-						<li><?php esc_html_e( 'Publish the map. Note the post ID in the URL bar — you will need it in Step 3.', 'bmg-interactive-map' ); ?></li>
+						<li><?php esc_html_e( 'Set a Featured Image — this is the background image that markers and areas are placed on. Use any image: a photo, a hand-drawn map, a floor plan, etc.', 'bmg-interactive-map' ); ?></li>
+						<li><?php esc_html_e( '(Optional) Set per-map zoom limits in the Zoom Settings panel on the right. Leave blank to use the global defaults from Settings.', 'bmg-interactive-map' ); ?></li>
+						<li><?php esc_html_e( 'Publish the map. Note the post ID in the URL bar — you will need it in Step 4.', 'bmg-interactive-map' ); ?></li>
 					</ol>
 					<div class="bmg-help-tip">
 						<span class="dashicons dashicons-lightbulb" aria-hidden="true"></span>
@@ -96,8 +96,8 @@ class BMG_Help {
 						<li><?php esc_html_e( 'Enter a title — shown as the heading in the marker popup.', 'bmg-interactive-map' ); ?></li>
 						<li><?php esc_html_e( 'Add a description in the content area — shown below the title in the popup.', 'bmg-interactive-map' ); ?></li>
 						<li><?php esc_html_e( 'In the Location Settings panel, choose the Parent Map from Step 1.', 'bmg-interactive-map' ); ?></li>
-						<li><?php esc_html_e( 'The map image loads in the visual editor. Click anywhere on it to drop a marker, or drag the existing marker to reposition it. You can also type X % and Y % values manually.', 'bmg-interactive-map' ); ?></li>
-						<li><?php esc_html_e( '(Optional) Pick a custom marker colour. The default colour is set under Interactive Maps → Settings.', 'bmg-interactive-map' ); ?></li>
+						<li><?php esc_html_e( 'The map image loads in the visual editor. Click anywhere on it to drop a marker, or drag the marker to reposition it. You can also type X % and Y % values manually.', 'bmg-interactive-map' ); ?></li>
+						<li><?php esc_html_e( '(Optional) Pick a custom marker colour and Font Awesome icon class. The default colour is set under Interactive Maps → Settings.', 'bmg-interactive-map' ); ?></li>
 						<li><?php esc_html_e( 'Publish the location. Repeat for as many locations as needed.', 'bmg-interactive-map' ); ?></li>
 					</ol>
 					<div class="bmg-help-tip">
@@ -110,6 +110,39 @@ class BMG_Help {
 			<!-- ── Step 3 ─────────────────────────────────────────────── -->
 			<div class="bmg-help-card">
 				<div class="bmg-help-step-badge">3</div>
+				<div class="bmg-help-step-body">
+					<h2><?php esc_html_e( 'Add Areas (optional)', 'bmg-interactive-map' ); ?></h2>
+					<p><?php esc_html_e( 'Areas are polygon overlays — regions, zones, or districts drawn directly on the map. They render as outlines at rest, highlight with a fill on hover, and open a popup when clicked.', 'bmg-interactive-map' ); ?></p>
+					<ol>
+						<li>
+							<?php
+							printf(
+								/* translators: %s: link to add new area */
+								esc_html__( 'Go to %s.', 'bmg-interactive-map' ),
+								'<a href="' . esc_url( admin_url( 'post-new.php?post_type=bmg_area' ) ) . '">'
+								. esc_html__( 'Interactive Maps → Areas → Add New Area', 'bmg-interactive-map' )
+								. '</a>'
+							);
+							?>
+						</li>
+						<li><?php esc_html_e( 'Enter a title — shown as the name tooltip on hover and the heading in the popup.', 'bmg-interactive-map' ); ?></li>
+						<li><?php esc_html_e( 'Add a description in the content area — shown in the popup body.', 'bmg-interactive-map' ); ?></li>
+						<li><?php esc_html_e( 'In the Area Settings panel, choose the Parent Map.', 'bmg-interactive-map' ); ?></li>
+						<li><?php esc_html_e( 'The map image loads in the visual polygon editor. Click anywhere on the image to add a vertex. Add at least 3 vertices to form a polygon. Drag any vertex to reposition it.', 'bmg-interactive-map' ); ?></li>
+						<li><?php esc_html_e( 'Use the Undo button to remove the last vertex, or Clear to start again.', 'bmg-interactive-map' ); ?></li>
+						<li><?php esc_html_e( '(Optional) Adjust the stroke colour, fill colour, and fill opacity.', 'bmg-interactive-map' ); ?></li>
+						<li><?php esc_html_e( 'Publish the area. Repeat for as many areas as needed.', 'bmg-interactive-map' ); ?></li>
+					</ol>
+					<div class="bmg-help-tip">
+						<span class="dashicons dashicons-lightbulb" aria-hidden="true"></span>
+						<?php esc_html_e( 'Tip: areas with fewer than 3 vertices are silently skipped on the frontend. Save them as drafts until they are complete.', 'bmg-interactive-map' ); ?>
+					</div>
+				</div>
+			</div>
+
+			<!-- ── Step 4 ─────────────────────────────────────────────── -->
+			<div class="bmg-help-card">
+				<div class="bmg-help-step-badge">4</div>
 				<div class="bmg-help-step-body">
 					<h2><?php esc_html_e( 'Display the Map', 'bmg-interactive-map' ); ?></h2>
 
@@ -135,13 +168,13 @@ class BMG_Help {
 							</tr>
 							<tr>
 								<td><code>width</code></td>
-								<td><code>0</code></td>
-								<td><?php esc_html_e( 'Explicit width in pixels. Leave 0 to fill the column width.', 'bmg-interactive-map' ); ?></td>
+								<td><em><?php esc_html_e( '(fill column)', 'bmg-interactive-map' ); ?></em></td>
+								<td><?php esc_html_e( 'Width as pixels or percent, e.g. 800px or 100%. Leave blank to fill the column.', 'bmg-interactive-map' ); ?></td>
 							</tr>
 							<tr>
 								<td><code>height</code></td>
-								<td><code>0</code></td>
-								<td><?php esc_html_e( 'Explicit height in pixels. Leave 0 to use the image aspect ratio.', 'bmg-interactive-map' ); ?></td>
+								<td><em><?php esc_html_e( '(aspect ratio)', 'bmg-interactive-map' ); ?></em></td>
+								<td><?php esc_html_e( 'Height as pixels or percent, e.g. 600px. Leave blank to derive height from the image aspect ratio.', 'bmg-interactive-map' ); ?></td>
 							</tr>
 							<tr>
 								<td><code>list_position</code></td>
@@ -153,17 +186,43 @@ class BMG_Help {
 								</td>
 							</tr>
 							<tr>
+								<td><code>list_title</code></td>
+								<td><code>Locations</code></td>
+								<td><?php esc_html_e( 'Label shown in the list panel header.', 'bmg-interactive-map' ); ?></td>
+							</tr>
+							<tr>
 								<td><code>zoom_position</code></td>
 								<td><em><?php esc_html_e( '(site setting)', 'bmg-interactive-map' ); ?></em></td>
 								<td>
-									<?php esc_html_e( 'Override the zoom control corner for this map only. Values:', 'bmg-interactive-map' ); ?>
+									<?php esc_html_e( 'Override the zoom control corner. Values:', 'bmg-interactive-map' ); ?>
 									<code>topleft</code>, <code>topright</code>, <code>bottomleft</code>, <code>bottomright</code>
 								</td>
+							</tr>
+							<tr>
+								<td><code>show_tooltips</code></td>
+								<td><code>0</code></td>
+								<td><?php esc_html_e( 'Show location name on marker hover. Set to 1 to enable.', 'bmg-interactive-map' ); ?></td>
+							</tr>
+							<tr>
+								<td><code>start_zoom</code></td>
+								<td><em><?php esc_html_e( '(fit all)', 'bmg-interactive-map' ); ?></em></td>
+								<td><?php esc_html_e( 'Starting Leaflet zoom level, e.g. -1 or 0. Must be set together with start_x and start_y.', 'bmg-interactive-map' ); ?></td>
+							</tr>
+							<tr>
+								<td><code>start_x</code></td>
+								<td><em><?php esc_html_e( '(fit all)', 'bmg-interactive-map' ); ?></em></td>
+								<td><?php esc_html_e( 'Starting center X as a percentage of the image width (0–100). Use together with start_zoom and start_y.', 'bmg-interactive-map' ); ?></td>
+							</tr>
+							<tr>
+								<td><code>start_y</code></td>
+								<td><em><?php esc_html_e( '(fit all)', 'bmg-interactive-map' ); ?></em></td>
+								<td><?php esc_html_e( 'Starting center Y as a percentage of the image height (0–100). Use together with start_zoom and start_x.', 'bmg-interactive-map' ); ?></td>
 							</tr>
 						</tbody>
 					</table>
 
-					<pre class="bmg-help-code" style="margin-top:12px;"><code>[bmg_map id="42" list_position="right" zoom_position="bottomright"]</code></pre>
+					<pre class="bmg-help-code" style="margin-top:12px;"><code>[bmg_map id="42" list_position="right" zoom_position="bottomright"]
+[bmg_map id="42" start_zoom="-1" start_x="30" start_y="60"]</code></pre>
 
 					<!-- Option B: Gutenberg -->
 					<h3 style="margin-top:24px;"><?php esc_html_e( 'Option B — Block Editor (Gutenberg)', 'bmg-interactive-map' ); ?></h3>
@@ -171,7 +230,7 @@ class BMG_Help {
 						<li><?php esc_html_e( 'Open the page or post in the Block Editor.', 'bmg-interactive-map' ); ?></li>
 						<li><?php esc_html_e( 'Click the + button, search for "Interactive Map", and insert the block.', 'bmg-interactive-map' ); ?></li>
 						<li><?php esc_html_e( 'Choose your map from the dropdown in the block placeholder or the Settings panel on the right.', 'bmg-interactive-map' ); ?></li>
-						<li><?php esc_html_e( 'In the Settings panel you can also set Width, Height, Zoom Control Position, and Location List Position.', 'bmg-interactive-map' ); ?></li>
+						<li><?php esc_html_e( 'In the Settings panel you can also set Width, Height, Zoom Control Position, Show Name on Hover, and Location List Position.', 'bmg-interactive-map' ); ?></li>
 						<li><?php esc_html_e( 'Update or publish the page.', 'bmg-interactive-map' ); ?></li>
 					</ol>
 
@@ -180,15 +239,15 @@ class BMG_Help {
 					<ol>
 						<li><?php esc_html_e( 'Open the page in the Elementor editor.', 'bmg-interactive-map' ); ?></li>
 						<li><?php esc_html_e( 'Search for "Interactive Map" in the widget panel and drag it onto the canvas.', 'bmg-interactive-map' ); ?></li>
-						<li><?php esc_html_e( 'In the Content tab → Map Settings: choose a map, and optionally set Width, Height, and Zoom Control Position.', 'bmg-interactive-map' ); ?></li>
-						<li><?php esc_html_e( 'In the Content tab → Location List: choose a list position (or leave on None).', 'bmg-interactive-map' ); ?></li>
-						<li><?php esc_html_e( 'In the Style tab you can customise: map background colour, list panel colours and typography, popup title typography and colour, and popup background and border.', 'bmg-interactive-map' ); ?></li>
+						<li><?php esc_html_e( 'Content tab → Map Settings: choose a map, set Width, and configure the remaining layout options.', 'bmg-interactive-map' ); ?></li>
+						<li><?php esc_html_e( 'Map Height, Starting Zoom/Center, and Hide List all support per-breakpoint values — switch between Desktop / Tablet / Mobile using the responsive toggle at the top of the panel to set different values for each screen size.', 'bmg-interactive-map' ); ?></li>
+						<li><?php esc_html_e( 'Style tab: customise map background, list panel, popup, tooltip, and close button.', 'bmg-interactive-map' ); ?></li>
 						<li><?php esc_html_e( 'Save and publish the page.', 'bmg-interactive-map' ); ?></li>
 					</ol>
 
 					<div class="bmg-help-tip">
 						<span class="dashicons dashicons-lightbulb" aria-hidden="true"></span>
-						<?php esc_html_e( 'Tip: the map is fully responsive and adapts to any column width automatically.', 'bmg-interactive-map' ); ?>
+						<?php esc_html_e( 'Tip: the map is fully responsive and adapts to any column width automatically. Use the Elementor responsive controls to fine-tune height and starting view for mobile visitors.', 'bmg-interactive-map' ); ?>
 					</div>
 				</div>
 			</div>
@@ -230,7 +289,7 @@ class BMG_Help {
 
 					<div class="bmg-help-tip">
 						<span class="dashicons dashicons-lightbulb" aria-hidden="true"></span>
-						<?php esc_html_e( 'Tip: floating lists with more than 10 locations are automatically capped to show 10 items at a time and scroll for the rest.', 'bmg-interactive-map' ); ?>
+						<?php esc_html_e( 'Tip: in Elementor, use the responsive "Hide List" switcher to hide the list panel on mobile without removing it on desktop.', 'bmg-interactive-map' ); ?>
 					</div>
 				</div>
 			</div>
@@ -267,15 +326,15 @@ class BMG_Help {
 							</tr>
 							<tr>
 								<td><?php esc_html_e( 'Min Zoom', 'bmg-interactive-map' ); ?></td>
-								<td><?php esc_html_e( 'How far out the user can zoom. Negative values allow zooming beyond the image bounds (range −5 to 0, default −3).', 'bmg-interactive-map' ); ?></td>
+								<td><?php esc_html_e( 'Global default for how far out visitors can zoom. Can be overridden per map in the Zoom Settings panel on the map edit screen (range −5 to 0, default −3).', 'bmg-interactive-map' ); ?></td>
 							</tr>
 							<tr>
 								<td><?php esc_html_e( 'Max Zoom', 'bmg-interactive-map' ); ?></td>
-								<td><?php esc_html_e( 'How far in the user can zoom (range 1 to 5, default 3).', 'bmg-interactive-map' ); ?></td>
+								<td><?php esc_html_e( 'Global default for how far in visitors can zoom. Can be overridden per map in the Zoom Settings panel (range 1 to 5, default 3).', 'bmg-interactive-map' ); ?></td>
 							</tr>
 							<tr>
 								<td><?php esc_html_e( 'Zoom Control Position', 'bmg-interactive-map' ); ?></td>
-								<td><?php esc_html_e( 'Corner where the + / − zoom buttons appear on every map. Can be overridden per-map via the shortcode zoom_position parameter, the block setting, or the Elementor widget setting.', 'bmg-interactive-map' ); ?></td>
+								<td><?php esc_html_e( 'Corner where the + / − zoom buttons appear on every map. Can be overridden per embed via the shortcode zoom_position parameter, the block setting, or the Elementor widget setting.', 'bmg-interactive-map' ); ?></td>
 							</tr>
 						</tbody>
 					</table>
@@ -304,6 +363,18 @@ class BMG_Help {
 							<tr>
 								<td><?php esc_html_e( 'Tab to a marker → Enter or Space', 'bmg-interactive-map' ); ?></td>
 								<td><?php esc_html_e( 'Opens the popup via keyboard (accessible).', 'bmg-interactive-map' ); ?></td>
+							</tr>
+							<tr>
+								<td><?php esc_html_e( 'Hover over a marker (tooltips on)', 'bmg-interactive-map' ); ?></td>
+								<td><?php esc_html_e( 'Shows a tooltip with the location name.', 'bmg-interactive-map' ); ?></td>
+							</tr>
+							<tr>
+								<td><?php esc_html_e( 'Hover over an area', 'bmg-interactive-map' ); ?></td>
+								<td><?php esc_html_e( 'Highlights the polygon fill and shows a sticky name tooltip.', 'bmg-interactive-map' ); ?></td>
+							</tr>
+							<tr>
+								<td><?php esc_html_e( 'Click an area', 'bmg-interactive-map' ); ?></td>
+								<td><?php esc_html_e( 'Opens the area popup with title and description at the clicked point.', 'bmg-interactive-map' ); ?></td>
 							</tr>
 							<tr>
 								<td><?php esc_html_e( 'Click a location list item', 'bmg-interactive-map' ); ?></td>
