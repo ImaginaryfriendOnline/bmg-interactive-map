@@ -188,7 +188,19 @@ class BMG_Help {
 							<tr>
 								<td><code>list_title</code></td>
 								<td><code>Locations</code></td>
-								<td><?php esc_html_e( 'Label shown in the list panel header.', 'bmg-interactive-map' ); ?></td>
+								<td><?php esc_html_e( 'Label shown in the location list header.', 'bmg-interactive-map' ); ?></td>
+							</tr>
+							<tr>
+								<td><code>area_list_position</code></td>
+								<td><code>none</code></td>
+								<td>
+									<?php esc_html_e( 'Show an area list. Same values as list_position.', 'bmg-interactive-map' ); ?>
+								</td>
+							</tr>
+							<tr>
+								<td><code>area_list_title</code></td>
+								<td><code>Areas</code></td>
+								<td><?php esc_html_e( 'Label shown in the area list header.', 'bmg-interactive-map' ); ?></td>
 							</tr>
 							<tr>
 								<td><code>zoom_position</code></td>
@@ -221,7 +233,8 @@ class BMG_Help {
 						</tbody>
 					</table>
 
-					<pre class="bmg-help-code" style="margin-top:12px;"><code>[bmg_map id="42" list_position="right" zoom_position="bottomright"]
+					<pre class="bmg-help-code" style="margin-top:12px;"><code>[bmg_map id="42" list_position="right" area_list_position="right"]
+[bmg_map id="42" list_position="float-tl" area_list_position="float-br"]
 [bmg_map id="42" start_zoom="-1" start_x="30" start_y="60"]</code></pre>
 
 					<!-- Option B: Gutenberg -->
@@ -230,7 +243,7 @@ class BMG_Help {
 						<li><?php esc_html_e( 'Open the page or post in the Block Editor.', 'bmg-interactive-map' ); ?></li>
 						<li><?php esc_html_e( 'Click the + button, search for "Interactive Map", and insert the block.', 'bmg-interactive-map' ); ?></li>
 						<li><?php esc_html_e( 'Choose your map from the dropdown in the block placeholder or the Settings panel on the right.', 'bmg-interactive-map' ); ?></li>
-						<li><?php esc_html_e( 'In the Settings panel you can also set Width, Height, Zoom Control Position, Show Name on Hover, and Location List Position.', 'bmg-interactive-map' ); ?></li>
+						<li><?php esc_html_e( 'In the Settings panel you can also set Width, Height, Zoom Control Position, Show Name on Hover, Location List Position, and Area List Position.', 'bmg-interactive-map' ); ?></li>
 						<li><?php esc_html_e( 'Update or publish the page.', 'bmg-interactive-map' ); ?></li>
 					</ol>
 
@@ -239,9 +252,10 @@ class BMG_Help {
 					<ol>
 						<li><?php esc_html_e( 'Open the page in the Elementor editor.', 'bmg-interactive-map' ); ?></li>
 						<li><?php esc_html_e( 'Search for "Interactive Map" in the widget panel and drag it onto the canvas.', 'bmg-interactive-map' ); ?></li>
-						<li><?php esc_html_e( 'Content tab → Map Settings: choose a map, set Width, and configure the remaining layout options.', 'bmg-interactive-map' ); ?></li>
-						<li><?php esc_html_e( 'Map Height, Starting Zoom/Center, and Hide List all support per-breakpoint values — switch between Desktop / Tablet / Mobile using the responsive toggle at the top of the panel to set different values for each screen size.', 'bmg-interactive-map' ); ?></li>
-						<li><?php esc_html_e( 'Style tab: customise map background, list panel, popup, tooltip, and close button.', 'bmg-interactive-map' ); ?></li>
+						<li><?php esc_html_e( 'Content tab → Map Settings: choose a map, set Width, Location List Position, Area List Position, and other layout options.', 'bmg-interactive-map' ); ?></li>
+						<li><?php esc_html_e( 'Map Height and Starting Zoom/Center support per-breakpoint values — switch between Desktop / Tablet / Mobile using the responsive toggle to set different values for each screen size.', 'bmg-interactive-map' ); ?></li>
+						<li><?php esc_html_e( 'Use the Hide Toolbar responsive switcher to show or hide the toolbar per breakpoint.', 'bmg-interactive-map' ); ?></li>
+						<li><?php esc_html_e( 'Style tab: customise the toolbar, map background, location list, area list, popup, tooltip, and close button.', 'bmg-interactive-map' ); ?></li>
 						<li><?php esc_html_e( 'Save and publish the page.', 'bmg-interactive-map' ); ?></li>
 					</ol>
 
@@ -252,14 +266,14 @@ class BMG_Help {
 				</div>
 			</div>
 
-			<!-- ── Location List ──────────────────────────────────────── -->
+			<!-- ── Location & Area Lists ─────────────────────────────── -->
 			<div class="bmg-help-card">
 				<div class="bmg-help-step-badge">
 					<span class="dashicons dashicons-list-view" style="font-size:18px;line-height:28px;" aria-hidden="true"></span>
 				</div>
 				<div class="bmg-help-step-body">
-					<h2><?php esc_html_e( 'Location List', 'bmg-interactive-map' ); ?></h2>
-					<p><?php esc_html_e( 'An optional scrollable list of all locations can be shown alongside or on top of the map. The list and map stay in sync — clicking a list item pans the map to that marker and opens its popup; clicking a marker highlights and scrolls to the corresponding list item.', 'bmg-interactive-map' ); ?></p>
+					<h2><?php esc_html_e( 'Location &amp; Area Lists', 'bmg-interactive-map' ); ?></h2>
+					<p><?php esc_html_e( 'Both the location list and the area list are optional scrollable panels. Each can be placed independently using the same set of position values. The list and map stay in sync — clicking a list item navigates the map to that item; clicking a marker or area highlights the matching list item.', 'bmg-interactive-map' ); ?></p>
 
 					<table class="bmg-help-table widefat striped">
 						<thead>
@@ -270,26 +284,74 @@ class BMG_Help {
 						</thead>
 						<tbody>
 							<tr><td><code>none</code></td><td><?php esc_html_e( 'No list shown (default).', 'bmg-interactive-map' ); ?></td></tr>
-							<tr><td><code>right</code></td><td><?php esc_html_e( 'List panel to the right of the map (side-by-side). Collapses to an icon strip.', 'bmg-interactive-map' ); ?></td></tr>
-							<tr><td><code>left</code></td><td><?php esc_html_e( 'List panel to the left of the map (side-by-side). Collapses to an icon strip.', 'bmg-interactive-map' ); ?></td></tr>
-							<tr><td><code>float-tl</code></td><td><?php esc_html_e( 'Floating overlay panel — top-left corner of the map. Collapses to a single header bar.', 'bmg-interactive-map' ); ?></td></tr>
-							<tr><td><code>float-tr</code></td><td><?php esc_html_e( 'Floating overlay panel — top-right corner of the map. Collapses to a single header bar.', 'bmg-interactive-map' ); ?></td></tr>
-							<tr><td><code>float-bl</code></td><td><?php esc_html_e( 'Floating overlay panel — bottom-left corner of the map. Collapses to a single header bar.', 'bmg-interactive-map' ); ?></td></tr>
-							<tr><td><code>float-br</code></td><td><?php esc_html_e( 'Floating overlay panel — bottom-right corner of the map. Collapses to a single header bar.', 'bmg-interactive-map' ); ?></td></tr>
+							<tr><td><code>right</code></td><td><?php esc_html_e( 'List panel to the right of the map. Collapses to an icon strip.', 'bmg-interactive-map' ); ?></td></tr>
+							<tr><td><code>left</code></td><td><?php esc_html_e( 'List panel to the left of the map. Collapses to an icon strip.', 'bmg-interactive-map' ); ?></td></tr>
+							<tr><td><code>float-tl</code></td><td><?php esc_html_e( 'Floating overlay — top-left corner. Collapses to a header bar.', 'bmg-interactive-map' ); ?></td></tr>
+							<tr><td><code>float-tr</code></td><td><?php esc_html_e( 'Floating overlay — top-right corner. Collapses to a header bar.', 'bmg-interactive-map' ); ?></td></tr>
+							<tr><td><code>float-bl</code></td><td><?php esc_html_e( 'Floating overlay — bottom-left corner. Collapses to a header bar.', 'bmg-interactive-map' ); ?></td></tr>
+							<tr><td><code>float-br</code></td><td><?php esc_html_e( 'Floating overlay — bottom-right corner. Collapses to a header bar.', 'bmg-interactive-map' ); ?></td></tr>
 						</tbody>
 					</table>
 
-					<h3 style="margin-top:16px;"><?php esc_html_e( 'Search', 'bmg-interactive-map' ); ?></h3>
-					<p><?php esc_html_e( 'A search field is automatically added to the top of the list panel in these cases:', 'bmg-interactive-map' ); ?></p>
+					<p style="margin-top:12px;"><?php esc_html_e( 'When both lists are set to the same position they stack vertically inside a single combined panel.', 'bmg-interactive-map' ); ?></p>
+
+					<h3><?php esc_html_e( 'Search &amp; Scroll', 'bmg-interactive-map' ); ?></h3>
+					<p><?php esc_html_e( 'A search field and scroll limit are added automatically to any list with 5 or more items. Typing in the search box filters items by title; map markers and polygons are unaffected.', 'bmg-interactive-map' ); ?></p>
+
+					<h3><?php esc_html_e( 'Area List Behaviour', 'bmg-interactive-map' ); ?></h3>
 					<ul>
-						<li><?php esc_html_e( 'Always, for side positions (left / right).', 'bmg-interactive-map' ); ?></li>
-						<li><?php esc_html_e( 'When there are more than 10 locations, for floating positions.', 'bmg-interactive-map' ); ?></li>
+						<li><?php esc_html_e( 'Hovering an area list item highlights the polygon fill on the map.', 'bmg-interactive-map' ); ?></li>
+						<li><?php esc_html_e( 'Clicking an area list item flies the map view to the polygon centroid and opens its popup.', 'bmg-interactive-map' ); ?></li>
 					</ul>
-					<p><?php esc_html_e( 'Typing in the search box filters the list items by title. Map markers are unaffected.', 'bmg-interactive-map' ); ?></p>
 
 					<div class="bmg-help-tip">
 						<span class="dashicons dashicons-lightbulb" aria-hidden="true"></span>
-						<?php esc_html_e( 'Tip: in Elementor, use the responsive "Hide List" switcher to hide the list panel on mobile without removing it on desktop.', 'bmg-interactive-map' ); ?>
+						<?php esc_html_e( 'Tip: use the toolbar\'s Locations and Areas buttons to show or hide each list at runtime without changing the embed settings.', 'bmg-interactive-map' ); ?>
+					</div>
+				</div>
+			</div>
+
+			<!-- ── Toolbar ───────────────────────────────────────────── -->
+			<div class="bmg-help-card">
+				<div class="bmg-help-step-badge">
+					<span class="dashicons dashicons-button" style="font-size:18px;line-height:28px;" aria-hidden="true"></span>
+				</div>
+				<div class="bmg-help-step-body">
+					<h2><?php esc_html_e( 'Toolbar', 'bmg-interactive-map' ); ?></h2>
+					<p><?php esc_html_e( 'Every map embed displays a small icon button bar centred over the map image. The toolbar automatically moves to a free corner when floating list panels occupy the top edge.', 'bmg-interactive-map' ); ?></p>
+
+					<table class="bmg-help-table widefat striped">
+						<thead>
+							<tr>
+								<th><?php esc_html_e( 'Button', 'bmg-interactive-map' ); ?></th>
+								<th><?php esc_html_e( 'Action', 'bmg-interactive-map' ); ?></th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td><?php esc_html_e( 'Locations (list icon)', 'bmg-interactive-map' ); ?></td>
+								<td><?php esc_html_e( 'Show / hide the entire location list including its header. Only shown when a location list position is configured.', 'bmg-interactive-map' ); ?></td>
+							</tr>
+							<tr>
+								<td><?php esc_html_e( 'Areas (polygon icon)', 'bmg-interactive-map' ); ?></td>
+								<td><?php esc_html_e( 'Show / hide the entire area list including its header. Only shown when an area list position is configured.', 'bmg-interactive-map' ); ?></td>
+							</tr>
+							<tr>
+								<td><?php esc_html_e( 'Fill Window (window frame icon)', 'bmg-interactive-map' ); ?></td>
+								<td><?php esc_html_e( 'Expand the map to fill the full browser viewport using CSS. Works inside iframes and does not require browser permission. Press Escape or click Exit to return.', 'bmg-interactive-map' ); ?></td>
+							</tr>
+							<tr>
+								<td><?php esc_html_e( 'Fullscreen (expand-arrows icon)', 'bmg-interactive-map' ); ?></td>
+								<td><?php esc_html_e( 'Enter native browser fullscreen (hides browser chrome). Press Escape or click Exit to return.', 'bmg-interactive-map' ); ?></td>
+							</tr>
+						</tbody>
+					</table>
+
+					<p style="margin-top:12px;"><?php esc_html_e( 'An "Exit fullscreen" button appears at the bottom-centre of the map while either expanded mode is active.', 'bmg-interactive-map' ); ?></p>
+
+					<div class="bmg-help-tip">
+						<span class="dashicons dashicons-lightbulb" aria-hidden="true"></span>
+						<?php esc_html_e( 'Tip: in Elementor use the responsive "Hide Toolbar" switcher (Content tab → Map Settings) to suppress the toolbar on specific screen sizes. Button colours are customisable under Style tab → Toolbar.', 'bmg-interactive-map' ); ?>
 					</div>
 				</div>
 			</div>
@@ -385,8 +447,32 @@ class BMG_Help {
 								<td><?php esc_html_e( 'Highlights and scrolls to the matching list item.', 'bmg-interactive-map' ); ?></td>
 							</tr>
 							<tr>
+								<td><?php esc_html_e( 'Hover over an area list item', 'bmg-interactive-map' ); ?></td>
+								<td><?php esc_html_e( 'Highlights the polygon fill on the map.', 'bmg-interactive-map' ); ?></td>
+							</tr>
+							<tr>
+								<td><?php esc_html_e( 'Click an area list item', 'bmg-interactive-map' ); ?></td>
+								<td><?php esc_html_e( 'Flies the map to the polygon centroid and opens its popup.', 'bmg-interactive-map' ); ?></td>
+							</tr>
+							<tr>
 								<td><?php esc_html_e( 'Type in the search field', 'bmg-interactive-map' ); ?></td>
-								<td><?php esc_html_e( 'Filters the location list to titles that match. Map markers are not affected.', 'bmg-interactive-map' ); ?></td>
+								<td><?php esc_html_e( 'Filters that list to titles that match. Map markers and polygons are not affected.', 'bmg-interactive-map' ); ?></td>
+							</tr>
+							<tr>
+								<td><?php esc_html_e( 'Toolbar — Locations / Areas button', 'bmg-interactive-map' ); ?></td>
+								<td><?php esc_html_e( 'Shows or hides the corresponding list panel entirely.', 'bmg-interactive-map' ); ?></td>
+							</tr>
+							<tr>
+								<td><?php esc_html_e( 'Toolbar — Fill Window button', 'bmg-interactive-map' ); ?></td>
+								<td><?php esc_html_e( 'Expands the map to fill the browser viewport (CSS only, no browser API).', 'bmg-interactive-map' ); ?></td>
+							</tr>
+							<tr>
+								<td><?php esc_html_e( 'Toolbar — Fullscreen button', 'bmg-interactive-map' ); ?></td>
+								<td><?php esc_html_e( 'Enters native browser fullscreen mode.', 'bmg-interactive-map' ); ?></td>
+							</tr>
+							<tr>
+								<td><?php esc_html_e( 'Exit fullscreen / Escape key', 'bmg-interactive-map' ); ?></td>
+								<td><?php esc_html_e( 'Exits fill-window or fullscreen mode and restores normal view.', 'bmg-interactive-map' ); ?></td>
 							</tr>
 							<tr>
 								<td><?php esc_html_e( 'Scroll wheel / pinch', 'bmg-interactive-map' ); ?></td>

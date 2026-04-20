@@ -8,13 +8,15 @@ A WordPress plugin for creating interactive image-based maps with clickable loca
 - **Clickable markers** — place markers anywhere on the image; each opens a popup with a title and description
 - **Polygon areas** — draw multi-vertex regions over the map; areas render as outlines, highlight on hover, show a sticky name tooltip, and open a popup on click
 - **Zoom & pan** — scroll to zoom, drag to pan; configurable zoom limits globally and per map
-- **Location list** — optional side panel or floating overlay listing all locations, with search/filter
+- **Location list** — optional side panel or floating overlay listing all locations, with search/filter and collapse toggle
+- **Area list** — same options as location list; when both lists share a position they stack in a combined panel; hovering a list item highlights the polygon on the map
+- **Toolbar** — icon button bar centred over the map; toggles location list, area list, fill-window mode, and native fullscreen; auto-repositions to avoid floating list panels
 - **Tooltips** — show location names on marker hover
 - **Starting view** — set a custom starting zoom level and center point per embed; supports per-breakpoint values in Elementor
 - **Keyboard accessible** — Tab to markers, Enter/Space to open popups
 - **Three display methods** — shortcode, Gutenberg block, or Elementor widget
-- **Elementor responsive controls** — map height, starting view, and list visibility are all configurable per breakpoint (desktop / tablet / mobile)
-- **Elementor styling** — full visual control over markers, popups, list panel, and close button via Elementor style tabs
+- **Elementor responsive controls** — map height and starting view are configurable per breakpoint (desktop / tablet / mobile)
+- **Elementor styling** — full visual control over markers, popups, location list, area list, toolbar, and close button via Elementor style tabs
 - **Cascade operations** — trashing or deleting a map automatically cascades to its locations and areas
 
 ## Requirements
@@ -65,7 +67,9 @@ Full parameter reference:
 | `width` | *(fill column)* | Width: `800`, `800px`, or `100%` |
 | `height` | *(aspect ratio)* | Height: `600` or `600px`. Leave blank to derive from the image ratio. |
 | `list_position` | `none` | Location list placement — see values below |
-| `list_title` | `Locations` | Label shown in the list panel header |
+| `list_title` | `Locations` | Label shown in the location list header |
+| `area_list_position` | `none` | Area list placement — same values as `list_position` |
+| `area_list_title` | `Areas` | Label shown in the area list header |
 | `zoom_position` | *(global setting)* | Zoom control corner: `topleft` `topright` `bottomleft` `bottomright` |
 | `show_tooltips` | `0` | Show location name on marker hover: `0` or `1` |
 | `start_zoom` | *(fit all)* | Starting Leaflet zoom level (e.g. `-1`, `0`, `2`) |
@@ -74,19 +78,21 @@ Full parameter reference:
 
 `start_zoom`, `start_x`, and `start_y` must all be provided together or the starting view is ignored.
 
-`list_position` values:
+`list_position` / `area_list_position` values:
 
 | Value | Effect |
 |-------|--------|
 | `none` | No list |
-| `left` / `right` | Side panel; collapses to a narrow icon strip |
+| `left` / `right` | Side panel next to the map; collapses to a narrow icon strip |
 | `float-tl` / `float-tr` / `float-bl` / `float-br` | Floating overlay in a corner; collapses to a single header bar |
+
+When both lists are set to the same position they stack vertically inside a combined panel. Each list becomes scrollable and shows a search field when it contains 5 or more items.
 
 Examples:
 
 ```
-[bmg_map id="42" width="100%" list_position="right"]
-[bmg_map id="42" list_position="float-tl" zoom_position="bottomright" show_tooltips="1"]
+[bmg_map id="42" width="100%" list_position="right" area_list_position="right"]
+[bmg_map id="42" list_position="float-tl" area_list_position="float-br" zoom_position="bottomright"]
 [bmg_map id="42" start_zoom="-1" start_x="30" start_y="60"]
 ```
 
@@ -99,19 +105,36 @@ Search for **Interactive Map** in the block inserter. Select your map, then conf
 Drag the **Interactive Map** widget from the General category onto your page. All layout controls support desktop / tablet / mobile breakpoints via Elementor's responsive mode.
 
 **Content tab — Map Settings:**
-- Select Map
-- Width
+- Select Map, Width
 - Map Height *(responsive — set different heights per breakpoint)*
-- Zoom Control Position
-- Show Name on Hover
-- Location List Position, List Title, Hide List *(Hide List is responsive)*
-- Starting Zoom, Starting Center X %, Starting Center Y % *(all responsive — set different starting views per breakpoint)*
+- Zoom Control Position, Show Name on Hover
+- Location List Position, List Title
+- Area List Position, Area List Title
+- Hide Toolbar *(responsive — hide/show the toolbar per breakpoint)*
+- Starting Zoom, Starting Center X %, Starting Center Y % *(all responsive)*
 
 **Style tab:**
+- **Toolbar** — button background (normal / hover / active), icon colour
 - **Marker Tooltip** — typography and colours
 - **Map** — background colour
 - **Location List** — panel, title bar, search field, item, hover, and active colours and typography
+- **Area List** — same controls as Location List, scoped to the area list
 - **Popup** — container background, border, border radius; title and body typography and colours; close button icon, colour, size, and shape
+
+## Toolbar
+
+Every map embed includes a small icon button bar positioned at the top-centre of the map image (automatically moved to a free corner when floating lists occupy the top edge). The toolbar contains:
+
+| Button | Icon | Action |
+|--------|------|--------|
+| Locations | List icon | Show / hide the location list entirely |
+| Areas | Polygon icon | Show / hide the area list entirely |
+| Fill Window | Window frame icon | Expand the map to fill the browser viewport (CSS only, no browser API) |
+| Fullscreen | Expand-arrows icon | Enter native browser fullscreen (hides browser chrome) |
+
+An **Exit fullscreen** pill button appears at the bottom-centre of the map during either expanded mode. Press **Escape** or click the button to return to normal view.
+
+Use the Elementor **Hide Toolbar** responsive switcher to suppress the toolbar on specific breakpoints.
 
 ## Per-Map Zoom Limits
 
