@@ -767,29 +767,37 @@
 	display: block;
 	width: 14px;
 	height: 14px;
-	background-repeat: no-repeat;
-	background-size: contain;
-	background-position: center;
+	background-color: #333;
+	-webkit-mask-repeat: no-repeat;
+	mask-repeat: no-repeat;
+	-webkit-mask-size: contain;
+	mask-size: contain;
+	-webkit-mask-position: center;
+	mask-position: center;
 }
 
 /* Location list icon: bulleted list with dot markers */
 .bmg-toolbar-icon--loc {
-	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='3' cy='4' r='2' fill='%23333'/%3E%3Ccircle cx='3' cy='8' r='2' fill='%23333'/%3E%3Ccircle cx='3' cy='12' r='2' fill='%23333'/%3E%3Crect x='7' y='3' width='8' height='2' rx='1' fill='%23333'/%3E%3Crect x='7' y='7' width='8' height='2' rx='1' fill='%23333'/%3E%3Crect x='7' y='11' width='8' height='2' rx='1' fill='%23333'/%3E%3C/svg%3E");
+	-webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='3' cy='4' r='2'/%3E%3Ccircle cx='3' cy='8' r='2'/%3E%3Ccircle cx='3' cy='12' r='2'/%3E%3Crect x='7' y='3' width='8' height='2' rx='1'/%3E%3Crect x='7' y='7' width='8' height='2' rx='1'/%3E%3Crect x='7' y='11' width='8' height='2' rx='1'/%3E%3C/svg%3E");
+	mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='3' cy='4' r='2'/%3E%3Ccircle cx='3' cy='8' r='2'/%3E%3Ccircle cx='3' cy='12' r='2'/%3E%3Crect x='7' y='3' width='8' height='2' rx='1'/%3E%3Crect x='7' y='7' width='8' height='2' rx='1'/%3E%3Crect x='7' y='11' width='8' height='2' rx='1'/%3E%3C/svg%3E");
 }
 
-/* Area list icon: polygon outline */
+/* Area list icon: polygon shape (filled so mask works) */
 .bmg-toolbar-icon--area {
-	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpolygon points='8,1 15,6 12,14 4,14 1,6' fill='none' stroke='%23333' stroke-width='1.5'/%3E%3C/svg%3E");
+	-webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M8 1 15 6 12 14 4 14 1 6Z' fill-rule='evenodd'/%3E%3Cpath d='M8 3 13.5 6.8 11.3 13 4.7 13 2.5 6.8Z' fill='white'/%3E%3C/svg%3E");
+	mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M8 1 15 6 12 14 4 14 1 6Z' fill-rule='evenodd'/%3E%3Cpath d='M8 3 13.5 6.8 11.3 13 4.7 13 2.5 6.8Z' fill='white'/%3E%3C/svg%3E");
 }
 
 /* Fullscreen: expand arrows */
 .bmg-toolbar-icon--fs {
-	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M1 1h5v2H3v3H1zm9 0h5v5h-2V3h-3zm5 9h-2v3h-3v2h5zM1 10h2v3h3v2H1z' fill='%23333'/%3E%3C/svg%3E");
+	-webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M1 1h5v2H3v3H1zm9 0h5v5h-2V3h-3zm5 9h-2v3h-3v2h5zM1 10h2v3h3v2H1z'/%3E%3C/svg%3E");
+	mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M1 1h5v2H3v3H1zm9 0h5v5h-2V3h-3zm5 9h-2v3h-3v2h5zM1 10h2v3h3v2H1z'/%3E%3C/svg%3E");
 }
 
 /* Fullscreen: collapse arrows (when layout is fullscreen) */
 .bmg-map-layout--fullscreen .bmg-toolbar-icon--fs {
-	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M6 1v5H1V4h3V1zm4 0h2v3h3v2h-5zm5 9v2h-3v3h-2v-5zm-14 0h5v5H4v-3H1z' fill='%23333'/%3E%3C/svg%3E");
+	-webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M6 1v5H1V4h3V1zm4 0h2v3h3v2h-5zm5 9v2h-3v3h-2v-5zm-14 0h5v5H4v-3H1z'/%3E%3C/svg%3E");
+	mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M6 1v5H1V4h3V1zm4 0h2v3h3v2h-5zm5 9v2h-3v3h-2v-5zm-14 0h5v5H4v-3H1z'/%3E%3C/svg%3E");
 }
 
 /* ── Fullscreen layout ────────────────────────────────────────────────────── */

@@ -306,6 +306,15 @@ $this->add_responsive_control( 'start_zoom', [
 			],
 		] );
 
+		$this->add_control( 'toolbar_icon_color', [
+			'label'     => esc_html__( 'Icon Color', 'bmg-interactive-map' ),
+			'type'      => \Elementor\Controls_Manager::COLOR,
+			'separator' => 'before',
+			'selectors' => [
+				'{{WRAPPER}} .bmg-toolbar-icon' => 'background-color: {{VALUE}};',
+			],
+		] );
+
 		$this->end_controls_section();
 
 		// ── Location List Style ───────────────────────────────────────────────
