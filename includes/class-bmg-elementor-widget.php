@@ -190,20 +190,7 @@ class BMG_Elementor_Widget extends \Elementor\Widget_Base {
 			],
 		] );
 
-		$this->add_responsive_control( 'list_hide', [
-			'label'        => esc_html__( 'Hide List', 'bmg-interactive-map' ),
-			'type'         => \Elementor\Controls_Manager::SWITCHER,
-			'label_on'     => esc_html__( 'Hidden', 'bmg-interactive-map' ),
-			'label_off'    => esc_html__( 'Shown',  'bmg-interactive-map' ),
-			'return_value' => 'yes',
-			'default'      => '',
-			'selectors'    => [
-				'{{WRAPPER}} .bmg-location-list' => 'display: none !important;',
-			],
-			'condition'    => [ 'list_position!' => 'none' ],
-		] );
-
-		$this->add_responsive_control( 'start_zoom', [
+$this->add_responsive_control( 'start_zoom', [
 			'label'       => esc_html__( 'Starting Zoom', 'bmg-interactive-map' ),
 			'type'        => \Elementor\Controls_Manager::NUMBER,
 			'min'         => -5,
