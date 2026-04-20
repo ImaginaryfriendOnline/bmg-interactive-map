@@ -717,14 +717,27 @@
 
 .bmg-map-toolbar {
 	position: absolute;
-	top: 8px;
-	left: 50%;
-	transform: translateX(-50%);
 	z-index: 600;
 	display: flex;
 	gap: 4px;
 	pointer-events: none;
 }
+
+/* Zone placement — set by PHP based on which corners floating lists occupy */
+.bmg-map-toolbar--top {
+	top: 8px;
+	left: 50%;
+	transform: translateX(-50%);
+}
+.bmg-map-toolbar--bottom {
+	bottom: 8px;
+	left: 50%;
+	transform: translateX(-50%);
+}
+.bmg-map-toolbar--top-left    { top: 8px;    left:  8px; }
+.bmg-map-toolbar--top-right   { top: 8px;    right: 8px; }
+.bmg-map-toolbar--bottom-left  { bottom: 8px; left:  8px; }
+.bmg-map-toolbar--bottom-right { bottom: 8px; right: 8px; }
 
 .bmg-toolbar-btn {
 	pointer-events: all;

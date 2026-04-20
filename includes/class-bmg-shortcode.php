@@ -293,8 +293,34 @@ class BMG_Shortcode {
 				. ' aria-label="' . esc_attr__( 'Enter fullscreen', 'bmg-interactive-map' ) . '">'
 				. '<span class="bmg-toolbar-icon bmg-toolbar-icon--fs" aria-hidden="true"></span>'
 				. '</button>';
+
+			// Pick toolbar zone that avoids floating list corners.
+			$float_corners  = [ 'float-tl', 'float-tr', 'float-bl', 'float-br' ];
+			$occupied       = [];
+			if ( in_array( $list_position, $float_corners, true ) ) {
+				$occupied[] = $list_position;
+			}
+			if ( in_array( $area_list_position, $float_corners, true ) ) {
+				$occupied[] = $area_list_position;
+			}
+			$top_blocked = in_array( 'float-tl', $occupied ) || in_array( 'float-tr', $occupied );
+			$bot_blocked = in_array( 'float-bl', $occupied ) || in_array( 'float-br', $occupied );
+			if ( ! $top_blocked ) {
+				$toolbar_zone = 'top';
+			} elseif ( ! $bot_blocked ) {
+				$toolbar_zone = 'bottom';
+			} elseif ( ! in_array( 'float-tl', $occupied ) ) {
+				$toolbar_zone = 'top-left';
+			} elseif ( ! in_array( 'float-tr', $occupied ) ) {
+				$toolbar_zone = 'top-right';
+			} elseif ( ! in_array( 'float-bl', $occupied ) ) {
+				$toolbar_zone = 'bottom-left';
+			} else {
+				$toolbar_zone = 'bottom-right';
+			}
+
 			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-			echo '<div class="bmg-map-toolbar">' . $toolbar_buttons . '</div>'
+			echo '<div class="bmg-map-toolbar bmg-map-toolbar--' . esc_attr( $toolbar_zone ) . '">' . $toolbar_buttons . '</div>'
 				. '<button class="bmg-fs-exit-btn" type="button"'
 				. ' aria-label="' . esc_attr__( 'Exit fullscreen', 'bmg-interactive-map' ) . '">'
 				. esc_html__( 'Exit fullscreen', 'bmg-interactive-map' )
