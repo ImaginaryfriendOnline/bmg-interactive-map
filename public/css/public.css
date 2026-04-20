@@ -866,3 +866,12 @@
 .bmg-map-layout:-webkit-full-screen .bmg-fs-exit-btn {
 	display: flex;
 }
+
+/* When the toolbar sits on the bottom edge, flip the exit button to the top
+   so they never overlap. Uses the sibling combinator — toolbar renders first. */
+.bmg-map-toolbar--bottom ~ .bmg-fs-exit-btn,
+.bmg-map-toolbar--bottom-left ~ .bmg-fs-exit-btn,
+.bmg-map-toolbar--bottom-right ~ .bmg-fs-exit-btn {
+	bottom: auto;
+	top: 8px;
+}
