@@ -171,11 +171,16 @@
 		polygon  = null;
 
 		wrap.style.aspectRatio = imgW + ' / ' + imgH;
-		wrap.innerHTML =
-			'<div id="bmg-area-editor" class="bmg-admin-area-editor"></div>' +
-			'<p class="description bmg-map-editor-hint">' +
-				'Click the map to add vertices. Drag a vertex to reposition it.' +
-			'</p>';
+		wrap.innerHTML = '<div id="bmg-area-editor" class="bmg-admin-area-editor"></div>';
+
+		// Hint lives as a sibling after the wrap so the wrap's max-height doesn't clip it.
+		var hint = wrap.nextElementSibling;
+		if ( ! hint || ! hint.classList.contains( 'bmg-map-editor-hint' ) ) {
+			hint = document.createElement( 'p' );
+			hint.className = 'description bmg-map-editor-hint';
+			hint.textContent = 'Click the map to add vertices. Drag a vertex to reposition it.';
+			wrap.parentNode.insertBefore( hint, wrap.nextSibling );
+		}
 
 		requestAnimationFrame( function () {
 			leafletMap = L.map( 'bmg-area-editor', {

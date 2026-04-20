@@ -63,12 +63,17 @@
 		// as the frontend renderer to avoid whitespace / mis-centred map).
 		wrap.style.aspectRatio = imgW + ' / ' + imgH;
 
-		wrap.innerHTML =
-			'<div id="bmg-map-editor" class="bmg-admin-map-editor"></div>' +
-			'<p class="description bmg-map-editor-hint">' +
-				'Click the map to place the marker, or drag the marker to reposition it. ' +
-				'You can also enter coordinates manually in the X&nbsp;% and Y&nbsp;% fields above.' +
-			'</p>';
+		wrap.innerHTML = '<div id="bmg-map-editor" class="bmg-admin-map-editor"></div>';
+
+		// Hint lives as a sibling after the wrap so the wrap's max-height doesn't clip it.
+		var hint = wrap.nextElementSibling;
+		if ( ! hint || ! hint.classList.contains( 'bmg-map-editor-hint' ) ) {
+			hint = document.createElement( 'p' );
+			hint.className = 'description bmg-map-editor-hint';
+			hint.innerHTML = 'Click the map to place the marker, or drag the marker to reposition it. ' +
+				'You can also enter coordinates manually in the X&nbsp;% and Y&nbsp;% fields above.';
+			wrap.parentNode.insertBefore( hint, wrap.nextSibling );
+		}
 
 		requestAnimationFrame( function () {
 			leafletMap = L.map( 'bmg-map-editor', {
