@@ -558,6 +558,18 @@
 					activate();
 				}
 			} );
+			item.addEventListener( 'mouseenter', function () {
+				var idx = parseInt( item.dataset.index, 10 );
+				if ( ! isNaN( idx ) && polys[ idx ] ) {
+					polys[ idx ].setStyle( { fillOpacity: areas[ idx ].fillOpacity } );
+				}
+			} );
+			item.addEventListener( 'mouseleave', function () {
+				var idx = parseInt( item.dataset.index, 10 );
+				if ( ! isNaN( idx ) && polys[ idx ] && ! polys[ idx ].isPopupOpen() ) {
+					polys[ idx ].setStyle( { fillOpacity: 0 } );
+				}
+			} );
 		} );
 
 		polys.forEach( function ( poly, idx ) {
