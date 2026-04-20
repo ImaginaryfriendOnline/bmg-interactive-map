@@ -275,10 +275,17 @@
 				areas = [];
 			}
 
+			var polys = [];
+
 			areas.forEach( function ( area ) {
 				var latlngs = area.points.map( function ( p ) {
 					return [ H - ( p.y / 100 ) * H, ( p.x / 100 ) * W ];
 				} );
+
+				var popupHtml = '<h3 class="bmg-popup-title">' + escHtml( area.title ) + '</h3>';
+				if ( area.description ) {
+					popupHtml += '<div class="bmg-popup-body">' + area.description + '</div>';
+				}
 
 				var poly = L.polygon( latlngs, {
 					color      : area.color,
@@ -286,6 +293,8 @@
 					fillOpacity: 0,
 					weight     : 2,
 				} ).addTo( map );
+
+				poly.bindPopup( popupHtml, { className: 'bmg-leaflet-popup', closeButton: true } );
 
 				poly.bindTooltip( escHtml( area.title ), {
 					sticky   : true,
@@ -303,15 +312,9 @@
 
 				poly.on( 'click', function ( e ) {
 					L.DomEvent.stopPropagation( e );
-					var popupHtml = '<h3 class="bmg-popup-title">' + escHtml( area.title ) + '</h3>';
-					if ( area.description ) {
-						popupHtml += '<div class="bmg-popup-body">' + area.description + '</div>';
-					}
-					L.popup( { className: 'bmg-leaflet-popup', closeButton: true } )
-						.setLatLng( e.latlng )
-						.setContent( popupHtml )
-						.openOn( map );
 				} );
+
+				polys.push( poly );
 			} );
 
 			if ( el.dataset.closeIcon ) {
@@ -327,6 +330,10 @@
 
 			if ( el.dataset.showList ) {
 				initList( el, map, markers );
+			}
+
+			if ( el.dataset.showAreaList ) {
+				initAreaList( el, map, polys, areas );
 			}
 
 			} ); // requestAnimationFrame
@@ -366,15 +373,14 @@
 			new ResizeObserver( syncListHeight ).observe( mapEl );
 		}
 
-		// For floating lists with more than 10 locations: cap the panel height
-		// to exactly 10 items (plus the search bar if present) so it stays
-		// compact and scrollable rather than covering half the map.
-		var isFloating = layoutEl.className.indexOf( 'bmg-map-layout--list-float' ) !== -1;
-		if ( isFloating && markers.length > 10 && items.length ) {
+		// Cap each list to 5 visible items so stacked and floating lists stay compact.
+		if ( items.length >= 5 ) {
 			var searchWrap  = listEl.querySelector( '.bmg-location-search-wrap' );
 			var searchH     = searchWrap ? searchWrap.offsetHeight : 0;
-			var itemH       = items[ 0 ].offsetHeight || 36; // 36 px fallback
-			listEl.style.maxHeight = ( searchH + itemH * 10 ) + 'px';
+			var headerEl    = listEl.querySelector( '.bmg-location-list__header' );
+			var headerH     = headerEl ? headerEl.offsetHeight : 34;
+			var itemH       = items[ 0 ].offsetHeight || 36;
+			listEl.style.maxHeight = ( headerH + searchH + itemH * 5 ) + 'px';
 		}
 
 		// Collapse/expand toggle.
@@ -457,6 +463,112 @@
 				}
 			} );
 			marker.on( 'popupclose', function () {
+				setActive( -1 );
+			} );
+		} );
+	}
+
+	// ------------------------------------------------------------------
+	// Area list — links sidebar list items to Leaflet polygon layers
+	// ------------------------------------------------------------------
+
+	function initAreaList( mapEl, map, polys, areas ) {
+		var layoutEl = mapEl.closest( '.bmg-map-layout' );
+		if ( ! layoutEl ) return;
+
+		var listEl = layoutEl.querySelector( '.bmg-area-list' );
+		if ( ! listEl ) return;
+
+		var items = listEl.querySelectorAll( '.bmg-location-list__item' );
+
+		function syncListHeight() {
+			layoutEl.style.setProperty( '--bmg-map-height', mapEl.offsetHeight + 'px' );
+		}
+		syncListHeight();
+		if ( window.ResizeObserver ) {
+			new ResizeObserver( syncListHeight ).observe( mapEl );
+		}
+
+		if ( items.length >= 5 ) {
+			var searchWrap = listEl.querySelector( '.bmg-location-search-wrap' );
+			var searchH    = searchWrap ? searchWrap.offsetHeight : 0;
+			var headerEl   = listEl.querySelector( '.bmg-location-list__header' );
+			var headerH    = headerEl ? headerEl.offsetHeight : 34;
+			var itemH      = items[ 0 ].offsetHeight || 36;
+			listEl.style.maxHeight = ( headerH + searchH + itemH * 5 ) + 'px';
+		}
+
+		var toggleBtn = listEl.querySelector( '.bmg-location-list__toggle' );
+		if ( toggleBtn ) {
+			var savedMaxHeight = '';
+			toggleBtn.addEventListener( 'click', function () {
+				var collapsed = listEl.classList.toggle( 'bmg-area-list--collapsed' );
+				toggleBtn.setAttribute( 'aria-expanded', collapsed ? 'false' : 'true' );
+				toggleBtn.setAttribute( 'aria-label', collapsed ? 'Expand area list' : 'Collapse area list' );
+				if ( collapsed ) {
+					savedMaxHeight = listEl.style.maxHeight;
+					listEl.style.maxHeight = '';
+				} else if ( savedMaxHeight ) {
+					listEl.style.maxHeight = savedMaxHeight;
+				}
+				setTimeout( function () {
+					syncListHeight();
+					map.invalidateSize();
+				}, 220 );
+			} );
+		}
+
+		var searchInput = listEl.querySelector( '.bmg-location-search' );
+		if ( searchInput ) {
+			searchInput.addEventListener( 'input', function () {
+				var q = searchInput.value.toLowerCase();
+				items.forEach( function ( item ) {
+					var titleEl = item.querySelector( '.bmg-location-list__title' );
+					var title   = titleEl ? titleEl.textContent.toLowerCase() : '';
+					item.style.display = ( q && title.indexOf( q ) === -1 ) ? 'none' : '';
+				} );
+			} );
+		}
+
+		function setActive( idx ) {
+			items.forEach( function ( item ) {
+				item.classList.toggle(
+					'bmg-location-list__item--active',
+					parseInt( item.dataset.index, 10 ) === idx
+				);
+			} );
+		}
+
+		items.forEach( function ( item ) {
+			function activate() {
+				var idx = parseInt( item.dataset.index, 10 );
+				if ( isNaN( idx ) || ! polys[ idx ] ) return;
+				setActive( idx );
+				var lls = polys[ idx ].getLatLngs()[ 0 ];
+				var lat = 0, lng = 0;
+				lls.forEach( function ( ll ) { lat += ll.lat; lng += ll.lng; } );
+				var centroid = L.latLng( lat / lls.length, lng / lls.length );
+				map.flyTo( centroid, map.getZoom(), { animate: true, duration: 0.4 } );
+				polys[ idx ].openPopup( centroid );
+			}
+			item.addEventListener( 'click', activate );
+			item.addEventListener( 'keydown', function ( e ) {
+				if ( e.key === 'Enter' || e.key === ' ' ) {
+					e.preventDefault();
+					activate();
+				}
+			} );
+		} );
+
+		polys.forEach( function ( poly, idx ) {
+			poly.on( 'popupopen', function () {
+				setActive( idx );
+				var activeItem = listEl.querySelector( '.bmg-location-list__item--active' );
+				if ( activeItem && activeItem.style.display !== 'none' ) {
+					activeItem.scrollIntoView( { block: 'nearest', behavior: 'smooth' } );
+				}
+			} );
+			poly.on( 'popupclose', function () {
 				setActive( -1 );
 			} );
 		} );

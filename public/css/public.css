@@ -466,3 +466,249 @@
 .bmg-map-layout--list-float-br .bmg-location-list--collapsed {
 	max-height: none !important; /* override both CSS and any JS-set inline value */
 }
+
+/* -----------------------------------------------------------------
+   Area list — base (mirrors .bmg-location-list)
+   ----------------------------------------------------------------- */
+
+.bmg-area-list {
+	background: #fff;
+	border: 1px solid #ccc;
+	box-sizing: border-box;
+	overflow-y: auto;
+}
+
+/* Square swatch for areas (vs circle for locations) */
+.bmg-location-list__swatch--area {
+	border-radius: 2px;
+}
+
+/* -----------------------------------------------------------------
+   Area list — independent side panels
+   ----------------------------------------------------------------- */
+
+.bmg-map-layout--area-list-left,
+.bmg-map-layout--area-list-right {
+	display: flex;
+	align-items: flex-start;
+}
+
+.bmg-map-layout--area-list-left .bmg-map-aspect-wrapper,
+.bmg-map-layout--area-list-right .bmg-map-aspect-wrapper {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.bmg-map-layout--area-list-left .bmg-area-list,
+.bmg-map-layout--area-list-right .bmg-area-list {
+	flex: 0 0 220px;
+	width: 220px;
+	max-height: var( --bmg-map-height, 400px );
+	transition: width 0.2s ease, flex-basis 0.2s ease;
+}
+
+.bmg-map-layout--area-list-right .bmg-area-list { border-left: none; }
+.bmg-map-layout--area-list-left  .bmg-area-list { border-right: none; }
+
+/* When both a location list AND an area list are side panels (different sides) */
+.bmg-map-layout--list-left.bmg-map-layout--area-list-right .bmg-map-aspect-wrapper,
+.bmg-map-layout--list-right.bmg-map-layout--area-list-left .bmg-map-aspect-wrapper {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+/* -----------------------------------------------------------------
+   Area list — independent floating panels
+   ----------------------------------------------------------------- */
+
+.bmg-map-layout--area-list-float-tl .bmg-area-list,
+.bmg-map-layout--area-list-float-tr .bmg-area-list,
+.bmg-map-layout--area-list-float-bl .bmg-area-list,
+.bmg-map-layout--area-list-float-br .bmg-area-list {
+	position: absolute;
+	z-index: 500;
+	width: 200px;
+	max-height: 50%;
+	border-radius: 4px;
+	box-shadow: 0 2px 10px rgba( 0, 0, 0, .3 );
+}
+
+.bmg-map-layout--area-list-float-tl .bmg-area-list { top: 10px;    left:  10px; }
+.bmg-map-layout--area-list-float-tr .bmg-area-list { top: 10px;    right: 10px; }
+.bmg-map-layout--area-list-float-bl .bmg-area-list { bottom: 10px; left:  10px; }
+.bmg-map-layout--area-list-float-br .bmg-area-list { bottom: 10px; right: 10px; }
+
+/* -----------------------------------------------------------------
+   Combined panel — both lists stacked at the same position
+   ----------------------------------------------------------------- */
+
+/* Side combined panel: replaces the individual list as the flex child */
+.bmg-map-layout--list-left  .bmg-lists-panel,
+.bmg-map-layout--list-right .bmg-lists-panel {
+	flex: 0 0 220px;
+	width: 220px;
+	display: flex;
+	flex-direction: column;
+	box-sizing: border-box;
+	border: 1px solid #ccc;
+}
+
+.bmg-map-layout--list-right .bmg-lists-panel { border-left: none; }
+.bmg-map-layout--list-left  .bmg-lists-panel { border-right: none; }
+
+/* Each list inside the combined panel: no outer border (panel provides it) */
+.bmg-lists-panel .bmg-location-list,
+.bmg-lists-panel .bmg-area-list {
+	flex: 0 0 auto;
+	width: 100%;
+	max-height: none;
+	border: none;
+	border-bottom: 1px solid #ccc;
+	overflow-y: auto;
+}
+
+.bmg-lists-panel .bmg-location-list:last-child,
+.bmg-lists-panel .bmg-area-list:last-child {
+	border-bottom: none;
+}
+
+/* Float combined panel */
+.bmg-lists-panel[class*="--float-"] {
+	position: absolute;
+	z-index: 500;
+	width: 200px;
+	display: flex;
+	flex-direction: column;
+	background: #fff;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	box-shadow: 0 2px 10px rgba( 0, 0, 0, .3 );
+	overflow: hidden;
+}
+
+.bmg-lists-panel--float-tl { top: 10px;    left:  10px; }
+.bmg-lists-panel--float-tr { top: 10px;    right: 10px; }
+.bmg-lists-panel--float-bl { bottom: 10px; left:  10px; }
+.bmg-lists-panel--float-br { bottom: 10px; right: 10px; }
+
+.bmg-lists-panel[class*="--float-"] .bmg-location-list,
+.bmg-lists-panel[class*="--float-"] .bmg-area-list {
+	position: static;
+	width: 100%;
+	max-height: none;
+	border: none;
+	border-bottom: 1px solid #ccc;
+	box-shadow: none;
+	border-radius: 0;
+}
+
+.bmg-lists-panel[class*="--float-"] .bmg-location-list:last-child,
+.bmg-lists-panel[class*="--float-"] .bmg-area-list:last-child {
+	border-bottom: none;
+}
+
+/* -----------------------------------------------------------------
+   Area list — toggle icons
+   ----------------------------------------------------------------- */
+
+/* Independent side panels */
+.bmg-map-layout--area-list-left  .bmg-area-list .bmg-location-list__toggle-icon::before { content: '‹'; font-size: 1.3em; line-height: 1; }
+.bmg-map-layout--area-list-right .bmg-area-list .bmg-location-list__toggle-icon::before { content: '›'; font-size: 1.3em; line-height: 1; }
+
+/* Combined side panels (area list shares position with location list) */
+.bmg-map-layout--list-left  .bmg-area-list .bmg-location-list__toggle-icon::before { content: '‹'; font-size: 1.3em; line-height: 1; }
+.bmg-map-layout--list-right .bmg-area-list .bmg-location-list__toggle-icon::before { content: '›'; font-size: 1.3em; line-height: 1; }
+
+/* Independent float panels */
+.bmg-map-layout--area-list-float-tl .bmg-area-list .bmg-location-list__toggle-icon::before,
+.bmg-map-layout--area-list-float-tr .bmg-area-list .bmg-location-list__toggle-icon::before,
+.bmg-map-layout--area-list-float-bl .bmg-area-list .bmg-location-list__toggle-icon::before,
+.bmg-map-layout--area-list-float-br .bmg-area-list .bmg-location-list__toggle-icon::before { content: '▲'; font-size: 0.75em; line-height: 1; }
+
+/* Combined float panels */
+.bmg-lists-panel[class*="--float-"] .bmg-area-list .bmg-location-list__toggle-icon::before { content: '▲'; font-size: 0.75em; line-height: 1; }
+
+/* -----------------------------------------------------------------
+   Area list — collapsed state
+   ----------------------------------------------------------------- */
+
+.bmg-area-list--collapsed .bmg-location-list__header { border-bottom: none; }
+
+.bmg-area-list--collapsed .bmg-location-search-wrap,
+.bmg-area-list--collapsed .bmg-location-list__items { display: none; }
+
+/* Independent side panels: shrink to icon strip */
+.bmg-map-layout--area-list-left  .bmg-area-list--collapsed,
+.bmg-map-layout--area-list-right .bmg-area-list--collapsed {
+	flex: 0 0 34px;
+	width: 34px;
+}
+
+.bmg-map-layout--area-list-left  .bmg-area-list--collapsed .bmg-location-list__header,
+.bmg-map-layout--area-list-right .bmg-area-list--collapsed .bmg-location-list__header {
+	justify-content: center;
+	padding: 8px 0;
+	height: 100%;
+	overflow: hidden;
+}
+
+.bmg-map-layout--area-list-left  .bmg-area-list--collapsed .bmg-location-list__label,
+.bmg-map-layout--area-list-right .bmg-area-list--collapsed .bmg-location-list__label { display: none; }
+
+.bmg-map-layout--area-list-left  .bmg-area-list--collapsed .bmg-location-list__toggle,
+.bmg-map-layout--area-list-right .bmg-area-list--collapsed .bmg-location-list__toggle {
+	width: 100%;
+	padding: 0;
+}
+
+/* Collapsed toggle icon reversal */
+.bmg-map-layout--area-list-left  .bmg-area-list--collapsed .bmg-location-list__toggle-icon::before { content: '›'; }
+.bmg-map-layout--area-list-right .bmg-area-list--collapsed .bmg-location-list__toggle-icon::before { content: '‹'; }
+
+/* Float panels: collapse to header bar only */
+.bmg-map-layout--area-list-float-tl .bmg-area-list--collapsed,
+.bmg-map-layout--area-list-float-tr .bmg-area-list--collapsed,
+.bmg-map-layout--area-list-float-bl .bmg-area-list--collapsed,
+.bmg-map-layout--area-list-float-br .bmg-area-list--collapsed { max-height: none !important; }
+
+.bmg-map-layout--area-list-float-tl .bmg-area-list--collapsed .bmg-location-list__toggle-icon::before,
+.bmg-map-layout--area-list-float-tr .bmg-area-list--collapsed .bmg-location-list__toggle-icon::before,
+.bmg-map-layout--area-list-float-bl .bmg-area-list--collapsed .bmg-location-list__toggle-icon::before,
+.bmg-map-layout--area-list-float-br .bmg-area-list--collapsed .bmg-location-list__toggle-icon::before { content: '▼'; }
+
+/* Combined panels: area list just hides items; no strip collapse needed */
+.bmg-lists-panel .bmg-area-list--collapsed .bmg-location-list__toggle-icon::before { content: '▼'; font-size: 0.75em; line-height: 1; }
+
+/* -----------------------------------------------------------------
+   Responsive: stack area list on narrow viewports
+   ----------------------------------------------------------------- */
+
+@media ( max-width: 600px ) {
+	.bmg-map-layout--area-list-left,
+	.bmg-map-layout--area-list-right {
+		flex-direction: column;
+	}
+
+	.bmg-map-layout--area-list-left {
+		flex-direction: column-reverse;
+	}
+
+	.bmg-map-layout--area-list-left  .bmg-area-list,
+	.bmg-map-layout--area-list-right .bmg-area-list {
+		flex: none;
+		width: 100%;
+		max-height: 200px;
+		border-left: 1px solid #ccc;
+		border-right: 1px solid #ccc;
+		border-top: none;
+	}
+
+	.bmg-map-layout--list-left  .bmg-lists-panel,
+	.bmg-map-layout--list-right .bmg-lists-panel {
+		flex: none;
+		width: 100%;
+		border-left: 1px solid #ccc;
+		border-right: 1px solid #ccc;
+		border-top: none;
+	}
+}

@@ -7,13 +7,14 @@ defined( 'ABSPATH' ) || exit;
  * Usage:
  *   [bmg_map id="42"]
  *   [bmg_map id="42" width="800" height="600"]
- *   [bmg_map id="42" list_position="right"]
+ *   [bmg_map id="42" list_position="right" area_list_position="right"]
  *
  * Attributes:
- *   id            (required) — the ID of the bmg_map post to render.
- *   width         (optional) — explicit width in pixels.
- *   height        (optional) — explicit height in pixels.
- *   list_position (optional) — show a location list: left | right | above | below | none (default).
+ *   id                  (required) — the ID of the bmg_map post to render.
+ *   width               (optional) — explicit width in pixels.
+ *   height              (optional) — explicit height in pixels.
+ *   list_position       (optional) — show a location list: left | right | float-* | none (default).
+ *   area_list_position  (optional) — show an area list: same values as list_position.
  */
 class BMG_Shortcode {
 
@@ -41,7 +42,22 @@ class BMG_Shortcode {
 		$close_icon_html               = self::$pending_close_icon_html;
 		self::$pending_close_icon_html = '';
 
-		$atts   = shortcode_atts( [ 'id' => 0, 'width' => '', 'height' => '', 'list_position' => 'none', 'zoom_position' => '', 'show_tooltips' => '0', 'list_title' => '', 'start_zoom' => '', 'start_x' => '', 'start_y' => '', 'responsive_start' => '' ], $atts, 'bmg_map' );
+		$atts   = shortcode_atts( [
+			'id'                 => 0,
+			'width'              => '',
+			'height'             => '',
+			'list_position'      => 'none',
+			'zoom_position'      => '',
+			'show_tooltips'      => '0',
+			'list_title'         => '',
+			'start_zoom'         => '',
+			'start_x'            => '',
+			'start_y'            => '',
+			'responsive_start'   => '',
+			'area_list_position' => 'none',
+			'area_list_title'    => '',
+		], $atts, 'bmg_map' );
+
 		$map_id = absint( $atts['id'] );
 		$dim_w  = self::sanitize_dimension( $atts['width'] );
 		$dim_h  = self::sanitize_dimension( $atts['height'] );
@@ -66,6 +82,10 @@ class BMG_Shortcode {
 			}
 		}
 
+		// Area list position.
+		$area_list_position = in_array( $atts['area_list_position'], $valid_positions, true ) ? $atts['area_list_position'] : 'none';
+		$area_list_title    = sanitize_text_field( $atts['area_list_title'] );
+
 		if ( ! $map_id ) {
 			return '<!-- bmg_map: no id provided -->';
 		}
@@ -81,25 +101,9 @@ class BMG_Shortcode {
 		}
 
 		// Build the wrapper inline style.
-		//
-		// Height strategy:
-		//   • Both px dimensions explicit → aspect-ratio from the specified W×H + SVG spacer, capped by max-width.
-		//   • Mixed units (% + px)        → set both inline.
-		//   • Height only                 → set width:100% + height inline.
-		//   • px width, no height         → aspect-ratio from image metadata + SVG spacer, capped by max-width.
-		//   • % width or no dimensions    → aspect-ratio from image metadata + SVG spacer.
-		//
-		// Two complementary mechanisms are used together:
-		//   1. CSS aspect-ratio (inline) — derives height from width automatically in all layout contexts.
-		//      JS corrects it to the image's exact natural dimensions after load.
-		//   2. SVG spacer <img> — an in-flow element that prevents the wrapper from collapsing to 0×0
-		//      inside Elementor Flexbox Containers, where a wrapper with only absolutely-positioned
-		//      content is treated as having no content and collapses.  Its viewBox is also corrected
-		//      by JS after the image loads.
 		$explicit_size  = false;
-		$spacer_img_src = ''; // non-empty → render <img class="bmg-map-aspect-spacer">
+		$spacer_img_src = '';
 
-		// Image metadata — used as the server-side aspect-ratio hint.
 		$thumb_id = get_post_thumbnail_id( $map_id );
 		$img_meta = wp_get_attachment_metadata( $thumb_id );
 		$img_w    = ! empty( $img_meta['width'] )  ? (int) $img_meta['width']  : 16;
@@ -110,34 +114,28 @@ class BMG_Shortcode {
 			$h_is_px = substr( $dim_h, -2 ) === 'px';
 
 			if ( $w_is_px && $h_is_px ) {
-				// Both pixel dims: cap with max-width; aspect-ratio keeps the correct ratio responsively.
 				$svg            = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' . (int) $dim_w . ' ' . (int) $dim_h . '"/>';
 				$spacer_img_src = 'data:image/svg+xml,' . rawurlencode( $svg );
 				$wrapper_style  = 'width:100%;max-width:' . $dim_w . ';aspect-ratio:' . (int) $dim_w . '/' . (int) $dim_h . ';';
-				$explicit_size  = true; // JS must not override the user-specified ratio
+				$explicit_size  = true;
 			} else {
-				// Mixed units (e.g. %-width + px-height): inline both.
 				$w_css         = $w_is_px ? 'min(' . $dim_w . ',100%)' : $dim_w;
 				$wrapper_style = 'width:' . $w_css . ';height:' . $dim_h . ';';
 				$explicit_size = true;
 			}
 		} elseif ( $dim_h ) {
-			// Height only — pin width:100% inline so flex parents can't shrink it.
 			$wrapper_style = 'width:100%;height:' . $dim_h . ';';
 			$explicit_size = true;
 		} else {
 			if ( $dim_w && substr( $dim_w, -2 ) === 'px' ) {
-				// px width, no height: cap with max-width; aspect-ratio derives height from image ratio.
 				$svg            = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' . $img_w . ' ' . $img_h . '"/>';
 				$spacer_img_src = 'data:image/svg+xml,' . rawurlencode( $svg );
 				$wrapper_style  = 'width:100%;max-width:' . $dim_w . ';aspect-ratio:' . $img_w . '/' . $img_h . ';';
 			} else {
-				// % width or no width: aspect-ratio creates the intrinsic height from image ratio.
 				$svg            = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' . $img_w . ' ' . $img_h . '"/>';
 				$spacer_img_src = 'data:image/svg+xml,' . rawurlencode( $svg );
 				$wrapper_style  = ( $dim_w ? 'width:' . $dim_w . ';' : 'width:100%;' ) . 'aspect-ratio:' . $img_w . '/' . $img_h . ';';
 			}
-			// JS corrects both aspect-ratio and the SVG spacer viewBox to the image's exact dimensions.
 		}
 
 		// Fetch all published locations for this map.
@@ -156,7 +154,6 @@ class BMG_Shortcode {
 			],
 		] );
 
-		// Build a clean JSON-safe array for the JS layer.
 		$locations_data = [];
 		foreach ( $location_posts as $loc ) {
 			$x     = get_post_meta( $loc->ID, '_bmg_loc_x', true );
@@ -203,6 +200,7 @@ class BMG_Shortcode {
 			}
 
 			$areas_data[] = [
+				'index'       => count( $areas_data ),
 				'title'       => $area->post_title,
 				'description' => wp_kses_post( wpautop( do_shortcode( $area->post_content ) ) ),
 				'points'      => $points,
@@ -217,22 +215,53 @@ class BMG_Shortcode {
 		wp_enqueue_style( 'bmg-public' );
 		wp_enqueue_script( 'bmg-public' );
 
-		$container_id    = 'bmg-map-' . $map_id;
-		$map_min_zoom    = get_post_meta( $map_id, '_bmg_map_min_zoom', true );
-		$map_max_zoom    = get_post_meta( $map_id, '_bmg_map_max_zoom', true );
-		$show_list       = $list_position !== 'none';
+		$container_id = 'bmg-map-' . $map_id;
+		$map_min_zoom = get_post_meta( $map_id, '_bmg_map_min_zoom', true );
+		$map_max_zoom = get_post_meta( $map_id, '_bmg_map_max_zoom', true );
+
+		// List config.
+		$show_list    = $list_position !== 'none';
 		$float_positions = [ 'float-tl', 'float-tr', 'float-bl', 'float-br' ];
-		$is_floating     = in_array( $list_position, $float_positions, true );
-		// Non-floating lists always show a search field.
-		// Floating lists only show one when there are more than 10 locations.
-		$show_search     = ! $is_floating || count( $locations_data ) > 10;
+		$is_floating  = in_array( $list_position, $float_positions, true );
+		$show_search  = count( $locations_data ) >= 5;
+
+		// Area list config.
+		$show_area_list   = $area_list_position !== 'none';
+		$is_area_floating = in_array( $area_list_position, $float_positions, true );
+		$show_area_search = count( $areas_data ) >= 5;
+
+		// When both lists share the same position they are stacked in a combined panel.
+		$lists_combined = $show_list && $show_area_list && $list_position === $area_list_position;
+		$needs_layout   = $show_list || $show_area_list;
+
+		// Build outer layout class string.
+		$layout_classes = 'bmg-map-layout';
+		if ( $show_list ) {
+			$layout_classes .= ' bmg-map-layout--list-' . $list_position;
+		}
+		if ( $show_area_list && ! $lists_combined ) {
+			$layout_classes .= ' bmg-map-layout--area-list-' . $area_list_position;
+		}
 
 		ob_start();
 
-		if ( $show_list ) {
-			echo '<div class="bmg-map-layout bmg-map-layout--list-' . esc_attr( $list_position ) . '">' . "\n";
-			if ( ! $is_floating && $list_position === 'left' ) {
+		if ( $needs_layout ) {
+			echo '<div class="' . esc_attr( $layout_classes ) . '">' . "\n";
+
+			// Left side panels rendered before the map wrapper.
+			if ( $lists_combined && $list_position === 'left' ) {
+				echo '<div class="bmg-lists-panel">' . "\n";
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 				echo self::render_location_list( $locations_data, $map->post_title, $show_search, $list_position, $list_title );
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+				echo self::render_area_list( $areas_data, $show_area_search, $area_list_title );
+				echo '</div>' . "\n";
+			} elseif ( $show_list && ! $is_floating && $list_position === 'left' ) {
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+				echo self::render_location_list( $locations_data, $map->post_title, $show_search, $list_position, $list_title );
+			} elseif ( $show_area_list && ! $is_area_floating && $area_list_position === 'left' ) {
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+				echo self::render_area_list( $areas_data, $show_area_search, $area_list_title );
 			}
 		}
 		?>
@@ -246,6 +275,7 @@ class BMG_Shortcode {
 				data-locations="<?php echo esc_attr( wp_json_encode( $locations_data, JSON_INVALID_UTF8_SUBSTITUTE ) ?: '[]' ); ?>"
 				data-areas="<?php echo esc_attr( wp_json_encode( $areas_data, JSON_INVALID_UTF8_SUBSTITUTE ) ?: '[]' ); ?>"
 				<?php echo $show_list ? 'data-show-list="1"' : ''; ?>
+				<?php echo $show_area_list ? 'data-show-area-list="1"' : ''; ?>
 				<?php echo ! empty( $atts['show_tooltips'] ) && $atts['show_tooltips'] !== '0' ? 'data-tooltips="1"' : ''; ?>
 				<?php echo $zoom_position ? 'data-zoom-position="' . esc_attr( $zoom_position ) . '"' : ''; ?>
 				<?php echo $map_min_zoom !== '' ? 'data-min-zoom="' . esc_attr( $map_min_zoom ) . '"' : ''; ?>
@@ -259,15 +289,43 @@ class BMG_Shortcode {
 				<?php echo $close_icon_html ? 'data-close-icon="' . esc_attr( $close_icon_html ) . '"' : ''; ?>
 				aria-label="<?php echo esc_attr( $map->post_title ); ?>">
 			</div>
-			<?php if ( $is_floating ) : ?>
-			<?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-			echo self::render_location_list( $locations_data, $map->post_title, $show_search, $list_position, $list_title ); ?>
-			<?php endif; ?>
+			<?php
+			// Floating lists inside the map wrapper.
+			if ( $lists_combined && $is_floating ) :
+				echo '<div class="bmg-lists-panel bmg-lists-panel--' . esc_attr( $list_position ) . '">' . "\n";
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+				echo self::render_location_list( $locations_data, $map->post_title, $show_search, $list_position, $list_title );
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+				echo self::render_area_list( $areas_data, $show_area_search, $area_list_title );
+				echo '</div>' . "\n";
+			else :
+				if ( $is_floating ) :
+					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+					echo self::render_location_list( $locations_data, $map->post_title, $show_search, $list_position, $list_title );
+				endif;
+				if ( $show_area_list && $is_area_floating ) :
+					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+					echo self::render_area_list( $areas_data, $show_area_search, $area_list_title );
+				endif;
+			endif;
+			?>
 		</div>
 		<?php
-		if ( $show_list ) {
-			if ( ! $is_floating && $list_position === 'right' ) {
+		if ( $needs_layout ) {
+			// Right side panels rendered after the map wrapper.
+			if ( $lists_combined && $list_position === 'right' ) {
+				echo '<div class="bmg-lists-panel">' . "\n";
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 				echo self::render_location_list( $locations_data, $map->post_title, $show_search, $list_position, $list_title );
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+				echo self::render_area_list( $areas_data, $show_area_search, $area_list_title );
+				echo '</div>' . "\n";
+			} elseif ( $show_list && ! $is_floating && $list_position === 'right' ) {
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+				echo self::render_location_list( $locations_data, $map->post_title, $show_search, $list_position, $list_title );
+			} elseif ( $show_area_list && ! $is_area_floating && $area_list_position === 'right' ) {
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+				echo self::render_area_list( $areas_data, $show_area_search, $area_list_title );
 			}
 			echo '</div>' . "\n"; // close .bmg-map-layout
 		}
@@ -275,7 +333,7 @@ class BMG_Shortcode {
 		return ob_get_clean();
 	}
 
-	private static function render_location_list( array $locations, string $map_title, bool $show_search = false, string $list_position = 'none', string $list_title = '' ): string {
+	private static function render_location_list( array $locations, string $map_title, bool $show_search, string $list_position = 'none', string $list_title = '' ): string {
 		$label = $list_title !== '' ? $list_title : __( 'Locations', 'bmg-interactive-map' );
 		$html  = '<nav class="bmg-location-list" data-list-position="' . esc_attr( $list_position ) . '" aria-label="' . esc_attr( $map_title ) . ' locations">' . "\n";
 		$html .= '<div class="bmg-location-list__header">'
@@ -314,15 +372,51 @@ class BMG_Shortcode {
 		return $html;
 	}
 
+	private static function render_area_list( array $areas, bool $show_search, string $list_title = '' ): string {
+		$label = $list_title !== '' ? $list_title : __( 'Areas', 'bmg-interactive-map' );
+		$html  = '<nav class="bmg-area-list" aria-label="' . esc_attr( $label ) . '">' . "\n";
+		$html .= '<div class="bmg-location-list__header">'
+			. '<span class="bmg-location-list__label">' . esc_html( $label ) . '</span>'
+			. '<button class="bmg-location-list__toggle" type="button" aria-expanded="true" aria-label="' . esc_attr__( 'Collapse area list', 'bmg-interactive-map' ) . '">'
+			. '<span class="bmg-location-list__toggle-icon" aria-hidden="true"></span>'
+			. '</button>'
+			. '</div>' . "\n";
+
+		if ( $show_search ) {
+			$html .= '<div class="bmg-location-search-wrap">'
+				. '<input type="search" class="bmg-location-search"'
+				. ' placeholder="' . esc_attr__( 'Search areas…', 'bmg-interactive-map' ) . '"'
+				. ' aria-label="' . esc_attr__( 'Search areas', 'bmg-interactive-map' ) . '">'
+				. '</div>' . "\n";
+		}
+
+		$html .= '<ul class="bmg-location-list__items">' . "\n";
+
+		if ( empty( $areas ) ) {
+			$html .= '<li class="bmg-location-list__empty">No areas.</li>' . "\n";
+		} else {
+			foreach ( $areas as $area ) {
+				$html .= '<li class="bmg-location-list__item"'
+					. ' data-index="' . (int) $area['index'] . '"'
+					. ' role="button"'
+					. ' tabindex="0"'
+					. ' aria-label="' . esc_attr( $area['title'] ) . '">'
+					. '<span class="bmg-location-list__swatch bmg-location-list__swatch--area" style="background:' . esc_attr( $area['color'] ) . ';"></span>'
+					. '<span class="bmg-location-list__title">' . esc_html( $area['title'] ) . '</span>'
+					. '</li>' . "\n";
+			}
+		}
+
+		$html .= '</ul>' . "\n" . '</nav>' . "\n";
+		return $html;
+	}
+
 	// -------------------------------------------------------------------------
 	// Helpers
 	// -------------------------------------------------------------------------
 
 	/**
 	 * Normalise a width/height value to a CSS dimension string.
-	 *
-	 * Accepts: '500', '500px', '50%', or a legacy integer 500.
-	 * Returns a ready-to-use CSS value ('500px', '50%') or '' if unset/invalid.
 	 */
 	private static function sanitize_dimension( $val ): string {
 		$val = trim( (string) $val );

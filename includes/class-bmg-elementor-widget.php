@@ -154,6 +154,29 @@ class BMG_Elementor_Widget extends \Elementor\Widget_Base {
 			'condition'   => [ 'list_position!' => 'none' ],
 		] );
 
+		$this->add_control( 'area_list_position', [
+			'label'     => esc_html__( 'Area List Position', 'bmg-interactive-map' ),
+			'type'      => \Elementor\Controls_Manager::SELECT,
+			'default'   => 'none',
+			'options'   => [
+				'none'     => esc_html__( 'None (hidden)',    'bmg-interactive-map' ),
+				'right'    => esc_html__( 'Right',            'bmg-interactive-map' ),
+				'left'     => esc_html__( 'Left',             'bmg-interactive-map' ),
+				'float-tl' => esc_html__( 'Float: Top Left',  'bmg-interactive-map' ),
+				'float-tr' => esc_html__( 'Float: Top Right', 'bmg-interactive-map' ),
+				'float-bl' => esc_html__( 'Float: Bot Left',  'bmg-interactive-map' ),
+				'float-br' => esc_html__( 'Float: Bot Right', 'bmg-interactive-map' ),
+			],
+		] );
+
+		$this->add_control( 'area_list_title', [
+			'label'       => esc_html__( 'Area List Title', 'bmg-interactive-map' ),
+			'type'        => \Elementor\Controls_Manager::TEXT,
+			'default'     => '',
+			'placeholder' => esc_html__( 'Areas', 'bmg-interactive-map' ),
+			'condition'   => [ 'area_list_position!' => 'none' ],
+		] );
+
 		$this->add_responsive_control( 'list_hide', [
 			'label'        => esc_html__( 'Hide List', 'bmg-interactive-map' ),
 			'type'         => \Elementor\Controls_Manager::SWITCHER,
@@ -584,8 +607,10 @@ class BMG_Elementor_Widget extends \Elementor\Widget_Base {
 			'list_position'    => $settings['list_position'] ?? 'none',
 			'zoom_position'    => $settings['zoom_position'] ?? '',
 			'show_tooltips'    => ( $settings['show_tooltips'] ?? '' ) === '1' ? '1' : '0',
-			'list_title'       => $settings['list_title'] ?? '',
-			'responsive_start' => $responsive_start,
+			'list_title'         => $settings['list_title'] ?? '',
+			'area_list_position' => $settings['area_list_position'] ?? 'none',
+			'area_list_title'    => $settings['area_list_title']    ?? '',
+			'responsive_start'   => $responsive_start,
 		] );
 	}
 }
