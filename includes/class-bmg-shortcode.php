@@ -294,7 +294,11 @@ class BMG_Shortcode {
 				. '<span class="bmg-toolbar-icon bmg-toolbar-icon--fs" aria-hidden="true"></span>'
 				. '</button>';
 			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-			echo '<div class="bmg-map-toolbar">' . $toolbar_buttons . '</div>';
+			echo '<div class="bmg-map-toolbar">' . $toolbar_buttons . '</div>'
+				. '<button class="bmg-fs-exit-btn" type="button"'
+				. ' aria-label="' . esc_attr__( 'Exit fullscreen', 'bmg-interactive-map' ) . '">'
+				. esc_html__( 'Exit fullscreen', 'bmg-interactive-map' )
+				. '</button>';
 			?>
 			<div class="bmg-map-container"
 				id="<?php echo esc_attr( $container_id ); ?>"

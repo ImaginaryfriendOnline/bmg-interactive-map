@@ -803,3 +803,39 @@
 .bmg-map-layout:-webkit-full-screen .bmg-map-aspect-spacer {
 	display: none !important;
 }
+
+/* Toolbar list-hidden state — hides entire list including header */
+.bmg-location-list--hidden,
+.bmg-area-list--hidden {
+	display: none !important;
+}
+
+/* Fullscreen exit button — only visible in fullscreen */
+.bmg-fs-exit-btn {
+	display: none;
+	position: absolute;
+	bottom: 8px;
+	left: 50%;
+	transform: translateX(-50%);
+	z-index: 601;
+	align-items: center;
+	gap: 6px;
+	padding: 6px 14px;
+	background: rgba(255,255,255,0.92);
+	border: 1px solid rgba(0,0,0,0.2);
+	border-radius: 4px;
+	font-size: 13px;
+	font-weight: 500;
+	cursor: pointer;
+	box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+	white-space: nowrap;
+	transition: background 0.12s;
+}
+.bmg-fs-exit-btn:hover {
+	background: rgba(255,255,255,1);
+}
+.bmg-map-layout--fullscreen .bmg-fs-exit-btn,
+.bmg-map-layout:fullscreen .bmg-fs-exit-btn,
+.bmg-map-layout:-webkit-full-screen .bmg-fs-exit-btn {
+	display: flex;
+}

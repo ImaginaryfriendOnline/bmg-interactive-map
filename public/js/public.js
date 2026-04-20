@@ -593,48 +593,66 @@
 	// ------------------------------------------------------------------
 
 	function initToolbar( el, map, layoutEl ) {
+		if ( ! layoutEl ) return;
 		var wrapperEl = el.closest( '.bmg-map-aspect-wrapper' );
 		if ( ! wrapperEl ) return;
 		var toolbar = wrapperEl.querySelector( '.bmg-map-toolbar' );
 		if ( ! toolbar ) return;
 
-		// Location list toggle — delegate to the existing inner toggle button
-		// so all its logic (maxHeight save/restore, aria, syncListHeight) runs.
+		function updatePanelVisibility() {
+			layoutEl.querySelectorAll( '.bmg-lists-panel' ).forEach( function ( panel ) {
+				var loc  = panel.querySelector( '.bmg-location-list' );
+				var area = panel.querySelector( '.bmg-area-list' );
+				var locHidden  = ! loc  || loc.classList.contains( 'bmg-location-list--hidden' );
+				var areaHidden = ! area || area.classList.contains( 'bmg-area-list--hidden' );
+				panel.style.display = ( locHidden && areaHidden ) ? 'none' : '';
+			} );
+		}
+
+		// Location list toggle — hide the entire list including its header.
 		var locBtn = toolbar.querySelector( '.bmg-toolbar-btn--loc-list' );
 		if ( locBtn ) {
-			var locList  = layoutEl.querySelector( '.bmg-location-list' );
-			var locInner = locList && locList.querySelector( '.bmg-location-list__toggle' );
+			var locList = layoutEl.querySelector( '.bmg-location-list' );
 			locBtn.addEventListener( 'click', function () {
-				if ( locInner ) locInner.click();
-				locBtn.setAttribute( 'aria-pressed',
-					locList && locList.classList.contains( 'bmg-location-list--collapsed' )
-						? 'true' : 'false' );
+				var hidden = locList.classList.toggle( 'bmg-location-list--hidden' );
+				locBtn.setAttribute( 'aria-pressed', hidden ? 'true' : 'false' );
+				updatePanelVisibility();
+				setTimeout( function () { map.invalidateSize(); }, 50 );
 			} );
 		}
 
-		// Area list toggle
+		// Area list toggle — hide the entire list including its header.
 		var areaBtn = toolbar.querySelector( '.bmg-toolbar-btn--area-list' );
 		if ( areaBtn ) {
-			var areaList  = layoutEl.querySelector( '.bmg-area-list' );
-			var areaInner = areaList && areaList.querySelector( '.bmg-location-list__toggle' );
+			var areaList = layoutEl.querySelector( '.bmg-area-list' );
 			areaBtn.addEventListener( 'click', function () {
-				if ( areaInner ) areaInner.click();
-				areaBtn.setAttribute( 'aria-pressed',
-					areaList && areaList.classList.contains( 'bmg-area-list--collapsed' )
-						? 'true' : 'false' );
+				var hidden = areaList.classList.toggle( 'bmg-area-list--hidden' );
+				areaBtn.setAttribute( 'aria-pressed', hidden ? 'true' : 'false' );
+				updatePanelVisibility();
+				setTimeout( function () { map.invalidateSize(); }, 50 );
 			} );
 		}
 
-		// Fullscreen toggle
-		var fsBtn = toolbar.querySelector( '.bmg-toolbar-btn--fullscreen' );
+		// Fullscreen toggle (toolbar icon) + dedicated exit button.
+		var fsBtn    = toolbar.querySelector( '.bmg-toolbar-btn--fullscreen' );
+		var fsExitBtn = wrapperEl.querySelector( '.bmg-fs-exit-btn' );
+
+		function exitFs() {
+			( document.exitFullscreen || document.webkitExitFullscreen
+				|| function () {} ).call( document );
+		}
+
+		if ( fsExitBtn ) {
+			fsExitBtn.addEventListener( 'click', exitFs );
+		}
+
 		if ( fsBtn ) {
 			fsBtn.addEventListener( 'click', function () {
 				if ( ! document.fullscreenElement ) {
 					( layoutEl.requestFullscreen || layoutEl.webkitRequestFullscreen
 						|| function () {} ).call( layoutEl );
 				} else {
-					( document.exitFullscreen || document.webkitExitFullscreen
-						|| function () {} ).call( document );
+					exitFs();
 				}
 			} );
 
@@ -642,8 +660,7 @@
 				var isFs = !! document.fullscreenElement;
 				layoutEl.classList.toggle( 'bmg-map-layout--fullscreen', isFs );
 				fsBtn.setAttribute( 'aria-pressed', isFs ? 'true' : 'false' );
-				fsBtn.setAttribute( 'aria-label',
-					isFs ? 'Exit fullscreen' : 'Enter fullscreen' );
+				fsBtn.setAttribute( 'aria-label', isFs ? 'Exit fullscreen' : 'Enter fullscreen' );
 				fsBtn.title = isFs ? 'Exit fullscreen' : 'Enter fullscreen';
 				setTimeout( function () { map.invalidateSize(); }, 50 );
 			}
