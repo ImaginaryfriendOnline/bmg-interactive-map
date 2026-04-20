@@ -121,8 +121,9 @@
 			var zoomPos   = el.dataset.zoomPosition || ZOOM_POSITION;
 			var minZoom   = el.dataset.minZoom !== undefined && el.dataset.minZoom !== '' ? Number( el.dataset.minZoom ) : MIN_ZOOM;
 			var maxZoom   = el.dataset.maxZoom !== undefined && el.dataset.maxZoom !== '' ? Number( el.dataset.maxZoom ) : MAX_ZOOM;
-			var startView = pickStartView( el );
-			var hasStart  = startView !== null;
+			var startView          = pickStartView( el );
+			var hasStart           = startView !== null;
+			var initialPositionSet = false;
 
 			// Stash the Leaflet instance so the Elementor re-render hook can
 			// destroy it cleanly before re-initialising.
@@ -151,8 +152,10 @@
 			// Apply starting view or fit-all, depending on whether a start view is set.
 			if ( hasStart ) {
 				map.setView( toLatLng( startView.x, startView.y, W, H ), startView.zoom );
+				initialPositionSet = true;
 			} else if ( el.offsetWidth > 0 && el.offsetHeight > 0 ) {
 				map.fitBounds( bounds, { padding: [ 0, 0 ] } );
+				initialPositionSet = true;
 			}
 
 			// Re-measure at increasing delays.  Elementor columns, CSS entry
@@ -172,8 +175,9 @@
 			function fitIfUntouched() {
 				if ( el._bmgMap !== map ) return;
 				map.invalidateSize();
-				if ( ! hasStart && ! userInteracted && el.offsetWidth > 0 && el.offsetHeight > 0 ) {
+				if ( ! initialPositionSet && ! hasStart && ! userInteracted && el.offsetWidth > 0 && el.offsetHeight > 0 ) {
 					map.fitBounds( bounds, { padding: [ 0, 0 ] } );
+					initialPositionSet = true;
 				}
 			}
 
@@ -189,8 +193,9 @@
 				var wrapperObserver = new ResizeObserver( function () {
 					if ( el._bmgMap !== map ) { wrapperObserver.disconnect(); return; }
 					map.invalidateSize();
-					if ( ! hasStart && ! userInteracted && el.offsetWidth > 0 && el.offsetHeight > 0 ) {
+					if ( ! initialPositionSet && ! hasStart && ! userInteracted && el.offsetWidth > 0 && el.offsetHeight > 0 ) {
 						map.fitBounds( bounds, { padding: [ 0, 0 ] } );
+						initialPositionSet = true;
 					}
 				} );
 				wrapperObserver.observe( wrapper || el );
