@@ -48,9 +48,12 @@ class BMG_Block {
 				'mapId'        => [ 'type' => 'number',  'default' => 0      ],
 				'width'        => [ 'type' => 'string',  'default' => ''     ],
 				'height'       => [ 'type' => 'string',  'default' => ''     ],
-				'listPosition' => [ 'type' => 'string',  'default' => 'none' ],
-				'zoomPosition' => [ 'type' => 'string',  'default' => ''     ],
-				'showTooltips' => [ 'type' => 'boolean', 'default' => false  ],
+				'listPosition'     => [ 'type' => 'string',  'default' => 'none' ],
+				'zoomPosition'     => [ 'type' => 'string',  'default' => ''     ],
+				'showTooltips'     => [ 'type' => 'boolean', 'default' => false  ],
+				'areaListPosition' => [ 'type' => 'string',  'default' => 'none' ],
+				'areaListTitle'    => [ 'type' => 'string',  'default' => ''     ],
+				'toolbarPosition'  => [ 'type' => 'string',  'default' => ''     ],
 			],
 			'render_callback' => [ __CLASS__, 'render' ],
 		] );
@@ -73,13 +76,25 @@ class BMG_Block {
 			? $attributes['zoomPosition']
 			: '';
 
+		$area_list_position = isset( $attributes['areaListPosition'] ) && in_array( $attributes['areaListPosition'], $valid_positions, true )
+			? $attributes['areaListPosition']
+			: 'none';
+
+		$allowed_toolbar = [ '', 'top', 'top-left', 'top-right', 'bottom', 'bottom-left', 'bottom-right' ];
+		$toolbar_position = isset( $attributes['toolbarPosition'] ) && in_array( $attributes['toolbarPosition'], $allowed_toolbar, true )
+			? $attributes['toolbarPosition']
+			: '';
+
 		return BMG_Shortcode::render( [
-			'id'            => $map_id,
-			'width'         => (string) ( $attributes['width']  ?? '' ),
-			'height'        => (string) ( $attributes['height'] ?? '' ),
-			'list_position' => $list_position,
-			'zoom_position' => $zoom_position,
-			'show_tooltips' => ! empty( $attributes['showTooltips'] ) ? '1' : '0',
+			'id'                 => $map_id,
+			'width'              => (string) ( $attributes['width']  ?? '' ),
+			'height'             => (string) ( $attributes['height'] ?? '' ),
+			'list_position'      => $list_position,
+			'zoom_position'      => $zoom_position,
+			'show_tooltips'      => ! empty( $attributes['showTooltips'] ) ? '1' : '0',
+			'area_list_position' => $area_list_position,
+			'area_list_title'    => sanitize_text_field( $attributes['areaListTitle'] ?? '' ),
+			'toolbar_position'   => $toolbar_position,
 		] );
 	}
 }

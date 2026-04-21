@@ -315,6 +315,22 @@ $this->add_responsive_control( 'start_zoom', [
 			],
 		] );
 
+		$this->add_control( 'toolbar_position', [
+			'label'     => esc_html__( 'Position', 'bmg-interactive-map' ),
+			'type'      => \Elementor\Controls_Manager::SELECT,
+			'separator' => 'before',
+			'default'   => '',
+			'options'   => [
+				''             => esc_html__( 'Auto',          'bmg-interactive-map' ),
+				'top'          => esc_html__( 'Top Center',    'bmg-interactive-map' ),
+				'top-left'     => esc_html__( 'Top Left',      'bmg-interactive-map' ),
+				'top-right'    => esc_html__( 'Top Right',     'bmg-interactive-map' ),
+				'bottom'       => esc_html__( 'Bottom Center', 'bmg-interactive-map' ),
+				'bottom-left'  => esc_html__( 'Bottom Left',   'bmg-interactive-map' ),
+				'bottom-right' => esc_html__( 'Bottom Right',  'bmg-interactive-map' ),
+			],
+		] );
+
 		$this->add_responsive_control( 'toolbar_orientation', [
 			'label'     => esc_html__( 'Orientation', 'bmg-interactive-map' ),
 			'type'      => \Elementor\Controls_Manager::CHOOSE,
@@ -795,6 +811,7 @@ $this->add_responsive_control( 'start_zoom', [
 			'list_title'         => $settings['list_title'] ?? '',
 			'area_list_position' => $settings['area_list_position'] ?? 'none',
 			'area_list_title'    => $settings['area_list_title']    ?? '',
+			'toolbar_position'   => $settings['toolbar_position']  ?? '',
 			'responsive_start'   => $responsive_start,
 		] );
 	}

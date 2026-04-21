@@ -56,6 +56,7 @@ class BMG_Shortcode {
 			'responsive_start'   => '',
 			'area_list_position' => 'none',
 			'area_list_title'    => '',
+			'toolbar_position'   => '',
 		], $atts, 'bmg_map' );
 
 		$map_id = absint( $atts['id'] );
@@ -85,6 +86,12 @@ class BMG_Shortcode {
 		// Area list position.
 		$area_list_position = in_array( $atts['area_list_position'], $valid_positions, true ) ? $atts['area_list_position'] : 'none';
 		$area_list_title    = sanitize_text_field( $atts['area_list_title'] );
+
+		// Toolbar position override.
+		$allowed_toolbar_positions = [ 'top', 'top-left', 'top-right', 'bottom', 'bottom-left', 'bottom-right' ];
+		$toolbar_position = in_array( $atts['toolbar_position'], $allowed_toolbar_positions, true )
+			? $atts['toolbar_position']
+			: '';
 
 		if ( ! $map_id ) {
 			return '<!-- bmg_map: no id provided -->';
@@ -306,29 +313,33 @@ class BMG_Shortcode {
 				. '<span class="bmg-toolbar-icon bmg-toolbar-icon--fs" aria-hidden="true"></span>'
 				. '</button>';
 
-			// Pick toolbar zone that avoids floating list corners.
-			$float_corners  = [ 'float-tl', 'float-tr', 'float-bl', 'float-br' ];
-			$occupied       = [];
-			if ( in_array( $list_position, $float_corners, true ) ) {
-				$occupied[] = $list_position;
-			}
-			if ( in_array( $area_list_position, $float_corners, true ) ) {
-				$occupied[] = $area_list_position;
-			}
-			$top_blocked = in_array( 'float-tl', $occupied ) || in_array( 'float-tr', $occupied );
-			$bot_blocked = in_array( 'float-bl', $occupied ) || in_array( 'float-br', $occupied );
-			if ( ! $top_blocked ) {
-				$toolbar_zone = 'top';
-			} elseif ( ! $bot_blocked ) {
-				$toolbar_zone = 'bottom';
-			} elseif ( ! in_array( 'float-tl', $occupied ) ) {
-				$toolbar_zone = 'top-left';
-			} elseif ( ! in_array( 'float-tr', $occupied ) ) {
-				$toolbar_zone = 'top-right';
-			} elseif ( ! in_array( 'float-bl', $occupied ) ) {
-				$toolbar_zone = 'bottom-left';
+			// Pick toolbar zone: use manual override if set, otherwise auto-avoid floating list corners.
+			if ( $toolbar_position !== '' ) {
+				$toolbar_zone = $toolbar_position;
 			} else {
-				$toolbar_zone = 'bottom-right';
+				$float_corners = [ 'float-tl', 'float-tr', 'float-bl', 'float-br' ];
+				$occupied      = [];
+				if ( in_array( $list_position, $float_corners, true ) ) {
+					$occupied[] = $list_position;
+				}
+				if ( in_array( $area_list_position, $float_corners, true ) ) {
+					$occupied[] = $area_list_position;
+				}
+				$top_blocked = in_array( 'float-tl', $occupied ) || in_array( 'float-tr', $occupied );
+				$bot_blocked = in_array( 'float-bl', $occupied ) || in_array( 'float-br', $occupied );
+				if ( ! $top_blocked ) {
+					$toolbar_zone = 'top';
+				} elseif ( ! $bot_blocked ) {
+					$toolbar_zone = 'bottom';
+				} elseif ( ! in_array( 'float-tl', $occupied ) ) {
+					$toolbar_zone = 'top-left';
+				} elseif ( ! in_array( 'float-tr', $occupied ) ) {
+					$toolbar_zone = 'top-right';
+				} elseif ( ! in_array( 'float-bl', $occupied ) ) {
+					$toolbar_zone = 'bottom-left';
+				} else {
+					$toolbar_zone = 'bottom-right';
+				}
 			}
 
 			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped

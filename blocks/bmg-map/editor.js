@@ -25,22 +25,28 @@
 		icon       : 'location-alt',
 		category   : 'embed',
 		attributes : {
-			mapId        : { type: 'number',  default: 0      },
-			width        : { type: 'string',  default: ''     },
-			height       : { type: 'string',  default: ''     },
-			listPosition : { type: 'string',  default: 'none' },
-			zoomPosition : { type: 'string',  default: ''     },
-			showTooltips : { type: 'boolean', default: false  },
+			mapId            : { type: 'number',  default: 0      },
+			width            : { type: 'string',  default: ''     },
+			height           : { type: 'string',  default: ''     },
+			listPosition     : { type: 'string',  default: 'none' },
+			zoomPosition     : { type: 'string',  default: ''     },
+			showTooltips     : { type: 'boolean', default: false  },
+			areaListPosition : { type: 'string',  default: 'none' },
+			areaListTitle    : { type: 'string',  default: ''     },
+			toolbarPosition  : { type: 'string',  default: ''     },
 		},
 
 		edit: function ( props ) {
-			var mapId        = props.attributes.mapId;
-			var width        = props.attributes.width;
-			var height       = props.attributes.height;
-			var listPosition = props.attributes.listPosition;
-			var zoomPosition = props.attributes.zoomPosition;
-			var showTooltips = props.attributes.showTooltips;
-			var setAttr      = props.setAttributes;
+			var mapId            = props.attributes.mapId;
+			var width            = props.attributes.width;
+			var height           = props.attributes.height;
+			var listPosition     = props.attributes.listPosition;
+			var zoomPosition     = props.attributes.zoomPosition;
+			var showTooltips     = props.attributes.showTooltips;
+			var areaListPosition = props.attributes.areaListPosition;
+			var areaListTitle    = props.attributes.areaListTitle;
+			var toolbarPosition  = props.attributes.toolbarPosition;
+			var setAttr          = props.setAttributes;
 
 			var selectedLabel = '';
 			if ( mapId ) {
@@ -115,6 +121,47 @@
 							],
 							onChange: function ( val ) {
 								setAttr( { listPosition: val } );
+							},
+						} ),
+						el( SelectControl, {
+							label  : __( 'Area List Position', 'bmg-interactive-map' ),
+							value  : areaListPosition,
+							options: [
+								{ label: __( 'None',             'bmg-interactive-map' ), value: 'none'     },
+								{ label: __( 'Right',            'bmg-interactive-map' ), value: 'right'    },
+								{ label: __( 'Left',             'bmg-interactive-map' ), value: 'left'     },
+								{ label: __( 'Float: Top Left',  'bmg-interactive-map' ), value: 'float-tl' },
+								{ label: __( 'Float: Top Right', 'bmg-interactive-map' ), value: 'float-tr' },
+								{ label: __( 'Float: Bot Left',  'bmg-interactive-map' ), value: 'float-bl' },
+								{ label: __( 'Float: Bot Right', 'bmg-interactive-map' ), value: 'float-br' },
+							],
+							onChange: function ( val ) {
+								setAttr( { areaListPosition: val } );
+							},
+						} ),
+						areaListPosition !== 'none' && el( TextControl, {
+							label      : __( 'Area List Title', 'bmg-interactive-map' ),
+							value      : areaListTitle,
+							placeholder: __( 'Areas', 'bmg-interactive-map' ),
+							onChange   : function ( val ) {
+								setAttr( { areaListTitle: val } );
+							},
+						} ),
+						el( SelectControl, {
+							label  : __( 'Toolbar Position', 'bmg-interactive-map' ),
+							help   : __( 'Leave on "Auto" to avoid overlapping floating list panels.', 'bmg-interactive-map' ),
+							value  : toolbarPosition,
+							options: [
+								{ label: __( 'Auto',          'bmg-interactive-map' ), value: ''            },
+								{ label: __( 'Top Center',    'bmg-interactive-map' ), value: 'top'         },
+								{ label: __( 'Top Left',      'bmg-interactive-map' ), value: 'top-left'    },
+								{ label: __( 'Top Right',     'bmg-interactive-map' ), value: 'top-right'   },
+								{ label: __( 'Bottom Center', 'bmg-interactive-map' ), value: 'bottom'      },
+								{ label: __( 'Bottom Left',   'bmg-interactive-map' ), value: 'bottom-left' },
+								{ label: __( 'Bottom Right',  'bmg-interactive-map' ), value: 'bottom-right'},
+							],
+							onChange: function ( val ) {
+								setAttr( { toolbarPosition: val } );
 							},
 						} )
 					)
