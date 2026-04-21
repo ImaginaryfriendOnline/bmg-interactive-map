@@ -17,7 +17,7 @@ PLUGIN_DIR  = SCRIPT_DIR
 PLUGIN_FILE = os.path.join( PLUGIN_DIR, 'bmg-interactive-map.php' )
 ZIP_OUT     = None  # set after version is determined
 
-EXCLUDE_DIRS  = { '.claude', 'lib', 'releases' }
+EXCLUDE_DIRS  = { '.claude', '.git', 'lib', 'releases' }
 EXCLUDE_EXTS  = { '.zip' }
 EXCLUDE_FILES = { 'repackage.py' }
 
