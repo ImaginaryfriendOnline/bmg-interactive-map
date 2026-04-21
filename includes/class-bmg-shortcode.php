@@ -55,8 +55,9 @@ class BMG_Shortcode {
 			'start_y'            => '',
 			'responsive_start'   => '',
 			'area_list_position' => 'none',
-			'area_list_title'    => '',
-			'toolbar_position'   => '',
+			'area_list_title'         => '',
+			'toolbar_position'        => '',
+			'area_highlights_default' => '',
 		], $atts, 'bmg_map' );
 
 		$map_id = absint( $atts['id'] );
@@ -346,6 +347,7 @@ class BMG_Shortcode {
 				data-image="<?php echo esc_url( $image_url ); ?>"
 				data-locations="<?php echo esc_attr( wp_json_encode( $locations_data, JSON_INVALID_UTF8_SUBSTITUTE ) ?: '[]' ); ?>"
 				data-areas="<?php echo esc_attr( wp_json_encode( $areas_data, JSON_INVALID_UTF8_SUBSTITUTE ) ?: '[]' ); ?>"
+				<?php echo ( ! empty( $atts['area_highlights_default'] ) && $atts['area_highlights_default'] !== '0' ) ? 'data-areas-highlighted="1"' : ''; ?>
 				<?php echo $show_list ? 'data-show-list="1"' : ''; ?>
 				<?php echo $show_area_list ? 'data-show-area-list="1"' : ''; ?>
 				<?php echo ! empty( $atts['show_tooltips'] ) && $atts['show_tooltips'] !== '0' ? 'data-tooltips="1"' : ''; ?>

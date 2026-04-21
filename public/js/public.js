@@ -643,6 +643,14 @@
 						poly.setStyle( { fillOpacity: on ? areas[ idx ].fillOpacity : 0 } );
 					} );
 				} );
+
+				// Apply default highlight state if pre-enabled via data attribute.
+				if ( el.dataset.areasHighlighted === '1' ) {
+					highlightBtn.setAttribute( 'aria-pressed', 'true' );
+					polys.forEach( function ( poly, idx ) {
+						poly.setStyle( { fillOpacity: areas[ idx ].fillOpacity } );
+					} );
+				}
 			}
 		}
 

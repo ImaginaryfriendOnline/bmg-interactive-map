@@ -51,9 +51,10 @@ class BMG_Block {
 				'listPosition'     => [ 'type' => 'string',  'default' => 'none' ],
 				'zoomPosition'     => [ 'type' => 'string',  'default' => ''     ],
 				'showTooltips'     => [ 'type' => 'boolean', 'default' => false  ],
-				'areaListPosition' => [ 'type' => 'string',  'default' => 'none' ],
-				'areaListTitle'    => [ 'type' => 'string',  'default' => ''     ],
-				'toolbarPosition'  => [ 'type' => 'string',  'default' => ''     ],
+				'areaListPosition'      => [ 'type' => 'string',  'default' => 'none'  ],
+				'areaListTitle'         => [ 'type' => 'string',  'default' => ''      ],
+				'toolbarPosition'       => [ 'type' => 'string',  'default' => ''      ],
+				'areaHighlightsDefault' => [ 'type' => 'boolean', 'default' => false   ],
 			],
 			'render_callback' => [ __CLASS__, 'render' ],
 		] );
@@ -93,8 +94,9 @@ class BMG_Block {
 			'zoom_position'      => $zoom_position,
 			'show_tooltips'      => ! empty( $attributes['showTooltips'] ) ? '1' : '0',
 			'area_list_position' => $area_list_position,
-			'area_list_title'    => sanitize_text_field( $attributes['areaListTitle'] ?? '' ),
-			'toolbar_position'   => $toolbar_position,
+			'area_list_title'         => sanitize_text_field( $attributes['areaListTitle'] ?? '' ),
+			'toolbar_position'        => $toolbar_position,
+			'area_highlights_default' => ! empty( $attributes['areaHighlightsDefault'] ) ? '1' : '',
 		] );
 	}
 }

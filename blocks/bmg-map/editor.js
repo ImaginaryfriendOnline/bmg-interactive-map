@@ -31,9 +31,10 @@
 			listPosition     : { type: 'string',  default: 'none' },
 			zoomPosition     : { type: 'string',  default: ''     },
 			showTooltips     : { type: 'boolean', default: false  },
-			areaListPosition : { type: 'string',  default: 'none' },
-			areaListTitle    : { type: 'string',  default: ''     },
-			toolbarPosition  : { type: 'string',  default: ''     },
+			areaListPosition      : { type: 'string',  default: 'none'  },
+			areaListTitle         : { type: 'string',  default: ''      },
+			toolbarPosition       : { type: 'string',  default: ''      },
+			areaHighlightsDefault : { type: 'boolean', default: false   },
 		},
 
 		edit: function ( props ) {
@@ -43,10 +44,11 @@
 			var listPosition     = props.attributes.listPosition;
 			var zoomPosition     = props.attributes.zoomPosition;
 			var showTooltips     = props.attributes.showTooltips;
-			var areaListPosition = props.attributes.areaListPosition;
-			var areaListTitle    = props.attributes.areaListTitle;
-			var toolbarPosition  = props.attributes.toolbarPosition;
-			var setAttr          = props.setAttributes;
+			var areaListPosition      = props.attributes.areaListPosition;
+			var areaListTitle         = props.attributes.areaListTitle;
+			var toolbarPosition       = props.attributes.toolbarPosition;
+			var areaHighlightsDefault = props.attributes.areaHighlightsDefault;
+			var setAttr               = props.setAttributes;
 
 			var selectedLabel = '';
 			if ( mapId ) {
@@ -162,6 +164,13 @@
 							],
 							onChange: function ( val ) {
 								setAttr( { toolbarPosition: val } );
+							},
+						} ),
+						el( ToggleControl, {
+							label   : __( 'Area Highlights On by Default', 'bmg-interactive-map' ),
+							checked : areaHighlightsDefault,
+							onChange: function ( val ) {
+								setAttr( { areaHighlightsDefault: val } );
 							},
 						} )
 					)
