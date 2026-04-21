@@ -156,3 +156,24 @@ add_filter( 'upgrader_pre_install', function ( $result, $hook_extra ) {
 
 	return $result;
 }, 10, 2 );
+
+// -------------------------------------------------------------------------
+// On every load: silently remove any .git directory left inside the plugin
+// folder (e.g. from a git-clone install).  The is_dir() check is cheap so
+// WP_Filesystem is only initialised when the folder actually exists.
+// -------------------------------------------------------------------------
+
+add_action( 'plugins_loaded', function () {
+	$git_dir = BMG_MAP_PLUGIN_DIR . '.git';
+	if ( ! is_dir( $git_dir ) ) {
+		return;
+	}
+	global $wp_filesystem;
+	if ( ! $wp_filesystem ) {
+		require_once ABSPATH . 'wp-admin/includes/file.php';
+		WP_Filesystem();
+	}
+	if ( $wp_filesystem ) {
+		$wp_filesystem->delete( $git_dir, true );
+	}
+} );
