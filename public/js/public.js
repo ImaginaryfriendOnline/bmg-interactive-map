@@ -613,25 +613,17 @@
 			} );
 		}
 
-		// Location list toggle — hide the entire list including its header.
-		var locBtn = toolbar.querySelector( '.bmg-toolbar-btn--loc-list' );
-		if ( locBtn ) {
-			var locList = layoutEl.querySelector( '.bmg-location-list' );
-			locBtn.addEventListener( 'click', function () {
-				var hidden = locList.classList.toggle( 'bmg-location-list--hidden' );
-				locBtn.setAttribute( 'aria-pressed', hidden ? 'true' : 'false' );
-				updatePanelVisibility();
-				setTimeout( function () { map.invalidateSize(); }, 50 );
-			} );
-		}
-
-		// Area list toggle — hide the entire list including its header.
-		var areaBtn = toolbar.querySelector( '.bmg-toolbar-btn--area-list' );
-		if ( areaBtn ) {
+		// Combined lists toggle — hides/shows both location and area lists together.
+		var listsBtn = toolbar.querySelector( '.bmg-toolbar-btn--lists' );
+		if ( listsBtn ) {
+			var locList  = layoutEl.querySelector( '.bmg-location-list' );
 			var areaList = layoutEl.querySelector( '.bmg-area-list' );
-			areaBtn.addEventListener( 'click', function () {
-				var hidden = areaList.classList.toggle( 'bmg-area-list--hidden' );
-				areaBtn.setAttribute( 'aria-pressed', hidden ? 'true' : 'false' );
+			var listsHidden = false;
+			listsBtn.addEventListener( 'click', function () {
+				listsHidden = ! listsHidden;
+				if ( locList )  locList.classList.toggle(  'bmg-location-list--hidden', listsHidden );
+				if ( areaList ) areaList.classList.toggle( 'bmg-area-list--hidden',     listsHidden );
+				listsBtn.setAttribute( 'aria-pressed', listsHidden ? 'true' : 'false' );
 				updatePanelVisibility();
 				setTimeout( function () { map.invalidateSize(); }, 50 );
 			} );

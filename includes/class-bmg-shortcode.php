@@ -278,20 +278,12 @@ class BMG_Shortcode {
 			<?php endif; ?>
 			<?php
 			$toolbar_buttons = '';
-			if ( $list_position !== 'none' ) {
-				$toolbar_buttons .= '<button class="bmg-toolbar-btn bmg-toolbar-btn--loc-list" type="button"'
+			if ( $list_position !== 'none' || $area_list_position !== 'none' ) {
+				$toolbar_buttons .= '<button class="bmg-toolbar-btn bmg-toolbar-btn--lists" type="button"'
 					. ' aria-pressed="false"'
-					. ' title="' . esc_attr__( 'Toggle location list', 'bmg-interactive-map' ) . '"'
-					. ' aria-label="' . esc_attr__( 'Toggle location list', 'bmg-interactive-map' ) . '">'
+					. ' title="' . esc_attr__( 'Toggle lists', 'bmg-interactive-map' ) . '"'
+					. ' aria-label="' . esc_attr__( 'Toggle lists', 'bmg-interactive-map' ) . '">'
 					. '<span class="bmg-toolbar-icon bmg-toolbar-icon--loc" aria-hidden="true"></span>'
-					. '</button>';
-			}
-			if ( $area_list_position !== 'none' ) {
-				$toolbar_buttons .= '<button class="bmg-toolbar-btn bmg-toolbar-btn--area-list" type="button"'
-					. ' aria-pressed="false"'
-					. ' title="' . esc_attr__( 'Toggle area list', 'bmg-interactive-map' ) . '"'
-					. ' aria-label="' . esc_attr__( 'Toggle area list', 'bmg-interactive-map' ) . '">'
-					. '<span class="bmg-toolbar-icon bmg-toolbar-icon--area" aria-hidden="true"></span>'
 					. '</button>';
 			}
 			$toolbar_buttons .= '<button class="bmg-toolbar-btn bmg-toolbar-btn--area-highlight" type="button"'
