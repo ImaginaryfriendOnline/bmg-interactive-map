@@ -226,6 +226,7 @@ class BMG_Shortcode {
 		$container_id = 'bmg-map-' . $map_id;
 		$map_min_zoom = get_post_meta( $map_id, '_bmg_map_min_zoom', true );
 		$map_max_zoom = get_post_meta( $map_id, '_bmg_map_max_zoom', true );
+		$tileset      = BMG_Tileset::get_tileset_data( $map_id );
 
 		// List config.
 		$show_list    = $list_position !== 'none';
@@ -361,6 +362,7 @@ class BMG_Shortcode {
 				<?php endif; ?>
 				<?php echo $responsive_start_json ? 'data-responsive-start="' . esc_attr( $responsive_start_json ) . '"' : ''; ?>
 				<?php echo $close_icon_html ? 'data-close-icon="' . esc_attr( $close_icon_html ) . '"' : ''; ?>
+				<?php echo $tileset ? 'data-tileset-url="' . esc_url( $tileset['url'] ) . '" data-tileset-zoom-min="' . esc_attr( $tileset['zoom_min'] ) . '"' : ''; ?>
 				aria-label="<?php echo esc_attr( $map->post_title ); ?>">
 			</div>
 			<?php

@@ -17,6 +17,7 @@ A WordPress plugin for creating interactive image-based maps with clickable loca
 - **Three display methods** — shortcode, Gutenberg block, or Elementor widget
 - **Elementor responsive controls** — map height and starting view are configurable per breakpoint (desktop / tablet / mobile)
 - **Elementor styling** — full visual control over markers, popups, location list, area list, toolbar, and close button via Elementor style tabs
+- **Tilesets** — optionally pre-slice the map image into 256×256 px tiles at multiple zoom levels; served as static files for faster rendering of large images
 - **Cascade operations** — trashing or deleting a map automatically cascades to its locations and areas
 
 ## Requirements
@@ -35,7 +36,7 @@ A WordPress plugin for creating interactive image-based maps with clickable loca
 
 ### 1 — Create a Map
 
-Go to **Interactive Maps → Add New**. Give the map a title and set a **Featured Image** (this becomes the map background). Optionally set per-map zoom limits in the **Zoom Settings** sidebar panel. Publish.
+Go to **Interactive Maps → Add New**. Give the map a title and set a **Featured Image** (this becomes the map background). Optionally set per-map zoom limits in the **Zoom Settings** sidebar panel. Optionally generate a tileset in the **Tileset** sidebar panel (see [Tilesets](#tilesets) below). Publish.
 
 ### 2 — Add Locations
 
@@ -136,6 +137,35 @@ An **Exit fullscreen** pill button appears at the bottom-centre of the map durin
 
 Use the Elementor **Hide Toolbar** responsive switcher to suppress the toolbar on specific breakpoints.
 
+## Tilesets
+
+For maps with large background images, the **Tileset** option pre-slices the image into 256×256 px tiles at multiple zoom levels. The browser loads only the tiles that are currently visible, rather than the full image, which significantly reduces initial load time and memory usage.
+
+### Generating a Tileset
+
+1. Open the map in the admin editor.
+2. In the **Tileset** sidebar panel, click **Generate Tileset**.
+3. The plugin slices the image one zoom level at a time (with a progress bar). Generation runs in the browser via a series of AJAX requests — leave the page open until the status shows **Ready**.
+4. Tiles are stored in `wp-content/uploads/bmg-tiles/{map-id}/` as static JPEG files and served directly by the web server.
+
+### How Tiles Are Used
+
+Once a tileset is ready the frontend map automatically switches from a single image overlay to a tiled layer. Zoom levels above the native image resolution are served by upscaling the highest-resolution tiles (no extra files are generated for zooming in past 1:1).
+
+### Staleness
+
+When you replace the map's featured image the tileset is automatically marked stale and the map falls back to the full image overlay. A warning appears in the **Tileset** panel — click **Regenerate Tileset** to rebuild.
+
+### Deleting a Tileset
+
+Click **Delete Tileset** in the panel. The tile files are removed from disk and the map reverts to image-overlay mode. Tile files are also removed automatically when the map post is permanently deleted.
+
+### Requirements for Tileset Generation
+
+- PHP GD extension (standard on most hosts; used for image processing).
+- The map's featured image must be a file hosted in the WordPress media library (not an external URL). Supported formats: JPEG, PNG, GIF, WebP.
+- Sufficient `upload_max_filesize` / `memory_limit` on the server. For typical images (under 8000×8000 px) the default 256 MB PHP memory limit is sufficient.
+
 ## Per-Map Zoom Limits
 
 Each map can override the global zoom limits via the **Zoom Settings** sidebar panel on the map edit screen. Leave the fields blank to use the global defaults from Settings.
@@ -170,6 +200,10 @@ Go to **Interactive Maps → Settings** to configure global defaults.
 | Featured Image | The image used as the map background |
 | Min Zoom | Per-map override for how far out the user can zoom |
 | Max Zoom | Per-map override for how far in the user can zoom |
+| Tileset Status | `ready` when a valid tileset exists; `generating` during generation; blank when none |
+| Tileset Zoom Min | Lowest zoom level the tileset was generated for |
+| Tileset Image ID | Attachment ID of the image used to generate the tileset (used for staleness detection) |
+| Tileset URL Base | Base URL of the tile directory, e.g. `.../uploads/bmg-tiles/42/` |
 
 ### Location Meta Fields
 
@@ -198,6 +232,7 @@ Go to **Interactive Maps → Settings** to configure global defaults.
 | Location | `bmg_location` CPT; `_bmg_map_id`, `_bmg_loc_x`, `_bmg_loc_y`, `_bmg_loc_color`, `_bmg_loc_icon` |
 | Area | `bmg_area` CPT; `_bmg_area_map_id`, `_bmg_area_points` (JSON), `_bmg_area_color`, `_bmg_area_fill_color`, `_bmg_area_fill_opacity` |
 | Global settings | `bmg_map_settings` WordPress option (array) |
+| Tileset files | `wp-content/uploads/bmg-tiles/{map_id}/{z}/{x}/{y}.jpg` |
 | Leaflet library | `wp-content/plugins/bmg-interactive-map/lib/leaflet/` |
 
 ## Third-Party Libraries

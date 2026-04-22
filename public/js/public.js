@@ -79,7 +79,9 @@
 
 		el.dataset.bmgReady = '1';
 
-		var imageUrl = el.dataset.image;
+		var imageUrl   = el.dataset.image;
+		var tilesetUrl = el.dataset.tilesetUrl || '';
+		var useTiles   = !! tilesetUrl;
 		var locations;
 
 		try {
@@ -147,7 +149,18 @@
 			L.control.zoom( { position: zoomPos } ).addTo( map );
 
 			var bounds = [ [ 0, 0 ], [ H, W ] ];
-			L.imageOverlay( imageUrl, bounds ).addTo( map );
+			if ( useTiles ) {
+				L.tileLayer( tilesetUrl, {
+					tileSize      : 256,
+					noWrap        : true,
+					minZoom       : minZoom,
+					maxZoom       : maxZoom,
+					maxNativeZoom : 0,
+					bounds        : bounds,
+				} ).addTo( map );
+			} else {
+				L.imageOverlay( imageUrl, bounds ).addTo( map );
+			}
 
 			// Apply starting view or fit-all, depending on whether a start view is set.
 			if ( hasStart ) {

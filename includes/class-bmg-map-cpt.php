@@ -73,6 +73,14 @@ class BMG_Map_CPT {
 			'side',
 			'default'
 		);
+		add_meta_box(
+			'bmg_map_tileset',
+			__( 'Tileset', 'bmg-interactive-map' ),
+			[ __CLASS__, 'render_tileset_meta_box' ],
+			'bmg_map',
+			'side',
+			'default'
+		);
 	}
 
 	public static function render_meta_box( WP_Post $post ): void {
@@ -97,6 +105,68 @@ class BMG_Map_CPT {
 				placeholder="<?php echo esc_attr( $s['max_zoom'] ); ?>" />
 		</p>
 		<p class="description"><?php esc_html_e( 'Leave blank to use the global default.', 'bmg-interactive-map' ); ?></p>
+		<?php
+	}
+
+	public static function render_tileset_meta_box( WP_Post $post ): void {
+		$status     = get_post_meta( $post->ID, '_bmg_tileset_status', true );
+		$tileset_img= (int) get_post_meta( $post->ID, '_bmg_tileset_image_id', true );
+		$current_img= (int) get_post_thumbnail_id( $post->ID );
+		$is_ready   = $status === 'ready';
+		$is_stale   = $is_ready && $tileset_img && $tileset_img !== $current_img;
+
+		$s       = BMG_Settings::get();
+		$raw_min = get_post_meta( $post->ID, '_bmg_map_min_zoom', true );
+		$min_zoom= $raw_min !== '' ? (int) $raw_min : (int) $s['min_zoom'];
+
+		if ( $status === 'ready' ) {
+			$status_text = 'Ready';
+		} elseif ( $status === 'generating' ) {
+			$status_text = 'Generating…';
+		} elseif ( $status === 'error' ) {
+			$status_text = 'Error — see browser console';
+		} else {
+			$status_text = 'No tileset generated.';
+		}
+
+		$generate_label = $is_ready ? 'Regenerate Tileset' : 'Generate Tileset';
+		?>
+		<script>
+		window.bmgTilesetMeta = {
+			ajaxUrl:       <?php echo wp_json_encode( admin_url( 'admin-ajax.php' ) ); ?>,
+			generateNonce: <?php echo wp_json_encode( wp_create_nonce( 'bmg_generate_tiles_' . $post->ID ) ); ?>,
+			deleteNonce:   <?php echo wp_json_encode( wp_create_nonce( 'bmg_delete_tileset_' . $post->ID ) ); ?>,
+			mapId:         <?php echo absint( $post->ID ); ?>,
+			minZoom:       <?php echo (int) $min_zoom; ?>,
+		};
+		</script>
+		<div id="bmg-tileset-box">
+			<p style="margin-bottom:4px;">
+				<strong><?php esc_html_e( 'Status:', 'bmg-interactive-map' ); ?></strong>
+				<span id="bmg-tileset-status"><?php echo esc_html( $status_text ); ?></span>
+			</p>
+			<?php if ( $is_stale ) : ?>
+			<p id="bmg-tileset-stale" style="color:#b45309;margin-bottom:6px;">
+				<?php esc_html_e( 'Featured image has changed — regenerate to update.', 'bmg-interactive-map' ); ?>
+			</p>
+			<?php else : ?>
+			<p id="bmg-tileset-stale" style="display:none;color:#b45309;margin-bottom:6px;">
+				<?php esc_html_e( 'Featured image has changed — regenerate to update.', 'bmg-interactive-map' ); ?>
+			</p>
+			<?php endif; ?>
+			<p style="margin-bottom:6px;">
+				<button id="bmg-tileset-generate" type="button" class="button">
+					<?php echo esc_html( $generate_label ); ?>
+				</button>
+			</p>
+			<progress id="bmg-tileset-progress" style="display:none;width:100%;margin-bottom:6px;" value="0" max="1"></progress>
+			<p style="margin-bottom:0;">
+				<button id="bmg-tileset-delete" type="button" class="button button-link-delete"
+					<?php echo $is_ready ? '' : 'style="display:none;"'; ?>>
+					<?php esc_html_e( 'Delete Tileset', 'bmg-interactive-map' ); ?>
+				</button>
+			</p>
+		</div>
 		<?php
 	}
 
@@ -141,6 +211,13 @@ class BMG_Map_CPT {
 			return;
 		}
 		wp_enqueue_media();
+		wp_enqueue_script(
+			'bmg-tileset-admin',
+			BMG_MAP_PLUGIN_URL . 'admin/js/tileset-admin.js',
+			[],
+			BMG_MAP_VERSION,
+			true
+		);
 	}
 
 	// -------------------------------------------------------------------------

@@ -67,6 +67,7 @@ class BMG_Help {
 						<li><?php esc_html_e( 'Give the map a title (e.g. "World Map" or "Dungeon Level 1").', 'bmg-interactive-map' ); ?></li>
 						<li><?php esc_html_e( 'Set a Featured Image — this is the background image that markers and areas are placed on. Use any image: a photo, a hand-drawn map, a floor plan, etc.', 'bmg-interactive-map' ); ?></li>
 						<li><?php esc_html_e( '(Optional) Set per-map zoom limits in the Zoom Settings panel on the right. Leave blank to use the global defaults from Settings.', 'bmg-interactive-map' ); ?></li>
+						<li><?php esc_html_e( '(Optional) Generate a tileset in the Tileset panel — see the Tilesets section below for details.', 'bmg-interactive-map' ); ?></li>
 						<li><?php esc_html_e( 'Publish the map. Note the post ID in the URL bar — you will need it in Step 4.', 'bmg-interactive-map' ); ?></li>
 					</ol>
 					<div class="bmg-help-tip">
@@ -262,6 +263,37 @@ class BMG_Help {
 					<div class="bmg-help-tip">
 						<span class="dashicons dashicons-lightbulb" aria-hidden="true"></span>
 						<?php esc_html_e( 'Tip: the map is fully responsive and adapts to any column width automatically. Use the Elementor responsive controls to fine-tune height and starting view for mobile visitors.', 'bmg-interactive-map' ); ?>
+					</div>
+				</div>
+			</div>
+
+			<!-- ── Tilesets ─────────────────────────────────────────────── -->
+			<div class="bmg-help-card">
+				<div class="bmg-help-step-badge">
+					<span class="dashicons dashicons-grid-view" style="font-size:18px;line-height:28px;" aria-hidden="true"></span>
+				</div>
+				<div class="bmg-help-step-body">
+					<h2><?php esc_html_e( 'Tilesets', 'bmg-interactive-map' ); ?></h2>
+					<p><?php esc_html_e( 'By default each map loads its full-resolution background image in one piece. For large images this can be slow. The Tileset option pre-slices the image into 256×256 px tiles at multiple zoom levels so the browser loads only what is currently visible.', 'bmg-interactive-map' ); ?></p>
+
+					<h3><?php esc_html_e( 'Generating a Tileset', 'bmg-interactive-map' ); ?></h3>
+					<ol>
+						<li><?php esc_html_e( 'Open the map in the admin editor.', 'bmg-interactive-map' ); ?></li>
+						<li><?php esc_html_e( 'Find the Tileset panel in the right-hand sidebar.', 'bmg-interactive-map' ); ?></li>
+						<li><?php esc_html_e( 'Click Generate Tileset. A progress bar shows how many zoom levels have been processed. Leave the page open until the status reads Ready.', 'bmg-interactive-map' ); ?></li>
+					</ol>
+
+					<p><?php esc_html_e( 'Generation runs one zoom level at a time via AJAX — no page-reload or server timeout required. Tiles are stored as static JPEG files in wp-content/uploads/bmg-tiles/ and served directly by the web server.', 'bmg-interactive-map' ); ?></p>
+
+					<h3><?php esc_html_e( 'Staleness', 'bmg-interactive-map' ); ?></h3>
+					<p><?php esc_html_e( 'If you replace the map\'s featured image the Tileset panel shows a warning and the frontend falls back to the full image overlay automatically. Click Regenerate Tileset to rebuild the tiles from the new image.', 'bmg-interactive-map' ); ?></p>
+
+					<h3><?php esc_html_e( 'Deleting a Tileset', 'bmg-interactive-map' ); ?></h3>
+					<p><?php esc_html_e( 'Click Delete Tileset to remove all tile files from disk. The map reverts to image-overlay mode. Tile files are also removed automatically when the map post is permanently deleted.', 'bmg-interactive-map' ); ?></p>
+
+					<div class="bmg-help-tip">
+						<span class="dashicons dashicons-lightbulb" aria-hidden="true"></span>
+						<?php esc_html_e( 'Tip: tilesets require the PHP GD extension (available on virtually all hosts). The map\'s featured image must be stored in the WordPress media library — external image URLs are not supported. Supported formats: JPEG, PNG, GIF, WebP.', 'bmg-interactive-map' ); ?>
 					</div>
 				</div>
 			</div>
