@@ -58,8 +58,8 @@
 }
 
 .bmg-pin {
-	width: 18px;
-	height: 18px;
+	width: 26px;
+	height: 26px;
 	border-radius: 50%;
 	border: 2px solid #fff;
 	box-shadow: 0 2px 8px rgba( 0, 0, 0, .4 );
@@ -71,7 +71,7 @@
 }
 
 .bmg-pin__icon {
-	font-size: 9px;
+	font-size: 13px;
 	color: #fff;
 	line-height: 1;
 	pointer-events: none;

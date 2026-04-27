@@ -220,6 +220,29 @@
 				[  H * 1.1,  W * 1.1 ],
 			] );
 
+			// After autoPan runs, nudge the popup element if it still clips the map edge.
+			map.on( 'popupopen', function ( e ) {
+				setTimeout( function () {
+					var popupEl = e.popup.getElement();
+					var mapEl   = map.getContainer();
+					if ( ! popupEl || ! mapEl ) return;
+
+					var mapRect   = mapEl.getBoundingClientRect();
+					var popupRect = popupEl.getBoundingClientRect();
+					var pad = 10;
+					var dx = 0, dy = 0;
+
+					if ( popupRect.left   < mapRect.left   + pad ) dx =  ( mapRect.left   + pad ) - popupRect.left;
+					if ( popupRect.right  > mapRect.right  - pad ) dx = -( popupRect.right  - ( mapRect.right  - pad ) );
+					if ( popupRect.top    < mapRect.top    + pad ) dy =  ( mapRect.top    + pad ) - popupRect.top;
+					if ( popupRect.bottom > mapRect.bottom - pad ) dy = -( popupRect.bottom - ( mapRect.bottom - pad ) );
+
+					if ( dx !== 0 || dy !== 0 ) {
+						popupEl.style.transform += ' translate(' + Math.round( dx ) + 'px,' + Math.round( dy ) + 'px)';
+					}
+				}, 0 );
+			} );
+
 			var markers = [];
 
 			locations.forEach( function ( loc ) {
@@ -229,8 +252,8 @@
 
 				var icon = L.divIcon( {
 					className : 'bmg-map-marker-icon',
-					iconSize  : [ 18, 18 ],
-					iconAnchor: [ 9, 9 ],
+					iconSize  : [ 26, 26 ],
+					iconAnchor: [ 13, 13 ],
 					html      : '<div class="bmg-pin"'
 						+ ' role="button"'
 						+ ' tabindex="0"'
@@ -257,8 +280,9 @@
 				}
 
 				leafletMarker.bindPopup( popupHtml, {
-					maxWidth : 300,
-					className: 'bmg-leaflet-popup',
+					maxWidth      : 300,
+					className     : 'bmg-leaflet-popup',
+					autoPanPadding: [ 20, 20 ],
 				} );
 
 				// Keyboard accessibility: open popup on Enter or Space.
@@ -307,7 +331,11 @@
 					weight     : 2,
 				} ).addTo( map );
 
-				poly.bindPopup( popupHtml, { className: 'bmg-leaflet-popup', closeButton: true } );
+				poly.bindPopup( popupHtml, {
+					className     : 'bmg-leaflet-popup',
+					closeButton   : true,
+					autoPanPadding: [ 20, 20 ],
+				} );
 
 				poly.bindTooltip( escHtml( area.title ), {
 					sticky   : true,
