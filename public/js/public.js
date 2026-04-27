@@ -248,7 +248,11 @@
 				}
 
 				if ( dx !== 0 || dy !== 0 ) {
-					popupEl.style.transform += ' translate(' + Math.round( dx ) + 'px,' + Math.round( dy ) + 'px)';
+					// Use setLatLng so Leaflet stores the corrected position natively —
+					// subsequent _updatePositions() calls will honour it, not reset it.
+					var anchorPt    = map.latLngToContainerPoint( popup.getLatLng() );
+					var newAnchorPt = L.point( anchorPt.x + dx, anchorPt.y + dy );
+					popup.setLatLng( map.containerPointToLatLng( newAnchorPt ) );
 				}
 			}
 

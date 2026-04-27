@@ -517,6 +517,15 @@ class BMG_Shortcode {
 	// Assets (registered early; enqueued only when shortcode is used)
 	// -------------------------------------------------------------------------
 
+	public static function fa_loader_tag( string $tag, string $handle ): string {
+		if ( $handle !== 'bmg-font-awesome' || strpos( $tag, 'crossorigin' ) !== false ) {
+			return $tag;
+		}
+		// Works for both <script ...> and <link ... /> tags.
+		$tag = str_replace( '>', ' crossorigin="anonymous">', $tag );
+		return $tag;
+	}
+
 	public static function register_assets(): void {
 		wp_register_style(
 			'leaflet',
@@ -544,11 +553,15 @@ class BMG_Shortcode {
 		// before wp_head() closes. The user explicitly configured this URL.
 		$fa_url = BMG_Settings::get()['fa_url'] ?? '';
 		if ( $fa_url ) {
-			if ( substr( $fa_url, -3 ) === '.js' ) {
+			$fa_path  = parse_url( $fa_url, PHP_URL_PATH ) ?: '';
+			$is_fa_js = strtolower( pathinfo( $fa_path, PATHINFO_EXTENSION ) ) === 'js';
+			if ( $is_fa_js ) {
 				wp_enqueue_script( 'bmg-font-awesome', $fa_url, [], null, false );
 			} else {
 				wp_enqueue_style( 'bmg-font-awesome', $fa_url, [], null );
 			}
+			add_filter( 'script_loader_tag', [ __CLASS__, 'fa_loader_tag' ], 10, 2 );
+			add_filter( 'style_loader_tag',  [ __CLASS__, 'fa_loader_tag' ], 10, 2 );
 		}
 
 		wp_register_script(
