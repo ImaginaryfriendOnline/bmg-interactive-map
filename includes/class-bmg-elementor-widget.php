@@ -65,7 +65,7 @@ class BMG_Elementor_Widget extends \Elementor\Widget_Base {
 		$maps        = \Elementor\Plugin::$instance->editor->is_edit_mode() || \Elementor\Plugin::$instance->preview->is_preview_mode()
 			? get_posts( [
 				'post_type'      => 'bmg_map',
-				'post_status'    => 'publish',
+				'post_status'    => [ 'publish', 'draft' ],
 				'posts_per_page' => -1,
 				'orderby'        => 'title',
 				'order'          => 'ASC',

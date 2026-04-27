@@ -100,7 +100,8 @@ class BMG_Shortcode {
 		}
 
 		$map = get_post( $map_id );
-		if ( ! $map || $map->post_type !== 'bmg_map' || $map->post_status !== 'publish' ) {
+		$allowed_statuses = $atts['show_hidden'] === '1' ? [ 'publish', 'draft' ] : [ 'publish' ];
+		if ( ! $map || $map->post_type !== 'bmg_map' || ! in_array( $map->post_status, $allowed_statuses, true ) ) {
 			return '<!-- bmg_map: map not found -->';
 		}
 

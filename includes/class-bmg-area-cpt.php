@@ -87,7 +87,7 @@ class BMG_Area_CPT {
 
 		$maps = get_posts( [
 			'post_type'      => 'bmg_map',
-			'post_status'    => 'publish',
+			'post_status'    => [ 'publish', 'draft' ],
 			'posts_per_page' => -1,
 			'orderby'        => 'title',
 			'order'          => 'ASC',
@@ -314,7 +314,7 @@ class BMG_Area_CPT {
 
 		$maps = get_posts( [
 			'post_type'      => 'bmg_map',
-			'post_status'    => 'publish',
+			'post_status'    => [ 'publish', 'draft' ],
 			'posts_per_page' => -1,
 			'orderby'        => 'title',
 			'order'          => 'ASC',

@@ -81,10 +81,10 @@ class BMG_Location_CPT {
 		$color         = get_post_meta( $post->ID, '_bmg_loc_color', true ) ?: $default_color;
 		$icon_class    = get_post_meta( $post->ID, '_bmg_loc_icon', true );
 
-		// Fetch all published maps for the dropdown.
+		// Fetch published and draft maps for the dropdown.
 		$maps = get_posts( [
 			'post_type'      => 'bmg_map',
-			'post_status'    => 'publish',
+			'post_status'    => [ 'publish', 'draft' ],
 			'posts_per_page' => -1,
 			'orderby'        => 'title',
 			'order'          => 'ASC',
@@ -455,7 +455,7 @@ class BMG_Location_CPT {
 
 		$maps = get_posts( [
 			'post_type'      => 'bmg_map',
-			'post_status'    => 'publish',
+			'post_status'    => [ 'publish', 'draft' ],
 			'posts_per_page' => -1,
 			'orderby'        => 'title',
 			'order'          => 'ASC',

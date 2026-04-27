@@ -26,10 +26,10 @@ class BMG_Block {
 			true
 		);
 
-		// Provide published maps to the block editor sidebar (admin only).
+		// Provide published and draft maps to the block editor sidebar (admin only).
 		$maps = is_admin() ? get_posts( [
 			'post_type'      => 'bmg_map',
-			'post_status'    => 'publish',
+			'post_status'    => [ 'publish', 'draft' ],
 			'posts_per_page' => -1,
 			'orderby'        => 'title',
 			'order'          => 'ASC',
