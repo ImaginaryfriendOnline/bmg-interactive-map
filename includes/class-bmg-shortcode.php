@@ -232,8 +232,13 @@ class BMG_Shortcode {
 		wp_enqueue_style( 'leaflet' );
 		wp_enqueue_style( 'bmg-public' );
 		wp_enqueue_script( 'bmg-public' );
-		if ( ! empty( BMG_Settings::get()['fa_url'] ) ) {
-			wp_enqueue_style( 'bmg-font-awesome' );
+		$_fa_url = BMG_Settings::get()['fa_url'] ?? '';
+		if ( $_fa_url ) {
+			if ( substr( $_fa_url, -3 ) === '.js' ) {
+				wp_enqueue_script( 'bmg-font-awesome' );
+			} else {
+				wp_enqueue_style( 'bmg-font-awesome' );
+			}
 		}
 
 		$container_id = 'bmg-map-' . $map_id;
@@ -545,7 +550,11 @@ class BMG_Shortcode {
 
 		$fa_url = BMG_Settings::get()['fa_url'] ?? '';
 		if ( $fa_url ) {
-			wp_register_style( 'bmg-font-awesome', $fa_url, [], null );
+			if ( substr( $fa_url, -3 ) === '.js' ) {
+				wp_register_script( 'bmg-font-awesome', $fa_url, [], null, false );
+			} else {
+				wp_register_style( 'bmg-font-awesome', $fa_url, [], null );
+			}
 		}
 
 		wp_register_script(

@@ -167,7 +167,7 @@ class BMG_Settings {
 			esc_attr( self::OPTION_KEY ),
 			esc_attr( $opts['fa_url'] )
 		);
-		echo '<p class="description">' . esc_html__( 'Optional. Paste a Font Awesome CSS URL (kit or CDN) to load it on pages that display a map. Leave blank if your theme already loads Font Awesome.', 'bmg-interactive-map' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Optional. Paste a Font Awesome URL to load it on pages that display a map — CSS CDN URLs and JS kit URLs (kit.fontawesome.com) are both supported. Leave blank if your theme already loads Font Awesome.', 'bmg-interactive-map' ) . '</p>';
 	}
 
 	// -------------------------------------------------------------------------
