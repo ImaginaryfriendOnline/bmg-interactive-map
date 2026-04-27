@@ -91,6 +91,14 @@
 	transform: rotate( 225deg );
 	margin: 10px auto -10px;
 }
+.bmg-popup-below .leaflet-popup-content-wrapper {
+	margin-top: 14px; /* push content below the tip */
+	box-shadow: 0 -12px 40px 12px rgba( 0, 0, 0, .85 );
+}
+.bmg-popup-below .leaflet-popup-tip-container {
+	margin-top: 0; /* override the default -1px gap-closer; gap is above content in below mode */
+	margin-bottom: -1px;
+}
 
 /* -----------------------------------------------------------------
    Leaflet popup overrides

@@ -238,7 +238,7 @@
 					if ( popupRect.top < mapRect.top + pad ) {
 						// Near top: reposition below the marker with tip pointing up.
 						var markerPt   = map.latLngToContainerPoint( popup.getLatLng() );
-						var targetTop  = markerPt.y + 13 + 14; // markerHalf + tipHeight
+						var targetTop  = markerPt.y + 13 + 2; // markerHalf + small gap
 						var currentTop = popupRect.top - mapRect.top;
 						dy = targetTop - currentTop;
 						popupEl.classList.add( 'bmg-popup-below' );
