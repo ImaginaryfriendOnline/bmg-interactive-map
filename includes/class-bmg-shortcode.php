@@ -232,14 +232,6 @@ class BMG_Shortcode {
 		wp_enqueue_style( 'leaflet' );
 		wp_enqueue_style( 'bmg-public' );
 		wp_enqueue_script( 'bmg-public' );
-		$_fa_url = BMG_Settings::get()['fa_url'] ?? '';
-		if ( $_fa_url ) {
-			if ( substr( $_fa_url, -3 ) === '.js' ) {
-				wp_enqueue_script( 'bmg-font-awesome' );
-			} else {
-				wp_enqueue_style( 'bmg-font-awesome' );
-			}
-		}
 
 		$container_id = 'bmg-map-' . $map_id;
 		$map_min_zoom = get_post_meta( $map_id, '_bmg_map_min_zoom', true );
@@ -548,12 +540,14 @@ class BMG_Shortcode {
 			BMG_MAP_VERSION
 		);
 
+		// Enqueue FA immediately (not lazily in render()) so it lands in <head>
+		// before wp_head() closes. The user explicitly configured this URL.
 		$fa_url = BMG_Settings::get()['fa_url'] ?? '';
 		if ( $fa_url ) {
 			if ( substr( $fa_url, -3 ) === '.js' ) {
-				wp_register_script( 'bmg-font-awesome', $fa_url, [], null, false );
+				wp_enqueue_script( 'bmg-font-awesome', $fa_url, [], null, false );
 			} else {
-				wp_register_style( 'bmg-font-awesome', $fa_url, [], null );
+				wp_enqueue_style( 'bmg-font-awesome', $fa_url, [], null );
 			}
 		}
 
