@@ -493,11 +493,18 @@
 				var idx = parseInt( item.dataset.index, 10 );
 				if ( isNaN( idx ) || ! markers[ idx ] ) return;
 				setActive( idx );
+				var _opened = false;
+				function _doOpen() {
+					if ( _opened ) return;
+					_opened = true;
+					markers[ idx ].openPopup();
+				}
+				map.once( 'moveend', _doOpen );
+				setTimeout( _doOpen, 500 );
 				map.flyTo( markers[ idx ].getLatLng(), map.getZoom(), {
 					animate : true,
 					duration: 0.4,
 				} );
-				markers[ idx ].openPopup();
 			}
 			item.addEventListener( 'click', activate );
 			item.addEventListener( 'keydown', function ( e ) {
@@ -604,8 +611,15 @@
 				var lat = 0, lng = 0;
 				lls.forEach( function ( ll ) { lat += ll.lat; lng += ll.lng; } );
 				var centroid = L.latLng( lat / lls.length, lng / lls.length );
+				var _opened = false;
+				function _doOpen() {
+					if ( _opened ) return;
+					_opened = true;
+					polys[ idx ].openPopup( centroid );
+				}
+				map.once( 'moveend', _doOpen );
+				setTimeout( _doOpen, 500 );
 				map.flyTo( centroid, map.getZoom(), { animate: true, duration: 0.4 } );
-				polys[ idx ].openPopup( centroid );
 			}
 			item.addEventListener( 'click', activate );
 			item.addEventListener( 'keydown', function ( e ) {

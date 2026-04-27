@@ -79,6 +79,14 @@ class BMG_Settings {
 			'bmg_defaults'
 		);
 
+		add_settings_field(
+			'fa_url',
+			__( 'Font Awesome URL', 'bmg-interactive-map' ),
+			[ __CLASS__, 'field_fa_url' ],
+			'bmg-map-settings',
+			'bmg_defaults'
+		);
+
 	}
 
 	public static function sanitize( $input ): array {
@@ -91,6 +99,8 @@ class BMG_Settings {
 		$clean['zoom_position'] = in_array( $input['zoom_position'] ?? '', $valid_zoom_positions, true )
 			? $input['zoom_position']
 			: 'topleft';
+
+		$clean['fa_url'] = esc_url_raw( $input['fa_url'] ?? '' );
 
 		return $clean;
 	}
@@ -150,6 +160,16 @@ class BMG_Settings {
 		);
 	}
 
+	public static function field_fa_url(): void {
+		$opts = self::get();
+		printf(
+			'<input type="url" name="%s[fa_url]" value="%s" style="width:100%%;max-width:500px;" placeholder="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />',
+			esc_attr( self::OPTION_KEY ),
+			esc_attr( $opts['fa_url'] )
+		);
+		echo '<p class="description">' . esc_html__( 'Optional. Paste a Font Awesome CSS URL (kit or CDN) to load it on pages that display a map. Leave blank if your theme already loads Font Awesome.', 'bmg-interactive-map' ) . '</p>';
+	}
+
 	// -------------------------------------------------------------------------
 	// Page render
 	// -------------------------------------------------------------------------
@@ -180,10 +200,11 @@ class BMG_Settings {
 		static $cache = null;
 		if ( $cache === null ) {
 			$defaults = [
-				'default_color'       => '#e74c3c',
-				'min_zoom'            => -3,
-				'max_zoom'            => 3,
-				'zoom_position'       => 'topleft',
+				'default_color' => '#e74c3c',
+				'min_zoom'      => -3,
+				'max_zoom'      => 3,
+				'zoom_position' => 'topleft',
+				'fa_url'        => '',
 			];
 			$cache = wp_parse_args( (array) get_option( self::OPTION_KEY, [] ), $defaults );
 		}

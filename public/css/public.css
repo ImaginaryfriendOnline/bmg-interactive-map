@@ -99,6 +99,9 @@
 	margin-top: 0; /* override the default -1px gap-closer; gap is above content in below mode */
 	margin-bottom: -1px;
 }
+.bmg-popup-below .leaflet-popup-close-button {
+	top: 24px !important; /* 14px content-wrapper margin-top + 10px original offset */
+}
 
 /* -----------------------------------------------------------------
    Leaflet popup overrides

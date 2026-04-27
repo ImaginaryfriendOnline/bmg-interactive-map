@@ -232,6 +232,9 @@ class BMG_Shortcode {
 		wp_enqueue_style( 'leaflet' );
 		wp_enqueue_style( 'bmg-public' );
 		wp_enqueue_script( 'bmg-public' );
+		if ( ! empty( BMG_Settings::get()['fa_url'] ) ) {
+			wp_enqueue_style( 'bmg-font-awesome' );
+		}
 
 		$container_id = 'bmg-map-' . $map_id;
 		$map_min_zoom = get_post_meta( $map_id, '_bmg_map_min_zoom', true );
@@ -539,6 +542,11 @@ class BMG_Shortcode {
 			[ 'leaflet' ],
 			BMG_MAP_VERSION
 		);
+
+		$fa_url = BMG_Settings::get()['fa_url'] ?? '';
+		if ( $fa_url ) {
+			wp_register_style( 'bmg-font-awesome', $fa_url, [], null );
+		}
 
 		wp_register_script(
 			'bmg-public',
