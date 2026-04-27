@@ -210,10 +210,13 @@
 				fillOpacity: a.fillOpacity * 0.5,
 				weight     : 1.5,
 				dashArray  : '4 4',
-				interactive: false,
 				opacity    : 0.6,
 			} ).addTo( leafletMap );
 			poly.bindTooltip( a.title, { sticky: true } );
+			poly.on( 'click', function ( e ) {
+				var idx = selectedEntry ? vertices.indexOf( selectedEntry ) + 1 : vertices.length;
+				insertVertex( idx, e.latlng );
+			} );
 			siblingPolygons.push( poly );
 		} );
 	}

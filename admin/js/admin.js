@@ -168,9 +168,8 @@
 		if ( ! showSiblings || ! locData || ! leafletMap ) return;
 		locData.forEach( function ( loc ) {
 			var m = L.marker( toLeaflet( loc.x, loc.y ), {
-				icon       : makeSiblingIcon( loc.color ),
-				interactive: false,
-				opacity    : 0.5,
+				icon   : makeSiblingIcon( loc.color ),
+				opacity: 0.5,
 			} ).addTo( leafletMap );
 			m.bindTooltip( loc.title, { sticky: true } );
 			siblingMarkers.push( m );

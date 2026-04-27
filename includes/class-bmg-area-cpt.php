@@ -284,12 +284,22 @@ class BMG_Area_CPT {
 			$new[ $key ] = $label;
 			if ( $key === 'title' ) {
 				$new['bmg_parent_map'] = __( 'Parent Map', 'bmg-interactive-map' );
+				$new['bmg_page_view']  = __( 'Page View',  'bmg-interactive-map' );
 			}
 		}
 		return $new;
 	}
 
 	public static function render_map_column( string $column, int $post_id ): void {
+		if ( $column === 'bmg_page_view' ) {
+			if ( get_post_meta( $post_id, '_bmg_hidden', true ) === '1' ) {
+				echo '<span class="dashicons dashicons-hidden" style="color:#999;" title="' . esc_attr__( 'Hidden from page view', 'bmg-interactive-map' ) . '"></span>';
+			} else {
+				echo '<span class="dashicons dashicons-visibility" style="color:#46b450;" title="' . esc_attr__( 'Shown in page view', 'bmg-interactive-map' ) . '"></span>';
+			}
+			return;
+		}
+
 		if ( $column !== 'bmg_parent_map' ) {
 			return;
 		}
