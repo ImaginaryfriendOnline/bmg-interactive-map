@@ -24,6 +24,9 @@ class BMG_Location_CPT {
 		add_action( 'manage_bmg_location_posts_custom_column', [ __CLASS__, 'render_map_column' ], 10, 2 );
 		add_action( 'restrict_manage_posts', [ __CLASS__, 'render_list_filters' ] );
 		add_action( 'pre_get_posts',         [ __CLASS__, 'apply_list_filters'  ] );
+		add_filter( 'bulk_actions-edit-bmg_location',        [ __CLASS__, 'register_bulk_actions' ] );
+		add_filter( 'handle_bulk_actions-edit-bmg_location', [ __CLASS__, 'handle_bulk_actions'  ], 10, 3 );
+		add_action( 'admin_notices',                         [ __CLASS__, 'bulk_action_notice'   ] );
 	}
 
 	// -------------------------------------------------------------------------
@@ -518,6 +521,72 @@ class BMG_Location_CPT {
 		if ( $meta_query ) {
 			$query->set( 'meta_query', $meta_query );
 		}
+	}
+
+	// -------------------------------------------------------------------------
+	// Helpers
+	// -------------------------------------------------------------------------
+
+	// -------------------------------------------------------------------------
+	// Bulk actions — Hide / Unhide
+	// -------------------------------------------------------------------------
+
+	public static function register_bulk_actions( array $actions ): array {
+		$actions['bmg_hide']   = __( 'Hide from page view',   'bmg-interactive-map' );
+		$actions['bmg_unhide'] = __( 'Show in page view',     'bmg-interactive-map' );
+		return $actions;
+	}
+
+	public static function handle_bulk_actions( string $redirect_to, string $action, array $post_ids ): string {
+		if ( $action !== 'bmg_hide' && $action !== 'bmg_unhide' ) {
+			return $redirect_to;
+		}
+
+		foreach ( $post_ids as $post_id ) {
+			if ( ! current_user_can( 'edit_post', (int) $post_id ) ) {
+				continue;
+			}
+			if ( $action === 'bmg_hide' ) {
+				update_post_meta( (int) $post_id, '_bmg_hidden', '1' );
+			} else {
+				delete_post_meta( (int) $post_id, '_bmg_hidden' );
+			}
+		}
+
+		return add_query_arg( [
+			'bmg_bulk_action' => $action,
+			'bmg_bulk_count'  => count( $post_ids ),
+		], $redirect_to );
+	}
+
+	public static function bulk_action_notice(): void {
+		$screen = get_current_screen();
+		if ( ! $screen || $screen->id !== 'edit-bmg_location' ) {
+			return;
+		}
+
+		$action = sanitize_key( $_GET['bmg_bulk_action'] ?? '' );
+		$count  = (int) ( $_GET['bmg_bulk_count'] ?? 0 );
+
+		if ( ! $action || ! $count ) {
+			return;
+		}
+
+		if ( $action === 'bmg_hide' ) {
+			$msg = sprintf(
+				/* translators: %d: number of locations */
+				_n( '%d location hidden from page view.', '%d locations hidden from page view.', $count, 'bmg-interactive-map' ),
+				$count
+			);
+		} else {
+			$msg = sprintf(
+				/* translators: %d: number of locations */
+				_n( '%d location set to show in page view.', '%d locations set to show in page view.', $count, 'bmg-interactive-map' ),
+				$count
+			);
+		}
+
+		printf( '<div class="notice notice-success is-dismissible"><p>%s</p></div>', esc_html( $msg ) );
 	}
 
 	// -------------------------------------------------------------------------
