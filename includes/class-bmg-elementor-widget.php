@@ -823,7 +823,10 @@ $this->add_responsive_control( 'start_zoom', [
 			'toolbar_position'        => $settings['toolbar_position']        ?? '',
 			'area_highlights_default' => $settings['area_highlights_default'] ?? '',
 			'responsive_start'        => $responsive_start,
-			'show_hidden'             => '1',
+			'show_hidden'             => (
+				\Elementor\Plugin::$instance->editor->is_edit_mode() ||
+				\Elementor\Plugin::$instance->preview->is_preview_mode()
+			) ? '1' : '0',
 		] );
 	}
 }
