@@ -220,27 +220,38 @@
 				[  H * 1.1,  W * 1.1 ],
 			] );
 
-			// After autoPan runs, nudge the popup element if it still clips the map edge.
+			// Smart popup positioning: below marker if near top, shifted left if near right.
 			map.on( 'popupopen', function ( e ) {
-				setTimeout( function () {
-					var popupEl = e.popup.getElement();
+				requestAnimationFrame( function () {
+					var popup   = e.popup;
+					var popupEl = popup.getElement();
 					var mapEl   = map.getContainer();
 					if ( ! popupEl || ! mapEl ) return;
 
+					popupEl.classList.remove( 'bmg-popup-below' );
+
 					var mapRect   = mapEl.getBoundingClientRect();
 					var popupRect = popupEl.getBoundingClientRect();
-					var pad = 10;
+					var pad       = 10;
 					var dx = 0, dy = 0;
 
-					if ( popupRect.left   < mapRect.left   + pad ) dx =  ( mapRect.left   + pad ) - popupRect.left;
-					if ( popupRect.right  > mapRect.right  - pad ) dx = -( popupRect.right  - ( mapRect.right  - pad ) );
-					if ( popupRect.top    < mapRect.top    + pad ) dy =  ( mapRect.top    + pad ) - popupRect.top;
-					if ( popupRect.bottom > mapRect.bottom - pad ) dy = -( popupRect.bottom - ( mapRect.bottom - pad ) );
+					if ( popupRect.top < mapRect.top + pad ) {
+						// Near top: reposition below the marker with tip pointing up.
+						var markerPt   = map.latLngToContainerPoint( popup.getLatLng() );
+						var targetTop  = markerPt.y + 13 + 14; // markerHalf + tipHeight
+						var currentTop = popupRect.top - mapRect.top;
+						dy = targetTop - currentTop;
+						popupEl.classList.add( 'bmg-popup-below' );
+					} else {
+						if ( popupRect.right  > mapRect.right  - pad ) dx = ( mapRect.right  - pad ) - popupRect.right;
+						if ( popupRect.left   < mapRect.left   + pad ) dx = ( mapRect.left   + pad ) - popupRect.left;
+						if ( popupRect.bottom > mapRect.bottom - pad ) dy = ( mapRect.bottom - pad ) - popupRect.bottom;
+					}
 
 					if ( dx !== 0 || dy !== 0 ) {
 						popupEl.style.transform += ' translate(' + Math.round( dx ) + 'px,' + Math.round( dy ) + 'px)';
 					}
-				}, 0 );
+				} );
 			} );
 
 			var markers = [];
@@ -280,9 +291,9 @@
 				}
 
 				leafletMarker.bindPopup( popupHtml, {
-					maxWidth      : 300,
-					className     : 'bmg-leaflet-popup',
-					autoPanPadding: [ 20, 20 ],
+					maxWidth : 300,
+					className: 'bmg-leaflet-popup',
+					autoPan  : false,
 				} );
 
 				// Keyboard accessibility: open popup on Enter or Space.
@@ -332,9 +343,9 @@
 				} ).addTo( map );
 
 				poly.bindPopup( popupHtml, {
-					className     : 'bmg-leaflet-popup',
-					closeButton   : true,
-					autoPanPadding: [ 20, 20 ],
+					className  : 'bmg-leaflet-popup',
+					closeButton: true,
+					autoPan    : false,
 				} );
 
 				poly.bindTooltip( escHtml( area.title ), {

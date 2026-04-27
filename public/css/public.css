@@ -82,6 +82,16 @@
 	box-shadow: 0 4px 12px rgba( 0, 0, 0, .45 );
 }
 
+/* Popup opened below a marker — flip tip to point upward */
+.bmg-popup-below .leaflet-popup-tip-container {
+	top: 0;
+	bottom: auto;
+}
+.bmg-popup-below .leaflet-popup-tip {
+	transform: rotate( 225deg );
+	margin: 10px auto -10px;
+}
+
 /* -----------------------------------------------------------------
    Leaflet popup overrides
    ----------------------------------------------------------------- */
