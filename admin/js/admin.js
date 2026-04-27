@@ -20,6 +20,11 @@
 	var imgW       = 1;    // natural image width (px)
 	var imgH       = 1;    // natural image height (px)
 
+	// Sibling location overlays.
+	var siblingMarkers     = [];
+	var showSiblings       = true;
+	var currentSiblingData = meta.siblingLocations || [];
+
 	// ------------------------------------------------------------------
 	// Coordinate conversion helpers
 	//
@@ -52,6 +57,7 @@
 		if ( ! wrap ) return;
 
 		// Tear down any previous Leaflet instance.
+		clearSiblingMarkers();
 		if ( leafletMap ) {
 			leafletMap.remove();
 			leafletMap = null;
@@ -100,6 +106,9 @@
 				placeMarker( toLeaflet( x, y ) );
 			}
 
+			// Show sibling locations.
+			renderSiblingLocations( currentSiblingData );
+
 			// Click on the map → place / move marker.
 			leafletMap.on( 'click', function ( e ) {
 				placeMarker( e.latlng );
@@ -137,6 +146,40 @@
 				'cursor:move;' +
 			'"></div>',
 		} );
+	}
+
+	function makeSiblingIcon( color ) {
+		return L.divIcon( {
+			className : 'bmg-admin-marker-icon',
+			iconSize  : [ 14, 14 ],
+			iconAnchor: [ 7, 7 ],
+			html      : '<div style="' +
+				'width:14px;height:14px;border-radius:50%;' +
+				'background:' + color + ';' +
+				'border:2px solid #fff;' +
+				'box-shadow:0 1px 4px rgba(0,0,0,.3);' +
+			'"></div>',
+		} );
+	}
+
+	function renderSiblingLocations( locData ) {
+		siblingMarkers.forEach( function ( m ) { m.remove(); } );
+		siblingMarkers = [];
+		if ( ! showSiblings || ! locData || ! leafletMap ) return;
+		locData.forEach( function ( loc ) {
+			var m = L.marker( toLeaflet( loc.x, loc.y ), {
+				icon       : makeSiblingIcon( loc.color ),
+				interactive: false,
+				opacity    : 0.5,
+			} ).addTo( leafletMap );
+			m.bindTooltip( loc.title, { sticky: true } );
+			siblingMarkers.push( m );
+		} );
+	}
+
+	function clearSiblingMarkers() {
+		siblingMarkers.forEach( function ( m ) { m.remove(); } );
+		siblingMarkers = [];
 	}
 
 	// After every icon set/replace, stop mousedown from bubbling to the map's
@@ -211,6 +254,8 @@
 		var wrap  = document.getElementById( 'bmg-map-editor-wrap' );
 
 		if ( ! mapId ) {
+			clearSiblingMarkers();
+			currentSiblingData = [];
 			if ( leafletMap ) { leafletMap.remove(); leafletMap = null; marker = null; }
 			if ( wrap ) {
 				wrap.style.aspectRatio = '';
@@ -225,14 +270,16 @@
 		}
 
 		var data = new FormData();
-		data.append( 'action', 'bmg_get_map_image' );
-		data.append( 'nonce',  meta.nonce );
-		data.append( 'map_id', mapId );
+		data.append( 'action',              'bmg_get_map_image' );
+		data.append( 'nonce',               meta.nonce );
+		data.append( 'map_id',              mapId );
+		data.append( 'exclude_location_id', meta.postId || 0 );
 
 		fetch( meta.ajaxUrl, { method: 'POST', body: data } )
 			.then( function ( r ) { return r.json(); } )
 			.then( function ( json ) {
 				if ( json.success && json.data.url ) {
+					currentSiblingData = json.data.locations || [];
 					initEditor( json.data.url, json.data.width, json.data.height );
 				} else {
 					if ( wrap ) wrap.innerHTML = '<p class="description" style="color:#c00;">This map has no featured image. Add one and try again.</p>';
@@ -246,6 +293,28 @@
 	xInput     && xInput.addEventListener( 'input', syncMarkerFromInputs );
 	yInput     && yInput.addEventListener( 'input', syncMarkerFromInputs );
 	colorInput && colorInput.addEventListener( 'input', syncMarkerColor );
+
+	// ------------------------------------------------------------------
+	// Sibling-toggle checkbox (injected after the colour input row)
+	// ------------------------------------------------------------------
+
+	( function injectSiblingToggle() {
+		var previewBtn = document.getElementById( 'bmg-preview-toggle' );
+		if ( ! previewBtn ) return;
+		var label = document.createElement( 'label' );
+		label.style.cssText = 'display:inline-flex;align-items:center;gap:4px;margin-left:8px;cursor:pointer;';
+		var cb = document.createElement( 'input' );
+		cb.type    = 'checkbox';
+		cb.id      = 'bmg-loc-show-siblings';
+		cb.checked = true;
+		label.appendChild( cb );
+		label.appendChild( document.createTextNode( 'Show other locations' ) );
+		previewBtn.parentNode.appendChild( label );
+		cb.addEventListener( 'change', function () {
+			showSiblings = this.checked;
+			renderSiblingLocations( currentSiblingData );
+		} );
+	} )();
 
 	// ------------------------------------------------------------------
 	// Popup preview toggle

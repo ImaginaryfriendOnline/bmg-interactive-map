@@ -58,6 +58,7 @@ class BMG_Shortcode {
 			'area_list_title'         => '',
 			'toolbar_position'        => '',
 			'area_highlights_default' => '',
+			'show_hidden'             => '0',
 		], $atts, 'bmg_map' );
 
 		$map_id = absint( $atts['id'] );
@@ -164,6 +165,10 @@ class BMG_Shortcode {
 
 		$locations_data = [];
 		foreach ( $location_posts as $loc ) {
+			if ( $atts['show_hidden'] !== '1' && get_post_meta( $loc->ID, '_bmg_visible', true ) === '0' ) {
+				continue;
+			}
+
 			$x     = get_post_meta( $loc->ID, '_bmg_loc_x', true );
 			$y     = get_post_meta( $loc->ID, '_bmg_loc_y', true );
 			$color = get_post_meta( $loc->ID, '_bmg_loc_color', true ) ?: '#e74c3c';
@@ -201,6 +206,10 @@ class BMG_Shortcode {
 
 		$areas_data = [];
 		foreach ( $area_posts as $area ) {
+			if ( $atts['show_hidden'] !== '1' && get_post_meta( $area->ID, '_bmg_visible', true ) === '0' ) {
+				continue;
+			}
+
 			$points_raw = get_post_meta( $area->ID, '_bmg_area_points', true );
 			$points     = json_decode( $points_raw, true );
 			if ( ! is_array( $points ) || count( $points ) < 3 ) {

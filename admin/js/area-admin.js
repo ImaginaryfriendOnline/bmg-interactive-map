@@ -25,6 +25,14 @@
 	var imgW       = 1;
 	var imgH       = 1;
 
+	// Selected vertex for insert-after behaviour (null = append mode).
+	var selectedEntry = null;
+
+	// Sibling area overlays.
+	var siblingPolygons    = [];
+	var showSiblings       = true;
+	var currentSiblingData = meta.siblingAreas || [];
+
 	// ------------------------------------------------------------------
 	// Coordinate conversion (same convention as admin.js and public.js)
 	// ------------------------------------------------------------------
@@ -71,6 +79,8 @@
 				weight     : 2,
 			} ).addTo( leafletMap );
 		}
+
+		refreshAllVertexIcons();
 	}
 
 	function updateVertexCount() {
@@ -88,17 +98,20 @@
 	}
 
 	// ------------------------------------------------------------------
-	// Vertex management
+	// Vertex icon helpers
 	// ------------------------------------------------------------------
 
-	function makeVertexIcon() {
+	function makeVertexIcon( isSelected ) {
+		var bg   = isSelected ? '#f0c040' : getColor();
+		var size = isSelected ? 16 : 14;
+		var half = size / 2;
 		return L.divIcon( {
 			className : 'bmg-area-vertex-icon',
-			iconSize  : [ 14, 14 ],
-			iconAnchor: [ 7, 7 ],
+			iconSize  : [ size, size ],
+			iconAnchor: [ half, half ],
 			html: '<div style="' +
-				'width:14px;height:14px;border-radius:50%;' +
-				'background:' + getColor() + ';' +
+				'width:' + size + 'px;height:' + size + 'px;border-radius:50%;' +
+				'background:' + bg + ';' +
 				'border:2px solid #fff;' +
 				'box-shadow:0 1px 4px rgba(0,0,0,.4);' +
 				'cursor:move;' +
@@ -106,19 +119,39 @@
 		} );
 	}
 
-	function addVertex( latLng ) {
+	function refreshAllVertexIcons() {
+		vertices.forEach( function ( v ) {
+			v.marker.setIcon( makeVertexIcon( v === selectedEntry ) );
+		} );
+	}
+
+	function setSelected( entry ) {
+		selectedEntry = entry;
+		refreshAllVertexIcons();
+	}
+
+	// ------------------------------------------------------------------
+	// Vertex management
+	// ------------------------------------------------------------------
+
+	function insertVertex( idx, latLng ) {
 		var marker = L.marker( latLng, {
-			icon     : makeVertexIcon(),
+			icon     : makeVertexIcon( false ),
 			draggable: true,
 		} ).addTo( leafletMap );
 
 		var entry = { latLng: latLng, marker: marker };
-		vertices.push( entry );
+		vertices.splice( idx, 0, entry );
 
 		marker.on( 'dragend', function ( e ) {
 			entry.latLng = e.target.getLatLng();
 			refreshPolygon();
 			syncPointsToTextarea();
+		} );
+
+		marker.on( 'click', function ( e ) {
+			L.DomEvent.stopPropagation( e );
+			setSelected( selectedEntry === entry ? null : entry );
 		} );
 
 		// Stop mousedown from bubbling so dragging a vertex doesn't pan the map.
@@ -132,10 +165,19 @@
 		refreshPolygon();
 		updateVertexCount();
 		syncPointsToTextarea();
+		setSelected( entry );
+	}
+
+	function addVertex( latLng ) {
+		insertVertex( vertices.length, latLng );
 	}
 
 	function removeLastVertex() {
 		if ( ! vertices.length ) return;
+		var last = vertices[ vertices.length - 1 ];
+		if ( selectedEntry === last ) {
+			selectedEntry = null;
+		}
 		vertices.pop().marker.remove();
 		refreshPolygon();
 		updateVertexCount();
@@ -143,12 +185,42 @@
 	}
 
 	function clearAll() {
+		selectedEntry = null;
 		vertices.forEach( function ( v ) { v.marker.remove(); } );
 		vertices = [];
 		if ( polyline ) { polyline.remove(); polyline = null; }
 		if ( polygon  ) { polygon.remove();  polygon  = null; }
 		updateVertexCount();
 		syncPointsToTextarea();
+	}
+
+	// ------------------------------------------------------------------
+	// Sibling area overlays
+	// ------------------------------------------------------------------
+
+	function renderSiblingAreas( areasData ) {
+		siblingPolygons.forEach( function ( p ) { p.remove(); } );
+		siblingPolygons = [];
+		if ( ! showSiblings || ! areasData || ! leafletMap ) return;
+		areasData.forEach( function ( a ) {
+			var latlngs = a.points.map( function ( p ) { return toLeaflet( p.x, p.y ); } );
+			var poly = L.polygon( latlngs, {
+				color      : a.color,
+				fillColor  : a.fillColor,
+				fillOpacity: a.fillOpacity * 0.5,
+				weight     : 1.5,
+				dashArray  : '4 4',
+				interactive: false,
+				opacity    : 0.6,
+			} ).addTo( leafletMap );
+			poly.bindTooltip( a.title, { sticky: true } );
+			siblingPolygons.push( poly );
+		} );
+	}
+
+	function clearSiblingPolygons() {
+		siblingPolygons.forEach( function ( p ) { p.remove(); } );
+		siblingPolygons = [];
 	}
 
 	// ------------------------------------------------------------------
@@ -162,10 +234,12 @@
 		var wrap = document.getElementById( 'bmg-area-editor-wrap' );
 		if ( ! wrap ) return;
 
+		clearSiblingPolygons();
 		if ( leafletMap ) {
 			leafletMap.remove();
 			leafletMap = null;
 		}
+		selectedEntry = null;
 		vertices = [];
 		polyline = null;
 		polygon  = null;
@@ -178,7 +252,7 @@
 		if ( ! hint || ! hint.classList.contains( 'bmg-map-editor-hint' ) ) {
 			hint = document.createElement( 'p' );
 			hint.className = 'description bmg-map-editor-hint';
-			hint.textContent = 'Click the map to add vertices. Drag a vertex to reposition it.';
+			hint.textContent = 'Click the map to add a vertex. Click a vertex to select it \u2014 the next click inserts after it. Drag to reposition.';
 			wrap.parentNode.insertBefore( hint, wrap.nextSibling );
 		}
 
@@ -208,8 +282,12 @@
 				meta.points = null; // consumed; map-change should start fresh
 			}
 
+			// Show sibling areas after vertices are restored.
+			renderSiblingAreas( currentSiblingData );
+
 			leafletMap.on( 'click', function ( e ) {
-				addVertex( e.latlng );
+				var idx = selectedEntry ? vertices.indexOf( selectedEntry ) + 1 : vertices.length;
+				insertVertex( idx, e.latlng );
 			} );
 
 			if ( typeof ResizeObserver !== 'undefined' ) {
@@ -225,6 +303,27 @@
 	}
 
 	// ------------------------------------------------------------------
+	// Inject sibling-toggle checkbox after the clear button
+	// ------------------------------------------------------------------
+
+	( function injectSiblingToggle() {
+		if ( ! clearBtn ) return;
+		var label = document.createElement( 'label' );
+		label.style.cssText = 'display:inline-flex;align-items:center;gap:4px;margin-left:8px;cursor:pointer;';
+		var cb = document.createElement( 'input' );
+		cb.type    = 'checkbox';
+		cb.id      = 'bmg-area-show-siblings';
+		cb.checked = true;
+		label.appendChild( cb );
+		label.appendChild( document.createTextNode( 'Show other areas' ) );
+		clearBtn.parentNode.appendChild( label );
+		cb.addEventListener( 'change', function () {
+			showSiblings = this.checked;
+			renderSiblingAreas( currentSiblingData );
+		} );
+	} )();
+
+	// ------------------------------------------------------------------
 	// Event listeners
 	// ------------------------------------------------------------------
 
@@ -233,6 +332,8 @@
 		var wrap  = document.getElementById( 'bmg-area-editor-wrap' );
 
 		if ( ! mapId ) {
+			clearSiblingPolygons();
+			currentSiblingData = [];
 			if ( leafletMap ) { leafletMap.remove(); leafletMap = null; }
 			clearAll();
 			if ( wrap ) {
@@ -248,14 +349,16 @@
 		}
 
 		var data = new FormData();
-		data.append( 'action', 'bmg_get_map_image' );
-		data.append( 'nonce',  meta.nonce );
-		data.append( 'map_id', mapId );
+		data.append( 'action',          'bmg_get_map_image' );
+		data.append( 'nonce',           meta.nonce );
+		data.append( 'map_id',          mapId );
+		data.append( 'exclude_area_id', meta.postId || 0 );
 
 		fetch( meta.ajaxUrl, { method: 'POST', body: data } )
 			.then( function ( r ) { return r.json(); } )
 			.then( function ( json ) {
 				if ( json.success && json.data.url ) {
+					currentSiblingData = json.data.areas || [];
 					initEditor( json.data.url, json.data.width, json.data.height );
 				} else {
 					if ( wrap ) wrap.innerHTML = '<p class="description" style="color:#c00;">This map has no featured image. Add one and try again.</p>';

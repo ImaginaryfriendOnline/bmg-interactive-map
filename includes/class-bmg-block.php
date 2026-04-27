@@ -97,6 +97,7 @@ class BMG_Block {
 			'area_list_title'         => sanitize_text_field( $attributes['areaListTitle'] ?? '' ),
 			'toolbar_position'        => $toolbar_position,
 			'area_highlights_default' => ! empty( $attributes['areaHighlightsDefault'] ) ? '1' : '',
+			'show_hidden'             => '1',
 		] );
 	}
 }

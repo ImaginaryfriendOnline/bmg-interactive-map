@@ -823,6 +823,7 @@ $this->add_responsive_control( 'start_zoom', [
 			'toolbar_position'        => $settings['toolbar_position']        ?? '',
 			'area_highlights_default' => $settings['area_highlights_default'] ?? '',
 			'responsive_start'        => $responsive_start,
+			'show_hidden'             => '1',
 		] );
 	}
 }
