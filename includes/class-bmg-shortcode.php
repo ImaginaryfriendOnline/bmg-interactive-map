@@ -166,7 +166,7 @@ class BMG_Shortcode {
 
 		$locations_data = [];
 		foreach ( $location_posts as $loc ) {
-			if ( $atts['show_hidden'] !== '1' && get_post_meta( $loc->ID, '_bmg_visible', true ) === '0' ) {
+			if ( $atts['show_hidden'] !== '1' && get_post_meta( $loc->ID, '_bmg_hidden', true ) === '1' ) {
 				continue;
 			}
 
@@ -207,7 +207,7 @@ class BMG_Shortcode {
 
 		$areas_data = [];
 		foreach ( $area_posts as $area ) {
-			if ( $atts['show_hidden'] !== '1' && get_post_meta( $area->ID, '_bmg_visible', true ) === '0' ) {
+			if ( $atts['show_hidden'] !== '1' && get_post_meta( $area->ID, '_bmg_hidden', true ) === '1' ) {
 				continue;
 			}
 

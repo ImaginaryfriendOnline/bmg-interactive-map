@@ -131,7 +131,7 @@ class BMG_Area_CPT {
 			}
 		}
 
-		$visible = get_post_meta( $post->ID, '_bmg_visible', true ) !== '0';
+		$visible = get_post_meta( $post->ID, '_bmg_hidden', true ) !== '1';
 		?>
 		<div class="bmg-meta-wrap">
 
@@ -264,7 +264,11 @@ class BMG_Area_CPT {
 			update_post_meta( $post_id, '_bmg_area_points', wp_json_encode( $clean ) );
 		}
 
-		update_post_meta( $post_id, '_bmg_visible', isset( $_POST['bmg_area_visible'] ) ? '1' : '0' );
+		if ( isset( $_POST['bmg_area_visible'] ) ) {
+			delete_post_meta( $post_id, '_bmg_hidden' );
+		} else {
+			update_post_meta( $post_id, '_bmg_hidden', '1' );
+		}
 	}
 
 	// -------------------------------------------------------------------------
@@ -358,12 +362,14 @@ class BMG_Area_CPT {
 
 		if ( isset( $_GET['bmg_filter_visible'] ) && $_GET['bmg_filter_visible'] !== '' ) {
 			if ( $_GET['bmg_filter_visible'] === '0' ) {
-				$meta_query[] = [ 'key' => '_bmg_visible', 'value' => '0' ];
+				// Hidden: _bmg_hidden = '1'
+				$meta_query[] = [ 'key' => '_bmg_hidden', 'value' => '1' ];
 			} else {
+				// Shown: _bmg_hidden absent or not '1'
 				$meta_query[] = [
 					'relation' => 'OR',
-					[ 'key' => '_bmg_visible', 'compare' => 'NOT EXISTS' ],
-					[ 'key' => '_bmg_visible', 'value' => '0', 'compare' => '!=' ],
+					[ 'key' => '_bmg_hidden', 'compare' => 'NOT EXISTS' ],
+					[ 'key' => '_bmg_hidden', 'value' => '1', 'compare' => '!=' ],
 				];
 			}
 		}
