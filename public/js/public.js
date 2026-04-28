@@ -241,7 +241,7 @@
 				var mapRect  = mapEl.getBoundingClientRect();
 				var markerPt = map.latLngToContainerPoint( popup.getLatLng() );
 				var pad      = 10;
-				var iconHalf = 13; // half of the 26 px marker icon
+				var iconHalf = 10; // half of the 20 px marker icon
 
 				// Visible region = intersection of map element and visual viewport.
 				var vpTop    = Math.max( mapRect.top,    0 );
@@ -307,14 +307,13 @@
 
 				var icon = L.divIcon( {
 					className : 'bmg-map-marker-icon',
-					iconSize  : [ 26, 26 ],
-					iconAnchor: [ 13, 13 ],
+					iconSize  : [ 20, 20 ],
+					iconAnchor: [ 10, 10 ],
 					html      : '<div class="bmg-pin"'
 						+ ' role="button"'
 						+ ' tabindex="0"'
 						+ ' aria-label="' + label + '"'
 						+ ' style="background:' + color + ';">'
-						+ ( loc.icon_html ? '<span class="bmg-pin__icon">' + loc.icon_html + '</span>' : '' )
 						+ '</div>',
 				} );
 
@@ -324,7 +323,7 @@
 				if ( el.dataset.tooltips ) {
 					leafletMarker.bindTooltip( escHtml( loc.title ), {
 						direction: 'top',
-						offset   : [ 0, -12 ],
+						offset   : [ 0, -10 ],
 					} );
 				}
 

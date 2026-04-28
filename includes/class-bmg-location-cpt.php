@@ -20,7 +20,6 @@ class BMG_Location_CPT {
 		add_action( 'save_post',       [ __CLASS__, 'save_meta' ] );
 		add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_admin_assets' ] );
 		add_action( 'wp_ajax_bmg_get_map_image',  [ __CLASS__, 'ajax_get_map_image' ] );
-		add_action( 'wp_ajax_bmg_get_icon_list',  [ __CLASS__, 'ajax_get_icon_list' ] );
 		add_filter( 'manage_bmg_location_posts_columns',       [ __CLASS__, 'add_map_column' ] );
 		add_action( 'manage_bmg_location_posts_custom_column', [ __CLASS__, 'render_map_column' ], 10, 2 );
 		add_action( 'restrict_manage_posts', [ __CLASS__, 'render_list_filters' ] );
@@ -83,9 +82,6 @@ class BMG_Location_CPT {
 		$y             = get_post_meta( $post->ID, '_bmg_loc_y', true );
 		$default_color = BMG_Settings::get()['default_color'];
 		$color         = get_post_meta( $post->ID, '_bmg_loc_color', true ) ?: $default_color;
-		$icon_raw      = get_post_meta( $post->ID, '_bmg_loc_icon', true );
-		$icon_data     = json_decode( $icon_raw, true );
-
 		// Fetch published and draft maps for the dropdown.
 		$maps = get_posts( [
 			'post_type'      => 'bmg_map',
@@ -174,22 +170,6 @@ class BMG_Location_CPT {
 					<input type="color" id="bmg_loc_color" name="bmg_loc_color"
 						value="<?php echo esc_attr( $color ); ?>" />
 				</label>
-				<span style="display:flex;flex-direction:column;gap:4px;">
-					<label><?php esc_html_e( 'Icon', 'bmg-interactive-map' ); ?></label>
-					<div class="bmg-icon-picker-wrap">
-						<span class="bmg-icon-preview">
-							<?php
-							if ( is_array( $icon_data ) && ! empty( $icon_data['value'] ) && class_exists( '\Elementor\Icons_Manager' ) ) {
-								\Elementor\Icons_Manager::render_icon( $icon_data, [ 'aria-hidden' => 'true' ] );
-							}
-							?>
-						</span>
-						<button type="button" class="button bmg-choose-icon-btn"><?php esc_html_e( 'Choose Icon', 'bmg-interactive-map' ); ?></button>
-						<button type="button" class="button bmg-clear-icon-btn"><?php esc_html_e( 'Clear', 'bmg-interactive-map' ); ?></button>
-						<input type="hidden" id="bmg_loc_icon_json" name="bmg_loc_icon_json"
-							value="<?php echo esc_attr( $icon_raw ); ?>" />
-					</div>
-				</span>
 			</p>
 
 		<!-- Visibility -->
@@ -282,17 +262,6 @@ class BMG_Location_CPT {
 			if ( $color ) {
 				update_post_meta( $post_id, '_bmg_loc_color', $color );
 			}
-		}
-
-		$icon_json = wp_unslash( $_POST['bmg_loc_icon_json'] ?? '' );
-		$icon_arr  = json_decode( $icon_json, true );
-		if ( is_array( $icon_arr ) && ! empty( $icon_arr['value'] ) && ! empty( $icon_arr['library'] ) ) {
-			update_post_meta( $post_id, '_bmg_loc_icon', wp_json_encode( [
-				'value'   => sanitize_text_field( $icon_arr['value'] ),
-				'library' => sanitize_text_field( $icon_arr['library'] ),
-			] ) );
-		} else {
-			update_post_meta( $post_id, '_bmg_loc_icon', '' );
 		}
 
 		if ( isset( $_POST['bmg_location_visible'] ) ) {
@@ -396,161 +365,6 @@ class BMG_Location_CPT {
 			'maxZoom'      => $s['max_zoom'],
 		] );
 
-		if ( class_exists( '\Elementor\Plugin' ) && isset( \Elementor\Plugin::$instance->icons_manager ) ) {
-			wp_enqueue_style( 'elementor-icons' );
-
-			wp_enqueue_style(
-				'bmg-icon-picker',
-				BMG_MAP_PLUGIN_URL . 'admin/css/bmg-icon-picker.css',
-				[],
-				BMG_MAP_VERSION
-			);
-
-			wp_enqueue_script(
-				'bmg-icon-picker',
-				BMG_MAP_PLUGIN_URL . 'admin/js/bmg-icon-picker.js',
-				[],
-				BMG_MAP_VERSION,
-				true
-			);
-
-			$tabs = \Elementor\Plugin::$instance->icons_manager->get_icon_manager_tabs_config();
-
-			// Enqueue the icon font CSS for every registered library so glyphs render
-			// in the picker grid (admin never loads FA otherwise).
-			foreach ( $tabs as $t ) {
-				if ( ! empty( $t['url'] ) && ! empty( $t['name'] ) ) {
-					wp_enqueue_style(
-						'bmg-icon-lib-' . sanitize_key( $t['name'] ),
-						$t['url'],
-						[],
-						$t['ver'] ?? null
-					);
-				}
-			}
-
-			// Keep only tabs that have loadable icon data — excludes aggregate
-			// placeholder tabs like "all" which have neither fetchJson nor inline icons.
-			$picker_tabs = array_values( array_filter( $tabs, function ( $t ) {
-				return ! empty( $t['fetchJson'] )
-					|| ( ! empty( $t['icons'] ) && is_array( $t['icons'] ) );
-			} ) );
-
-			// Fallback: if every tab was filtered out, pass all of them.
-			if ( empty( $picker_tabs ) ) {
-				$picker_tabs = array_values( $tabs );
-			}
-
-			wp_localize_script( 'bmg-icon-picker', 'bmgIconPickerConfig', [
-				'tabs'  => $picker_tabs,
-				'nonce' => wp_create_nonce( 'bmg_icon_list' ),
-				'ajax'  => admin_url( 'admin-ajax.php' ),
-			] );
-		}
-	}
-
-	// -------------------------------------------------------------------------
-	// AJAX: return icon names for a given Elementor icon library
-	// -------------------------------------------------------------------------
-
-	public static function ajax_get_icon_list(): void {
-		check_ajax_referer( 'bmg_icon_list', 'nonce' );
-
-		if ( ! current_user_can( 'edit_posts' ) ) {
-			wp_send_json_error( 'Forbidden', 403 );
-		}
-
-		if ( ! class_exists( '\Elementor\Plugin' ) || ! isset( \Elementor\Plugin::$instance->icons_manager ) ) {
-			wp_send_json_error( 'Elementor not available' );
-		}
-
-		$library = sanitize_key( $_POST['library'] ?? '' );
-		$tabs    = \Elementor\Plugin::$instance->icons_manager->get_icon_manager_tabs_config();
-
-		// The array key and the 'name' property may differ in some Elementor versions,
-		// so search by name value rather than array key.
-		$tab = null;
-		foreach ( $tabs as $t ) {
-			if ( isset( $t['name'] ) && $t['name'] === $library ) {
-				$tab = $t;
-				break;
-			}
-		}
-
-		if ( null === $tab ) {
-			wp_send_json_error( 'Unknown library: ' . $library );
-		}
-		$icons = [];
-
-		// Fast path: icon names already embedded in the tab config (e.g. eicons).
-		if ( ! empty( $tab['icons'] ) && is_array( $tab['icons'] ) ) {
-			$icons = array_keys( $tab['icons'] );
-		}
-
-		if ( empty( $icons ) ) {
-			$fetch_url = $tab['fetchJson'] ?? '';
-			$body      = '';
-			$error     = '';
-
-			if ( $fetch_url ) {
-				// Primary: read from filesystem.
-				// Strip scheme and domain from both URLs before comparing so that
-				// http vs https mismatches do not prevent path resolution.
-				$site_bare  = preg_replace( '#^https?://#', '', rtrim( site_url(), '/' ) );
-				$fetch_bare = preg_replace( '#^https?://#', '', $fetch_url );
-
-				if ( strpos( $fetch_bare, $site_bare ) === 0 ) {
-					$rel_path  = substr( $fetch_bare, strlen( $site_bare ) );
-					$file_path = rtrim( ABSPATH, DIRECTORY_SEPARATOR ) . $rel_path;
-
-					if ( file_exists( $file_path ) && is_readable( $file_path ) ) {
-						// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
-						$body = (string) file_get_contents( $file_path );
-					} else {
-						$error = 'File not found: ' . $file_path;
-					}
-				}
-
-				// Fallback: HTTP fetch (handles CDN URLs and exotic setups).
-				if ( ! $body ) {
-					$resp = wp_remote_get( $fetch_url, [
-						'timeout'   => 15,
-						'sslverify' => false,
-					] );
-					if ( is_wp_error( $resp ) ) {
-						$error .= ' | HTTP: ' . $resp->get_error_message();
-					} else {
-						$body = (string) wp_remote_retrieve_body( $resp );
-					}
-				}
-			}
-
-			if ( $body ) {
-				// Pass 1 — plain JSON: {"icons":{"home":{},...}} or {"home":{},...}
-				$decoded = json_decode( $body, true );
-				if ( is_array( $decoded ) ) {
-					$src   = $decoded['icons'] ?? $decoded;
-					$icons = is_array( $src ) ? array_keys( $src ) : [];
-				}
-
-				// Pass 2 — Elementor JS pack format: "home":{} or "home":[]
-				if ( empty( $icons ) ) {
-					preg_match_all( '/"([a-z][a-z0-9-]+)":\s*[{\[]/', $body, $matches );
-					$icons = array_unique( $matches[1] ?? [] );
-				}
-			}
-
-			if ( empty( $icons ) ) {
-				$reason = $error ?: ( $fetch_url ? 'Empty response or unrecognised format' : 'No fetchJson URL' );
-				wp_send_json_error( $reason );
-			}
-		}
-
-		wp_send_json_success( [
-			'icons'         => array_values( $icons ),
-			'displayPrefix' => $tab['displayPrefix'] ?? '',
-			'prefix'        => $tab['prefix'] ?? '',
-		] );
 	}
 
 	// -------------------------------------------------------------------------

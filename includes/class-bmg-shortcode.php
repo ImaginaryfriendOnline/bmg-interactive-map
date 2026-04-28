@@ -28,20 +28,6 @@ class BMG_Shortcode {
 		self::$pending_close_icon_html = $html;
 	}
 
-	private static function render_location_icon( string $raw ): string {
-		if ( ! $raw ) {
-			return '';
-		}
-		$data = json_decode( $raw, true );
-		if ( is_array( $data ) && ! empty( $data['value'] ) && class_exists( '\Elementor\Icons_Manager' ) ) {
-			ob_start();
-			\Elementor\Icons_Manager::render_icon( $data, [ 'aria-hidden' => 'true' ] );
-			return (string) ob_get_clean();
-		}
-		// Legacy: plain FA class string
-		return '<i class="' . esc_attr( $raw ) . '" aria-hidden="true"></i>';
-	}
-
 	public static function init(): void {
 		add_shortcode( 'bmg_map', [ __CLASS__, 'render' ] );
 		add_action( 'wp_enqueue_scripts', [ __CLASS__, 'register_assets' ] );
@@ -199,7 +185,6 @@ class BMG_Shortcode {
 				'x'           => (float) $x,
 				'y'           => (float) $y,
 				'color'       => $color,
-				'icon_html'   => self::render_location_icon( get_post_meta( $loc->ID, '_bmg_loc_icon', true ) ),
 			];
 		}
 
