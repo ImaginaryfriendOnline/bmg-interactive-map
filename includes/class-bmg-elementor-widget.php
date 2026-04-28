@@ -249,6 +249,25 @@ $this->add_responsive_control( 'start_zoom', [
 
 		$this->end_controls_section();
 
+		// ── Marker Style ─────────────────────────────────────────────────────
+		$this->start_controls_section( 'section_style_markers', [
+			'label' => esc_html__( 'Markers', 'bmg-interactive-map' ),
+			'tab'   => \Elementor\Controls_Manager::TAB_STYLE,
+		] );
+
+		$this->add_control( 'marker_size', [
+			'label'      => esc_html__( 'Circle Size', 'bmg-interactive-map' ),
+			'type'       => \Elementor\Controls_Manager::SLIDER,
+			'size_units' => [ 'px' ],
+			'range'      => [ 'px' => [ 'min' => 6, 'max' => 60, 'step' => 1 ] ],
+			'default'    => [ 'size' => 20, 'unit' => 'px' ],
+			'selectors'  => [
+				'{{WRAPPER}} .bmg-pin' => 'width: {{SIZE}}{{UNIT}}; height: {{SIZE}}{{UNIT}};',
+			],
+		] );
+
+		$this->end_controls_section();
+
 		// ── Marker Tooltip Style ─────────────────────────────────────────────
 		// Tooltips render inside the Leaflet map pane, so {{WRAPPER}} scoping works.
 		$this->start_controls_section( 'section_style_tooltip', [
@@ -823,6 +842,7 @@ $this->add_responsive_control( 'start_zoom', [
 			'toolbar_position'        => $settings['toolbar_position']        ?? '',
 			'area_highlights_default' => $settings['area_highlights_default'] ?? '',
 			'responsive_start'        => $responsive_start,
+			'marker_size'             => (int) ( $settings['marker_size']['size'] ?? 20 ),
 			'show_hidden'             => (
 				\Elementor\Plugin::$instance->editor->is_edit_mode() ||
 				\Elementor\Plugin::$instance->preview->is_preview_mode()

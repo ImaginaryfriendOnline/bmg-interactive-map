@@ -120,9 +120,11 @@
 			requestAnimationFrame( function () {
 
 			// Per-embed zoom position and levels override global settings.
-			var zoomPos   = el.dataset.zoomPosition || ZOOM_POSITION;
-			var minZoom   = el.dataset.minZoom !== undefined && el.dataset.minZoom !== '' ? Number( el.dataset.minZoom ) : MIN_ZOOM;
-			var maxZoom   = el.dataset.maxZoom !== undefined && el.dataset.maxZoom !== '' ? Number( el.dataset.maxZoom ) : MAX_ZOOM;
+			var zoomPos    = el.dataset.zoomPosition || ZOOM_POSITION;
+			var minZoom    = el.dataset.minZoom !== undefined && el.dataset.minZoom !== '' ? Number( el.dataset.minZoom ) : MIN_ZOOM;
+			var maxZoom    = el.dataset.maxZoom !== undefined && el.dataset.maxZoom !== '' ? Number( el.dataset.maxZoom ) : MAX_ZOOM;
+			var markerSize = parseInt( el.dataset.markerSize, 10 ) || 20;
+			var iconHalf   = markerSize / 2;
 			var startView          = pickStartView( el );
 			var hasStart           = startView !== null;
 			var initialPositionSet = false;
@@ -241,7 +243,7 @@
 				var mapRect  = mapEl.getBoundingClientRect();
 				var markerPt = map.latLngToContainerPoint( popup.getLatLng() );
 				var pad      = 10;
-				var iconHalf = 10; // half of the 20 px marker icon
+				// iconHalf is captured from the initMap closure (markerSize / 2)
 
 				// Visible region = intersection of map element and visual viewport.
 				var vpTop    = Math.max( mapRect.top,    0 );
@@ -264,7 +266,7 @@
 				if ( popupRect.height + pad > spaceAbove && spaceBelow > spaceAbove ) {
 					popupEl.classList.add( 'bmg-popup-below' );
 					var currentTop = popupRect.top - mapRect.top;
-					var targetTop  = markerPt.y + iconHalf + 2; // 2 px gap below icon
+					var targetTop  = markerPt.y + iconHalf + 2;
 					dy = targetTop - currentTop;
 				} else {
 					// Keep above — nudge if it clips the visible top or bottom.
@@ -307,8 +309,8 @@
 
 				var icon = L.divIcon( {
 					className : 'bmg-map-marker-icon',
-					iconSize  : [ 20, 20 ],
-					iconAnchor: [ 10, 10 ],
+					iconSize  : [ markerSize, markerSize ],
+					iconAnchor: [ iconHalf,   iconHalf   ],
 					html      : '<div class="bmg-pin"'
 						+ ' role="button"'
 						+ ' tabindex="0"'
@@ -323,7 +325,7 @@
 				if ( el.dataset.tooltips ) {
 					leafletMarker.bindTooltip( escHtml( loc.title ), {
 						direction: 'top',
-						offset   : [ 0, -10 ],
+						offset   : [ 0, -iconHalf ],
 					} );
 				}
 

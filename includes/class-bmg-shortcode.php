@@ -58,6 +58,7 @@ class BMG_Shortcode {
 			'area_list_title'         => '',
 			'toolbar_position'        => '',
 			'area_highlights_default' => '',
+			'marker_size'             => 20,
 			'show_hidden'             => '0',
 		], $atts, 'bmg_map' );
 
@@ -368,6 +369,7 @@ class BMG_Shortcode {
 				<?php echo $responsive_start_json ? 'data-responsive-start="' . esc_attr( $responsive_start_json ) . '"' : ''; ?>
 				<?php echo $close_icon_html ? 'data-close-icon="' . esc_attr( $close_icon_html ) . '"' : ''; ?>
 				<?php echo $tileset ? 'data-tileset-url="' . esc_url( $tileset['url'] ) . '" data-tileset-zoom-min="' . esc_attr( $tileset['zoom_min'] ) . '"' : ''; ?>
+				data-marker-size="<?php echo esc_attr( max( 6, (int) $atts['marker_size'] ) ); ?>"
 				aria-label="<?php echo esc_attr( $map->post_title ); ?>">
 			</div>
 			<?php
