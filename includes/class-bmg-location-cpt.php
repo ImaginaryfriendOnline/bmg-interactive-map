@@ -415,8 +415,21 @@ class BMG_Location_CPT {
 			);
 
 			$tabs = \Elementor\Plugin::$instance->icons_manager->get_icon_manager_tabs_config();
+
+			// Keep only tabs that have loadable icon data — excludes aggregate
+			// placeholder tabs like "all" which have neither fetchJson nor inline icons.
+			$picker_tabs = array_values( array_filter( $tabs, function ( $t ) {
+				return ! empty( $t['fetchJson'] )
+					|| ( ! empty( $t['icons'] ) && is_array( $t['icons'] ) );
+			} ) );
+
+			// Fallback: if every tab was filtered out, pass all of them.
+			if ( empty( $picker_tabs ) ) {
+				$picker_tabs = array_values( $tabs );
+			}
+
 			wp_localize_script( 'bmg-icon-picker', 'bmgIconPickerConfig', [
-				'tabs'  => array_values( $tabs ),
+				'tabs'  => $picker_tabs,
 				'nonce' => wp_create_nonce( 'bmg_icon_list' ),
 				'ajax'  => admin_url( 'admin-ajax.php' ),
 			] );
