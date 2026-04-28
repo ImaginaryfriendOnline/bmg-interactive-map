@@ -445,37 +445,71 @@ class BMG_Location_CPT {
 			wp_send_json_error( 'Unknown library' );
 		}
 
-		$tab       = $tabs[ $library ];
-		$fetch_url = $tab['fetchJson'] ?? '';
-
-		if ( ! $fetch_url ) {
-			wp_send_json_error( 'No fetchJson URL for this library' );
-		}
-
-		// Fetch via WP HTTP API — avoids URL→path conversion issues caused by
-		// protocol mismatches (http vs https), CDN prefixes, or subdirectories.
-		$response = wp_remote_get( $fetch_url, [
-			'timeout'   => 15,
-			'sslverify' => apply_filters( 'https_local_ssl_verify', false ),
-		] );
-
-		if ( is_wp_error( $response ) ) {
-			wp_send_json_error( 'Could not fetch icon library: ' . $response->get_error_message() );
-		}
-
-		$body  = wp_remote_retrieve_body( $response );
+		$tab   = $tabs[ $library ];
 		$icons = [];
 
-		// Pass 1 — plain JSON:  {"icons":{"home":{},...}}  or  {"home":{},...}
-		$decoded = json_decode( $body, true );
-		if ( is_array( $decoded ) ) {
-			$icons = array_keys( $decoded['icons'] ?? $decoded );
+		// Fast path: icon names already embedded in the tab config (e.g. eicons).
+		if ( ! empty( $tab['icons'] ) && is_array( $tab['icons'] ) ) {
+			$icons = array_keys( $tab['icons'] );
 		}
 
-		// Pass 2 — Elementor JS pack format:  "home":{}  or  "home":[]
 		if ( empty( $icons ) ) {
-			preg_match_all( '/"([a-z][a-z0-9-]+)":\s*[{\[]/', $body, $matches );
-			$icons = array_unique( $matches[1] ?? [] );
+			$fetch_url = $tab['fetchJson'] ?? '';
+			$body      = '';
+			$error     = '';
+
+			if ( $fetch_url ) {
+				// Primary: read from filesystem.
+				// Strip scheme and domain from both URLs before comparing so that
+				// http vs https mismatches do not prevent path resolution.
+				$site_bare  = preg_replace( '#^https?://#', '', rtrim( site_url(), '/' ) );
+				$fetch_bare = preg_replace( '#^https?://#', '', $fetch_url );
+
+				if ( strpos( $fetch_bare, $site_bare ) === 0 ) {
+					$rel_path  = substr( $fetch_bare, strlen( $site_bare ) );
+					$file_path = rtrim( ABSPATH, DIRECTORY_SEPARATOR ) . $rel_path;
+
+					if ( file_exists( $file_path ) && is_readable( $file_path ) ) {
+						// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+						$body = (string) file_get_contents( $file_path );
+					} else {
+						$error = 'File not found: ' . $file_path;
+					}
+				}
+
+				// Fallback: HTTP fetch (handles CDN URLs and exotic setups).
+				if ( ! $body ) {
+					$resp = wp_remote_get( $fetch_url, [
+						'timeout'   => 15,
+						'sslverify' => false,
+					] );
+					if ( is_wp_error( $resp ) ) {
+						$error .= ' | HTTP: ' . $resp->get_error_message();
+					} else {
+						$body = (string) wp_remote_retrieve_body( $resp );
+					}
+				}
+			}
+
+			if ( $body ) {
+				// Pass 1 — plain JSON: {"icons":{"home":{},...}} or {"home":{},...}
+				$decoded = json_decode( $body, true );
+				if ( is_array( $decoded ) ) {
+					$src   = $decoded['icons'] ?? $decoded;
+					$icons = is_array( $src ) ? array_keys( $src ) : [];
+				}
+
+				// Pass 2 — Elementor JS pack format: "home":{} or "home":[]
+				if ( empty( $icons ) ) {
+					preg_match_all( '/"([a-z][a-z0-9-]+)":\s*[{\[]/', $body, $matches );
+					$icons = array_unique( $matches[1] ?? [] );
+				}
+			}
+
+			if ( empty( $icons ) ) {
+				$reason = $error ?: ( $fetch_url ? 'Empty response or unrecognised format' : 'No fetchJson URL' );
+				wp_send_json_error( $reason );
+			}
 		}
 
 		wp_send_json_success( [

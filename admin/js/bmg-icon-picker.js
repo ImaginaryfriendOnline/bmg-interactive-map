@@ -182,6 +182,10 @@
 						renderGrid( iconCache[ tab.name ], tab );
 					}
 				} else {
+					// Log the server's error message to the console to aid diagnosis.
+					if ( window.console ) {
+						console.error( 'BMG icon picker: failed to load library "' + tab.name + '"', res.data || res );
+					}
 					gridEl.innerHTML = '<div class="bmg-icon-modal__no-results">Could not load icons for this library.</div>';
 				}
 			} )
