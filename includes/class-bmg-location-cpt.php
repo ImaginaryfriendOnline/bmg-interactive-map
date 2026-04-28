@@ -441,11 +441,19 @@ class BMG_Location_CPT {
 		$library = sanitize_key( $_POST['library'] ?? '' );
 		$tabs    = \Elementor\Plugin::$instance->icons_manager->get_icon_manager_tabs_config();
 
-		if ( ! isset( $tabs[ $library ] ) ) {
-			wp_send_json_error( 'Unknown library' );
+		// The array key and the 'name' property may differ in some Elementor versions,
+		// so search by name value rather than array key.
+		$tab = null;
+		foreach ( $tabs as $t ) {
+			if ( isset( $t['name'] ) && $t['name'] === $library ) {
+				$tab = $t;
+				break;
+			}
 		}
 
-		$tab   = $tabs[ $library ];
+		if ( null === $tab ) {
+			wp_send_json_error( 'Unknown library: ' . $library );
+		}
 		$icons = [];
 
 		// Fast path: icon names already embedded in the tab config (e.g. eicons).
