@@ -445,28 +445,37 @@ class BMG_Location_CPT {
 			wp_send_json_error( 'Unknown library' );
 		}
 
-		$tab   = $tabs[ $library ];
+		$tab       = $tabs[ $library ];
+		$fetch_url = $tab['fetchJson'] ?? '';
+
+		if ( ! $fetch_url ) {
+			wp_send_json_error( 'No fetchJson URL for this library' );
+		}
+
+		// Fetch via WP HTTP API — avoids URL→path conversion issues caused by
+		// protocol mismatches (http vs https), CDN prefixes, or subdirectories.
+		$response = wp_remote_get( $fetch_url, [
+			'timeout'   => 15,
+			'sslverify' => apply_filters( 'https_local_ssl_verify', false ),
+		] );
+
+		if ( is_wp_error( $response ) ) {
+			wp_send_json_error( 'Could not fetch icon library: ' . $response->get_error_message() );
+		}
+
+		$body  = wp_remote_retrieve_body( $response );
 		$icons = [];
 
-		if ( ! empty( $tab['fetchJson'] ) ) {
-			$site_url  = trailingslashit( site_url() );
-			$file_path = str_replace( $site_url, trailingslashit( ABSPATH ), $tab['fetchJson'] );
+		// Pass 1 — plain JSON:  {"icons":{"home":{},...}}  or  {"home":{},...}
+		$decoded = json_decode( $body, true );
+		if ( is_array( $decoded ) ) {
+			$icons = array_keys( $decoded['icons'] ?? $decoded );
+		}
 
-			if ( file_exists( $file_path ) && is_readable( $file_path ) ) {
-				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
-				$content = file_get_contents( $file_path );
-				$decoded = json_decode( $content, true );
-
-				if ( is_array( $decoded ) && isset( $decoded['icons'] ) ) {
-					$icons = is_array( $decoded['icons'] ) ? array_keys( $decoded['icons'] ) : [];
-				} elseif ( is_array( $decoded ) ) {
-					$icons = array_values( $decoded );
-				} else {
-					// Extract icon names from Elementor's JS pack format
-					preg_match_all( '/"([a-z][a-z0-9-]+)":\s*[{\[]/', $content, $matches );
-					$icons = array_unique( $matches[1] ?? [] );
-				}
-			}
+		// Pass 2 — Elementor JS pack format:  "home":{}  or  "home":[]
+		if ( empty( $icons ) ) {
+			preg_match_all( '/"([a-z][a-z0-9-]+)":\s*[{\[]/', $body, $matches );
+			$icons = array_unique( $matches[1] ?? [] );
 		}
 
 		wp_send_json_success( [

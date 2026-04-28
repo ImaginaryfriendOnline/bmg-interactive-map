@@ -225,9 +225,11 @@
 			// and the visual viewport so mobile browsers where the map can extend
 			// behind the address bar are handled correctly.
 			//
-			// All movement goes through setLatLng so Leaflet's own transform-based
-			// positioning is never disturbed.  After a horizontal shift the tip is
-			// re-aligned via a CSS custom property so it still points at the marker.
+			// Orientation is chosen by comparing available space above vs below the
+			// marker, so bottom-of-map markers always open upward and top-of-map
+			// markers flip downward regardless of the popup's rendered geometry.
+			// All movement goes through setLatLng; after a horizontal shift the tip
+			// is re-aligned via a CSS custom property.
 			function applyPopupCorrection( popup ) {
 				var popupEl = popup.getElement();
 				var mapEl   = map.getContainer();
@@ -239,6 +241,7 @@
 				var mapRect  = mapEl.getBoundingClientRect();
 				var markerPt = map.latLngToContainerPoint( popup.getLatLng() );
 				var pad      = 10;
+				var iconHalf = 13; // half of the 26 px marker icon
 
 				// Visible region = intersection of map element and visual viewport.
 				var vpTop    = Math.max( mapRect.top,    0 );
@@ -246,31 +249,40 @@
 				var vpLeft   = Math.max( mapRect.left,   0 );
 				var vpRight  = Math.min( mapRect.right,  window.innerWidth );
 
+				// Marker Y in viewport coordinates.
+				var markerViewY = mapRect.top + markerPt.y;
+
+				// Visible pixels available above and below the icon edge.
+				var spaceAbove = markerViewY - iconHalf - vpTop;
+				var spaceBelow = vpBottom    - iconHalf - markerViewY;
+
 				var popupRect = popupEl.getBoundingClientRect();
 				var dx = 0, dy = 0;
 
-				if ( popupRect.top < vpTop + pad ) {
-					// Not enough room above in the visible viewport — flip below marker.
+				// Default orientation: above. Flip below only when the popup does not
+				// fit above AND there is more room below the marker than above it.
+				if ( popupRect.height + pad > spaceAbove && spaceBelow > spaceAbove ) {
 					popupEl.classList.add( 'bmg-popup-below' );
-					var targetTop  = markerPt.y + 13 + 2; // half-icon (13 px) + gap
 					var currentTop = popupRect.top - mapRect.top;
+					var targetTop  = markerPt.y + iconHalf + 2; // 2 px gap below icon
 					dy = targetTop - currentTop;
 				} else {
-					// Horizontal clamping — move popup away from the visible edge.
-					if ( popupRect.right  > vpRight  - pad ) dx = ( vpRight  - pad ) - popupRect.right;
-					if ( popupRect.left   < vpLeft   + pad ) dx = ( vpLeft   + pad ) - popupRect.left;
-					// Bottom clamping.
+					// Keep above — nudge if it clips the visible top or bottom.
+					if ( popupRect.top    < vpTop    + pad ) dy = ( vpTop    + pad ) - popupRect.top;
 					if ( popupRect.bottom > vpBottom - pad ) dy = ( vpBottom - pad ) - popupRect.bottom;
 				}
+
+				// Horizontal clamping applies regardless of orientation.
+				if ( popupRect.right > vpRight - pad ) dx = ( vpRight - pad ) - popupRect.right;
+				if ( popupRect.left  < vpLeft  + pad ) dx = ( vpLeft  + pad ) - popupRect.left;
 
 				if ( dx !== 0 || dy !== 0 ) {
 					var anchorPt = map.latLngToContainerPoint( popup.getLatLng() );
 					popup.setLatLng( map.containerPointToLatLng(
 						L.point( anchorPt.x + dx, anchorPt.y + dy )
 					) );
-					// After a horizontal shift the popup's latLng moves away from the
-					// marker, so the centred tip no longer points at it.  Shift the tip
-					// container by the inverse of dx to compensate.
+					// After a horizontal shift the tip drifts off the marker — the CSS
+					// var shifts the tip container back by the same amount.
 					if ( dx !== 0 ) {
 						popupEl.style.setProperty( '--bmg-tip-dx', ( -dx ) + 'px' );
 					}
