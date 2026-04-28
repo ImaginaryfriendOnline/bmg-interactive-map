@@ -416,6 +416,19 @@ class BMG_Location_CPT {
 
 			$tabs = \Elementor\Plugin::$instance->icons_manager->get_icon_manager_tabs_config();
 
+			// Enqueue the icon font CSS for every registered library so glyphs render
+			// in the picker grid (admin never loads FA otherwise).
+			foreach ( $tabs as $t ) {
+				if ( ! empty( $t['url'] ) && ! empty( $t['name'] ) ) {
+					wp_enqueue_style(
+						'bmg-icon-lib-' . sanitize_key( $t['name'] ),
+						$t['url'],
+						[],
+						$t['ver'] ?? null
+					);
+				}
+			}
+
 			// Keep only tabs that have loadable icon data — excludes aggregate
 			// placeholder tabs like "all" which have neither fetchJson nor inline icons.
 			$picker_tabs = array_values( array_filter( $tabs, function ( $t ) {
