@@ -220,39 +220,65 @@
 				[  H * 1.1,  W * 1.1 ],
 			] );
 
-			// Smart popup positioning: below marker if near top, shifted left if near right.
-			// Double rAF: first frame lets Leaflet finish its own _updatePositions()
-			// after any flyTo / zoomAnimation; second frame applies our correction.
+			// Smart popup positioning: below marker if near top of viewport, shifted
+			// left/right if near horizontal edges.  Uses the intersection of the map
+			// element rect and the visual viewport so mobile browsers (where the map
+			// may extend behind the address bar) are handled correctly.
+			//
+			// Vertical (above→below) is applied via setLatLng so Leaflet stores the
+			// corrected anchor.  Horizontal and bottom clamping use a CSS transform
+			// so the tip container stays pointing at the original marker position;
+			// a CSS variable shifts the tip to compensate for the popup drift.
 			function applyPopupCorrection( popup ) {
-				var popupEl = popup.getElement();
-				var mapEl   = map.getContainer();
+				var popupEl  = popup.getElement();
+				var mapEl    = map.getContainer();
 				if ( ! popupEl || ! mapEl ) return;
 
 				popupEl.classList.remove( 'bmg-popup-below' );
+				popupEl.style.transform = '';
+				popupEl.style.removeProperty( '--bmg-tip-dx' );
 
-				var mapRect   = mapEl.getBoundingClientRect();
+				var mapRect  = mapEl.getBoundingClientRect();
+				var markerPt = map.latLngToContainerPoint( popup.getLatLng() );
+				var pad      = 10;
+
+				// Visible region = intersection of the map element and the viewport.
+				var vpTop    = Math.max( mapRect.top,    0 );
+				var vpBottom = Math.min( mapRect.bottom, window.innerHeight );
+				var vpLeft   = Math.max( mapRect.left,   0 );
+				var vpRight  = Math.min( mapRect.right,  window.innerWidth );
+
 				var popupRect = popupEl.getBoundingClientRect();
-				var pad       = 10;
-				var dx = 0, dy = 0;
 
-				if ( popupRect.top < mapRect.top + pad ) {
-					var markerPt   = map.latLngToContainerPoint( popup.getLatLng() );
-					var targetTop  = markerPt.y + 13 + 2;
-					var currentTop = popupRect.top - mapRect.top;
-					dy = targetTop - currentTop;
+				// 1. Above → below flip when there is not enough room above the marker
+				//    in the visible viewport.
+				if ( popupRect.top < vpTop + pad ) {
 					popupEl.classList.add( 'bmg-popup-below' );
-				} else {
-					if ( popupRect.right  > mapRect.right  - pad ) dx = ( mapRect.right  - pad ) - popupRect.right;
-					if ( popupRect.left   < mapRect.left   + pad ) dx = ( mapRect.left   + pad ) - popupRect.left;
-					if ( popupRect.bottom > mapRect.bottom - pad ) dy = ( mapRect.bottom - pad ) - popupRect.bottom;
+					var targetTop  = markerPt.y + 13 + 2; // half icon (13px) + 2px gap
+					var currentTop = popupRect.top - mapRect.top;
+					var dy = targetTop - currentTop;
+					var anchorPt    = map.latLngToContainerPoint( popup.getLatLng() );
+					popup.setLatLng( map.containerPointToLatLng(
+						L.point( anchorPt.x, anchorPt.y + dy )
+					) );
+					popupRect = popupEl.getBoundingClientRect(); // re-read after reposition
 				}
 
-				if ( dx !== 0 || dy !== 0 ) {
-					// Use setLatLng so Leaflet stores the corrected position natively —
-					// subsequent _updatePositions() calls will honour it, not reset it.
-					var anchorPt    = map.latLngToContainerPoint( popup.getLatLng() );
-					var newAnchorPt = L.point( anchorPt.x + dx, anchorPt.y + dy );
-					popup.setLatLng( map.containerPointToLatLng( newAnchorPt ) );
+				// 2. Horizontal and bottom clamping via CSS transform.
+				//    The transform does not move the popup's latLng, so the tip
+				//    still points at the marker.  We shift the tip container by the
+				//    inverse of dx so it visually points at the marker after the drift.
+				var dx  = 0;
+				var dy2 = 0;
+				if ( popupRect.right  > vpRight  - pad ) dx  = ( vpRight  - pad ) - popupRect.right;
+				if ( popupRect.left   < vpLeft   + pad ) dx  = ( vpLeft   + pad ) - popupRect.left;
+				if ( popupRect.bottom > vpBottom - pad ) dy2 = ( vpBottom - pad ) - popupRect.bottom;
+
+				if ( dx !== 0 || dy2 !== 0 ) {
+					popupEl.style.transform = 'translate(' + dx + 'px,' + dy2 + 'px)';
+				}
+				if ( dx !== 0 ) {
+					popupEl.style.setProperty( '--bmg-tip-dx', ( -dx ) + 'px' );
 				}
 			}
 
@@ -281,7 +307,7 @@
 						+ ' tabindex="0"'
 						+ ' aria-label="' + label + '"'
 						+ ' style="background:' + color + ';">'
-						+ ( loc.icon ? '<i class="' + escAttr( loc.icon ) + ' bmg-pin__icon" aria-hidden="true"></i>' : '' )
+						+ ( loc.icon_html ? '<span class="bmg-pin__icon">' + loc.icon_html + '</span>' : '' )
 						+ '</div>',
 				} );
 
@@ -700,7 +726,7 @@
 				listsHidden = ! listsHidden;
 				if ( locList )  locList.classList.toggle(  'bmg-location-list--hidden', listsHidden );
 				if ( areaList ) areaList.classList.toggle( 'bmg-area-list--hidden',     listsHidden );
-				listsBtn.setAttribute( 'aria-pressed', listsHidden ? 'true' : 'false' );
+				listsBtn.setAttribute( 'aria-pressed', listsHidden ? 'false' : 'true' );
 				updatePanelVisibility();
 				setTimeout( function () { map.invalidateSize(); }, 50 );
 			} );
@@ -772,8 +798,7 @@
 		}
 
 		// Native fullscreen toggle.
-		var fsBtn     = toolbar.querySelector( '.bmg-toolbar-btn--fullscreen' );
-		var fsExitBtn = wrapperEl.querySelector( '.bmg-fs-exit-btn' );
+		var fsBtn = toolbar.querySelector( '.bmg-toolbar-btn--fullscreen' );
 
 		if ( fsBtn ) {
 			fsBtn.addEventListener( 'click', function () {
@@ -798,17 +823,6 @@
 			document.addEventListener( 'webkitfullscreenchange', onFsChange );
 		}
 
-		// Shared exit button — exits whichever mode is active.
-		if ( fsExitBtn ) {
-			fsExitBtn.addEventListener( 'click', function () {
-				if ( document.fullscreenElement ) {
-					( document.exitFullscreen || document.webkitExitFullscreen
-						|| function () {} ).call( document );
-				} else if ( inFullWindow ) {
-					exitFullWindow();
-				}
-			} );
-		}
 	}
 
 	// ------------------------------------------------------------------

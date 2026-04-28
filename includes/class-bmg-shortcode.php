@@ -28,6 +28,20 @@ class BMG_Shortcode {
 		self::$pending_close_icon_html = $html;
 	}
 
+	private static function render_location_icon( string $raw ): string {
+		if ( ! $raw ) {
+			return '';
+		}
+		$data = json_decode( $raw, true );
+		if ( is_array( $data ) && ! empty( $data['value'] ) && class_exists( '\Elementor\Icons_Manager' ) ) {
+			ob_start();
+			\Elementor\Icons_Manager::render_icon( $data, [ 'aria-hidden' => 'true' ] );
+			return (string) ob_get_clean();
+		}
+		// Legacy: plain FA class string
+		return '<i class="' . esc_attr( $raw ) . '" aria-hidden="true"></i>';
+	}
+
 	public static function init(): void {
 		add_shortcode( 'bmg_map', [ __CLASS__, 'render' ] );
 		add_action( 'wp_enqueue_scripts', [ __CLASS__, 'register_assets' ] );
@@ -185,7 +199,7 @@ class BMG_Shortcode {
 				'x'           => (float) $x,
 				'y'           => (float) $y,
 				'color'       => $color,
-				'icon'        => sanitize_text_field( get_post_meta( $loc->ID, '_bmg_loc_icon', true ) ),
+				'icon_html'   => self::render_location_icon( get_post_meta( $loc->ID, '_bmg_loc_icon', true ) ),
 			];
 		}
 
@@ -292,7 +306,7 @@ class BMG_Shortcode {
 			$toolbar_buttons = '';
 			if ( $list_position !== 'none' || $area_list_position !== 'none' ) {
 				$toolbar_buttons .= '<button class="bmg-toolbar-btn bmg-toolbar-btn--lists" type="button"'
-					. ' aria-pressed="false"'
+					. ' aria-pressed="true"'
 					. ' title="' . esc_attr__( 'Toggle lists', 'bmg-interactive-map' ) . '"'
 					. ' aria-label="' . esc_attr__( 'Toggle lists', 'bmg-interactive-map' ) . '">'
 					. '<span class="bmg-toolbar-icon bmg-toolbar-icon--loc" aria-hidden="true"></span>'
@@ -347,11 +361,7 @@ class BMG_Shortcode {
 			}
 
 			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-			echo '<div class="bmg-map-toolbar bmg-map-toolbar--' . esc_attr( $toolbar_zone ) . '">' . $toolbar_buttons . '</div>'
-				. '<button class="bmg-fs-exit-btn" type="button"'
-				. ' aria-label="' . esc_attr__( 'Exit fullscreen', 'bmg-interactive-map' ) . '">'
-				. esc_html__( 'Exit fullscreen', 'bmg-interactive-map' )
-				. '</button>';
+			echo '<div class="bmg-map-toolbar bmg-map-toolbar--' . esc_attr( $toolbar_zone ) . '">' . $toolbar_buttons . '</div>';
 			?>
 			<div class="bmg-map-container"
 				id="<?php echo esc_attr( $container_id ); ?>"

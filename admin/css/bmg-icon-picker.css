@@ -1,0 +1,184 @@
+/* -----------------------------------------------------------------------
+   Location CPT — Elementor icon picker
+   ----------------------------------------------------------------------- */
+
+.bmg-icon-picker-wrap {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+.bmg-icon-preview {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 30px;
+	height: 30px;
+	background: #3d3d3d;
+	border-radius: 50%;
+	color: #fff;
+	font-size: 14px;
+	flex-shrink: 0;
+}
+
+.bmg-icon-preview:empty {
+	display: none;
+}
+
+/* -----------------------------------------------------------------------
+   Modal overlay
+   ----------------------------------------------------------------------- */
+
+.bmg-icon-modal {
+	position: fixed;
+	inset: 0;
+	z-index: 100000;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: rgba( 0, 0, 0, 0.6 );
+}
+
+.bmg-icon-modal__dialog {
+	background: #fff;
+	border-radius: 4px;
+	width: min( 680px, 95vw );
+	height: min( 540px, 90vh );
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	box-shadow: 0 8px 32px rgba( 0, 0, 0, 0.4 );
+}
+
+/* -----------------------------------------------------------------------
+   Modal header
+   ----------------------------------------------------------------------- */
+
+.bmg-icon-modal__header {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 12px 16px;
+	border-bottom: 1px solid #ddd;
+	flex-shrink: 0;
+}
+
+.bmg-icon-modal__search {
+	flex: 1;
+	padding: 6px 10px;
+	border: 1px solid #8c8f94;
+	border-radius: 3px;
+	font-size: 13px;
+}
+
+.bmg-icon-modal__close {
+	background: none;
+	border: none;
+	cursor: pointer;
+	font-size: 20px;
+	line-height: 1;
+	color: #666;
+	padding: 2px 6px;
+}
+
+.bmg-icon-modal__close:hover {
+	color: #000;
+}
+
+/* -----------------------------------------------------------------------
+   Tabs
+   ----------------------------------------------------------------------- */
+
+.bmg-icon-modal__tabs {
+	display: flex;
+	gap: 2px;
+	padding: 8px 16px 0;
+	border-bottom: 1px solid #ddd;
+	flex-shrink: 0;
+	overflow-x: auto;
+}
+
+.bmg-icon-modal__tab {
+	padding: 6px 12px;
+	font-size: 12px;
+	cursor: pointer;
+	border: 1px solid transparent;
+	border-bottom: none;
+	border-radius: 3px 3px 0 0;
+	background: none;
+	white-space: nowrap;
+}
+
+.bmg-icon-modal__tab:hover {
+	background: #f0f0f0;
+}
+
+.bmg-icon-modal__tab.is-active {
+	background: #fff;
+	border-color: #ddd;
+	margin-bottom: -1px;
+	padding-bottom: 7px;
+}
+
+/* -----------------------------------------------------------------------
+   Icon grid
+   ----------------------------------------------------------------------- */
+
+.bmg-icon-modal__body {
+	flex: 1;
+	overflow-y: auto;
+	padding: 12px 16px;
+}
+
+.bmg-icon-modal__loading {
+	text-align: center;
+	color: #888;
+	padding: 32px;
+	font-size: 13px;
+}
+
+.bmg-icon-modal__grid {
+	display: grid;
+	grid-template-columns: repeat( auto-fill, minmax( 52px, 1fr ) );
+	gap: 4px;
+}
+
+.bmg-icon-modal__cell {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 4px;
+	padding: 8px 4px;
+	border: 1px solid transparent;
+	border-radius: 3px;
+	cursor: pointer;
+	font-size: 18px;
+	color: #444;
+	min-height: 52px;
+}
+
+.bmg-icon-modal__cell:hover {
+	border-color: #2271b1;
+	background: #f0f6fc;
+	color: #2271b1;
+}
+
+.bmg-icon-modal__cell.is-selected {
+	border-color: #2271b1;
+	background: #2271b1;
+	color: #fff;
+}
+
+.bmg-icon-modal__cell svg {
+	width: 18px;
+	height: 18px;
+}
+
+.bmg-icon-modal__no-results {
+	color: #888;
+	font-size: 13px;
+	text-align: center;
+	padding: 24px;
+}

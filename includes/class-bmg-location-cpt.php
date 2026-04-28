@@ -19,7 +19,8 @@ class BMG_Location_CPT {
 		add_action( 'add_meta_boxes',  [ __CLASS__, 'add_meta_boxes' ] );
 		add_action( 'save_post',       [ __CLASS__, 'save_meta' ] );
 		add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_admin_assets' ] );
-		add_action( 'wp_ajax_bmg_get_map_image', [ __CLASS__, 'ajax_get_map_image' ] );
+		add_action( 'wp_ajax_bmg_get_map_image',  [ __CLASS__, 'ajax_get_map_image' ] );
+		add_action( 'wp_ajax_bmg_get_icon_list',  [ __CLASS__, 'ajax_get_icon_list' ] );
 		add_filter( 'manage_bmg_location_posts_columns',       [ __CLASS__, 'add_map_column' ] );
 		add_action( 'manage_bmg_location_posts_custom_column', [ __CLASS__, 'render_map_column' ], 10, 2 );
 		add_action( 'restrict_manage_posts', [ __CLASS__, 'render_list_filters' ] );
@@ -82,7 +83,8 @@ class BMG_Location_CPT {
 		$y             = get_post_meta( $post->ID, '_bmg_loc_y', true );
 		$default_color = BMG_Settings::get()['default_color'];
 		$color         = get_post_meta( $post->ID, '_bmg_loc_color', true ) ?: $default_color;
-		$icon_class    = get_post_meta( $post->ID, '_bmg_loc_icon', true );
+		$icon_raw      = get_post_meta( $post->ID, '_bmg_loc_icon', true );
+		$icon_data     = json_decode( $icon_raw, true );
 
 		// Fetch published and draft maps for the dropdown.
 		$maps = get_posts( [
@@ -172,15 +174,22 @@ class BMG_Location_CPT {
 					<input type="color" id="bmg_loc_color" name="bmg_loc_color"
 						value="<?php echo esc_attr( $color ); ?>" />
 				</label>
-				<label for="bmg_loc_icon"><?php esc_html_e( 'Icon (FA class)', 'bmg-interactive-map' ); ?>
-					<input type="text" id="bmg_loc_icon" name="bmg_loc_icon"
-						value="<?php echo esc_attr( $icon_class ); ?>"
-						placeholder="fas fa-location-dot"
-						style="width:160px;" />
-				</label>
-			</p>
-			<p class="description" style="margin-top:-8px;">
-				<?php esc_html_e( 'Optional Font Awesome class shown inside the marker circle, e.g. fas fa-home. Leave blank for the plain circle.', 'bmg-interactive-map' ); ?>
+				<span style="display:flex;flex-direction:column;gap:4px;">
+					<label><?php esc_html_e( 'Icon', 'bmg-interactive-map' ); ?></label>
+					<div class="bmg-icon-picker-wrap">
+						<span class="bmg-icon-preview">
+							<?php
+							if ( is_array( $icon_data ) && ! empty( $icon_data['value'] ) && class_exists( '\Elementor\Icons_Manager' ) ) {
+								\Elementor\Icons_Manager::render_icon( $icon_data, [ 'aria-hidden' => 'true' ] );
+							}
+							?>
+						</span>
+						<button type="button" class="button bmg-choose-icon-btn"><?php esc_html_e( 'Choose Icon', 'bmg-interactive-map' ); ?></button>
+						<button type="button" class="button bmg-clear-icon-btn"><?php esc_html_e( 'Clear', 'bmg-interactive-map' ); ?></button>
+						<input type="hidden" id="bmg_loc_icon_json" name="bmg_loc_icon_json"
+							value="<?php echo esc_attr( $icon_raw ); ?>" />
+					</div>
+				</span>
 			</p>
 
 		<!-- Visibility -->
@@ -275,7 +284,16 @@ class BMG_Location_CPT {
 			}
 		}
 
-		update_post_meta( $post_id, '_bmg_loc_icon', sanitize_text_field( wp_unslash( $_POST['bmg_loc_icon'] ?? '' ) ) );
+		$icon_json = wp_unslash( $_POST['bmg_loc_icon_json'] ?? '' );
+		$icon_arr  = json_decode( $icon_json, true );
+		if ( is_array( $icon_arr ) && ! empty( $icon_arr['value'] ) && ! empty( $icon_arr['library'] ) ) {
+			update_post_meta( $post_id, '_bmg_loc_icon', wp_json_encode( [
+				'value'   => sanitize_text_field( $icon_arr['value'] ),
+				'library' => sanitize_text_field( $icon_arr['library'] ),
+			] ) );
+		} else {
+			update_post_meta( $post_id, '_bmg_loc_icon', '' );
+		}
 
 		if ( isset( $_POST['bmg_location_visible'] ) ) {
 			delete_post_meta( $post_id, '_bmg_hidden' );
@@ -376,6 +394,85 @@ class BMG_Location_CPT {
 			'defaultColor' => $s['default_color'],
 			'minZoom'      => $s['min_zoom'],
 			'maxZoom'      => $s['max_zoom'],
+		] );
+
+		if ( class_exists( '\Elementor\Plugin' ) && isset( \Elementor\Plugin::$instance->icons_manager ) ) {
+			wp_enqueue_style( 'elementor-icons' );
+
+			wp_enqueue_style(
+				'bmg-icon-picker',
+				BMG_MAP_PLUGIN_URL . 'admin/css/bmg-icon-picker.css',
+				[],
+				BMG_MAP_VERSION
+			);
+
+			wp_enqueue_script(
+				'bmg-icon-picker',
+				BMG_MAP_PLUGIN_URL . 'admin/js/bmg-icon-picker.js',
+				[],
+				BMG_MAP_VERSION,
+				true
+			);
+
+			$tabs = \Elementor\Plugin::$instance->icons_manager->get_icon_manager_tabs_config();
+			wp_localize_script( 'bmg-icon-picker', 'bmgIconPickerConfig', [
+				'tabs'  => array_values( $tabs ),
+				'nonce' => wp_create_nonce( 'bmg_icon_list' ),
+				'ajax'  => admin_url( 'admin-ajax.php' ),
+			] );
+		}
+	}
+
+	// -------------------------------------------------------------------------
+	// AJAX: return icon names for a given Elementor icon library
+	// -------------------------------------------------------------------------
+
+	public static function ajax_get_icon_list(): void {
+		check_ajax_referer( 'bmg_icon_list', 'nonce' );
+
+		if ( ! current_user_can( 'edit_posts' ) ) {
+			wp_send_json_error( 'Forbidden', 403 );
+		}
+
+		if ( ! class_exists( '\Elementor\Plugin' ) || ! isset( \Elementor\Plugin::$instance->icons_manager ) ) {
+			wp_send_json_error( 'Elementor not available' );
+		}
+
+		$library = sanitize_key( $_POST['library'] ?? '' );
+		$tabs    = \Elementor\Plugin::$instance->icons_manager->get_icon_manager_tabs_config();
+
+		if ( ! isset( $tabs[ $library ] ) ) {
+			wp_send_json_error( 'Unknown library' );
+		}
+
+		$tab   = $tabs[ $library ];
+		$icons = [];
+
+		if ( ! empty( $tab['fetchJson'] ) ) {
+			$site_url  = trailingslashit( site_url() );
+			$file_path = str_replace( $site_url, trailingslashit( ABSPATH ), $tab['fetchJson'] );
+
+			if ( file_exists( $file_path ) && is_readable( $file_path ) ) {
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+				$content = file_get_contents( $file_path );
+				$decoded = json_decode( $content, true );
+
+				if ( is_array( $decoded ) && isset( $decoded['icons'] ) ) {
+					$icons = is_array( $decoded['icons'] ) ? array_keys( $decoded['icons'] ) : [];
+				} elseif ( is_array( $decoded ) ) {
+					$icons = array_values( $decoded );
+				} else {
+					// Extract icon names from Elementor's JS pack format
+					preg_match_all( '/"([a-z][a-z0-9-]+)":\s*[{\[]/', $content, $matches );
+					$icons = array_unique( $matches[1] ?? [] );
+				}
+			}
+		}
+
+		wp_send_json_success( [
+			'icons'         => array_values( $icons ),
+			'displayPrefix' => $tab['displayPrefix'] ?? '',
+			'prefix'        => $tab['prefix'] ?? '',
 		] );
 	}
 

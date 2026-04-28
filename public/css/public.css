@@ -71,10 +71,20 @@
 }
 
 .bmg-pin__icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	pointer-events: none;
+}
+
+.bmg-pin__icon i,
+.bmg-pin__icon svg {
 	font-size: 13px;
 	color: #fff;
+	fill: #fff;
 	line-height: 1;
-	pointer-events: none;
+	width: 13px;
+	height: 13px;
 }
 
 .bmg-pin:hover {
@@ -124,6 +134,9 @@
 
 .bmg-leaflet-popup .leaflet-popup-tip-container {
 	margin-top: -1px;
+	/* Shifts the tip left/right to keep it pointing at the marker when the
+	   popup is horizontally clamped away from the map edge. */
+	margin-left: calc( -20px + var( --bmg-tip-dx, 0px ) );
 }
 
 .bmg-popup-title {
@@ -868,9 +881,6 @@
 	display: none !important;
 }
 
-.bmg-map-layout--full-window .bmg-fs-exit-btn {
-	display: flex;
-}
 
 /* ── Fullscreen layout ────────────────────────────────────────────────────── */
 
@@ -903,41 +913,3 @@
 	display: none !important;
 }
 
-/* Fullscreen exit button — only visible in fullscreen */
-.bmg-fs-exit-btn {
-	display: none;
-	position: absolute;
-	bottom: 8px;
-	left: 50%;
-	transform: translateX(-50%);
-	z-index: 601;
-	align-items: center;
-	gap: 6px;
-	padding: 6px 14px;
-	background: rgba(255,255,255,0.92);
-	border: 1px solid rgba(0,0,0,0.2);
-	border-radius: 4px;
-	font-size: 13px;
-	font-weight: 500;
-	cursor: pointer;
-	box-shadow: 0 1px 4px rgba(0,0,0,0.18);
-	white-space: nowrap;
-	transition: background 0.12s;
-}
-.bmg-fs-exit-btn:hover {
-	background: rgba(255,255,255,1);
-}
-.bmg-map-layout--fullscreen .bmg-fs-exit-btn,
-.bmg-map-layout:fullscreen .bmg-fs-exit-btn,
-.bmg-map-layout:-webkit-full-screen .bmg-fs-exit-btn {
-	display: flex;
-}
-
-/* When the toolbar sits on the bottom edge, flip the exit button to the top
-   so they never overlap. Uses the sibling combinator — toolbar renders first. */
-.bmg-map-toolbar--bottom ~ .bmg-fs-exit-btn,
-.bmg-map-toolbar--bottom-left ~ .bmg-fs-exit-btn,
-.bmg-map-toolbar--bottom-right ~ .bmg-fs-exit-btn {
-	bottom: auto;
-	top: 8px;
-}
