@@ -220,65 +220,60 @@
 				[  H * 1.1,  W * 1.1 ],
 			] );
 
-			// Smart popup positioning: below marker if near top of viewport, shifted
-			// left/right if near horizontal edges.  Uses the intersection of the map
-			// element rect and the visual viewport so mobile browsers (where the map
-			// may extend behind the address bar) are handled correctly.
+			// Smart popup positioning — keeps popups within the visible portion of the
+			// map on all screen sizes.  Uses the intersection of the map element rect
+			// and the visual viewport so mobile browsers where the map can extend
+			// behind the address bar are handled correctly.
 			//
-			// Vertical (above→below) is applied via setLatLng so Leaflet stores the
-			// corrected anchor.  Horizontal and bottom clamping use a CSS transform
-			// so the tip container stays pointing at the original marker position;
-			// a CSS variable shifts the tip to compensate for the popup drift.
+			// All movement goes through setLatLng so Leaflet's own transform-based
+			// positioning is never disturbed.  After a horizontal shift the tip is
+			// re-aligned via a CSS custom property so it still points at the marker.
 			function applyPopupCorrection( popup ) {
-				var popupEl  = popup.getElement();
-				var mapEl    = map.getContainer();
+				var popupEl = popup.getElement();
+				var mapEl   = map.getContainer();
 				if ( ! popupEl || ! mapEl ) return;
 
 				popupEl.classList.remove( 'bmg-popup-below' );
-				popupEl.style.transform = '';
 				popupEl.style.removeProperty( '--bmg-tip-dx' );
 
 				var mapRect  = mapEl.getBoundingClientRect();
 				var markerPt = map.latLngToContainerPoint( popup.getLatLng() );
 				var pad      = 10;
 
-				// Visible region = intersection of the map element and the viewport.
+				// Visible region = intersection of map element and visual viewport.
 				var vpTop    = Math.max( mapRect.top,    0 );
 				var vpBottom = Math.min( mapRect.bottom, window.innerHeight );
 				var vpLeft   = Math.max( mapRect.left,   0 );
 				var vpRight  = Math.min( mapRect.right,  window.innerWidth );
 
 				var popupRect = popupEl.getBoundingClientRect();
+				var dx = 0, dy = 0;
 
-				// 1. Above → below flip when there is not enough room above the marker
-				//    in the visible viewport.
 				if ( popupRect.top < vpTop + pad ) {
+					// Not enough room above in the visible viewport — flip below marker.
 					popupEl.classList.add( 'bmg-popup-below' );
-					var targetTop  = markerPt.y + 13 + 2; // half icon (13px) + 2px gap
+					var targetTop  = markerPt.y + 13 + 2; // half-icon (13 px) + gap
 					var currentTop = popupRect.top - mapRect.top;
-					var dy = targetTop - currentTop;
-					var anchorPt    = map.latLngToContainerPoint( popup.getLatLng() );
+					dy = targetTop - currentTop;
+				} else {
+					// Horizontal clamping — move popup away from the visible edge.
+					if ( popupRect.right  > vpRight  - pad ) dx = ( vpRight  - pad ) - popupRect.right;
+					if ( popupRect.left   < vpLeft   + pad ) dx = ( vpLeft   + pad ) - popupRect.left;
+					// Bottom clamping.
+					if ( popupRect.bottom > vpBottom - pad ) dy = ( vpBottom - pad ) - popupRect.bottom;
+				}
+
+				if ( dx !== 0 || dy !== 0 ) {
+					var anchorPt = map.latLngToContainerPoint( popup.getLatLng() );
 					popup.setLatLng( map.containerPointToLatLng(
-						L.point( anchorPt.x, anchorPt.y + dy )
+						L.point( anchorPt.x + dx, anchorPt.y + dy )
 					) );
-					popupRect = popupEl.getBoundingClientRect(); // re-read after reposition
-				}
-
-				// 2. Horizontal and bottom clamping via CSS transform.
-				//    The transform does not move the popup's latLng, so the tip
-				//    still points at the marker.  We shift the tip container by the
-				//    inverse of dx so it visually points at the marker after the drift.
-				var dx  = 0;
-				var dy2 = 0;
-				if ( popupRect.right  > vpRight  - pad ) dx  = ( vpRight  - pad ) - popupRect.right;
-				if ( popupRect.left   < vpLeft   + pad ) dx  = ( vpLeft   + pad ) - popupRect.left;
-				if ( popupRect.bottom > vpBottom - pad ) dy2 = ( vpBottom - pad ) - popupRect.bottom;
-
-				if ( dx !== 0 || dy2 !== 0 ) {
-					popupEl.style.transform = 'translate(' + dx + 'px,' + dy2 + 'px)';
-				}
-				if ( dx !== 0 ) {
-					popupEl.style.setProperty( '--bmg-tip-dx', ( -dx ) + 'px' );
+					// After a horizontal shift the popup's latLng moves away from the
+					// marker, so the centred tip no longer points at it.  Shift the tip
+					// container by the inverse of dx to compensate.
+					if ( dx !== 0 ) {
+						popupEl.style.setProperty( '--bmg-tip-dx', ( -dx ) + 'px' );
+					}
 				}
 			}
 
