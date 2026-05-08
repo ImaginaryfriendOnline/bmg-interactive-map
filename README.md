@@ -18,6 +18,7 @@ A WordPress plugin for creating interactive image-based maps with clickable loca
 - **Elementor responsive controls** — map height and starting view are configurable per breakpoint (desktop / tablet / mobile)
 - **Elementor styling** — full visual control over markers, popups, location list, area list, toolbar, and close button via Elementor style tabs
 - **Tilesets** — optionally pre-slice the map image into 256×256 px tiles at multiple zoom levels; served as static files for faster rendering of large images
+- **Deep linking** — append `?location=slug` or `?area=slug` to any map page URL to auto-pan and open the popup for that item on load
 - **Cascade operations** — trashing or deleting a map automatically cascades to its locations and areas
 
 ## Requirements
@@ -121,6 +122,26 @@ Drag the **Interactive Map** widget from the General category onto your page. Al
 - **Location List** — panel, title bar, search field, item, hover, and active colours and typography
 - **Area List** — same controls as Location List, scoped to the area list
 - **Popup** — container background, border, border radius; title and body typography and colours; close button icon, colour, size, and shape
+
+## Deep Linking
+
+Append a query parameter to any map page URL to automatically pan to a location or area and open its popup when the page loads.
+
+| Parameter | Value | Effect |
+|-----------|-------|--------|
+| `?location=slug` | WordPress post slug of the location | Centers the map on that marker and opens its popup |
+| `?area=slug` | WordPress post slug of the area | Centers the map on that polygon's centroid and opens its popup |
+
+The slug is the URL-friendly name WordPress assigns to each post. You can see it in the **Edit Location** or **Edit Area** permalink field, or in the address bar when editing (`post-name` portion).
+
+Examples:
+
+```
+https://example.com/my-map-page/?location=great-hall
+https://example.com/my-map-page/?area=northern-district
+```
+
+If both parameters are present, `?location` takes precedence. If the slug does not match any item on the map the page loads normally with no error.
 
 ## Toolbar
 

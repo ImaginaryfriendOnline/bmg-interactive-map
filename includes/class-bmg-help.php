@@ -267,6 +267,51 @@ class BMG_Help {
 				</div>
 			</div>
 
+			<!-- ── Deep Linking ─────────────────────────────────────────── -->
+			<div class="bmg-help-card">
+				<div class="bmg-help-step-badge">
+					<span class="dashicons dashicons-admin-links" style="font-size:18px;line-height:28px;" aria-hidden="true"></span>
+				</div>
+				<div class="bmg-help-step-body">
+					<h2><?php esc_html_e( 'Deep Linking — Open a Location or Area via URL', 'bmg-interactive-map' ); ?></h2>
+					<p><?php esc_html_e( 'You can link directly to a specific location or area on any map page. When the URL contains a matching query parameter the map will automatically pan to that item and open its popup.', 'bmg-interactive-map' ); ?></p>
+
+					<table class="bmg-help-table widefat striped">
+						<thead>
+							<tr>
+								<th><?php esc_html_e( 'Parameter', 'bmg-interactive-map' ); ?></th>
+								<th><?php esc_html_e( 'Value', 'bmg-interactive-map' ); ?></th>
+								<th><?php esc_html_e( 'Effect', 'bmg-interactive-map' ); ?></th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td><code>?location=</code></td>
+								<td><?php esc_html_e( 'Post slug of the location', 'bmg-interactive-map' ); ?></td>
+								<td><?php esc_html_e( 'Centers the map on that marker and opens its popup.', 'bmg-interactive-map' ); ?></td>
+							</tr>
+							<tr>
+								<td><code>?area=</code></td>
+								<td><?php esc_html_e( 'Post slug of the area', 'bmg-interactive-map' ); ?></td>
+								<td><?php esc_html_e( 'Centers the map on that polygon\'s centroid and opens its popup.', 'bmg-interactive-map' ); ?></td>
+							</tr>
+						</tbody>
+					</table>
+
+					<h3><?php esc_html_e( 'Finding the Slug', 'bmg-interactive-map' ); ?></h3>
+					<p><?php esc_html_e( 'The slug is the URL-friendly name WordPress assigns to each post. You can find it in the permalink field at the top of the Edit Location or Edit Area screen, or in the address bar while editing (the part after the last slash).', 'bmg-interactive-map' ); ?></p>
+
+					<h3><?php esc_html_e( 'Examples', 'bmg-interactive-map' ); ?></h3>
+					<pre class="bmg-help-code"><code>https://example.com/map-page/?location=great-hall
+https://example.com/map-page/?area=northern-district</code></pre>
+
+					<div class="bmg-help-tip">
+						<span class="dashicons dashicons-lightbulb" aria-hidden="true"></span>
+						<?php esc_html_e( 'Tip: if both parameters are present, ?location takes precedence. If the slug does not match any item on the map the page loads normally with no error. On a page with multiple maps only the map that contains the matching item will respond.', 'bmg-interactive-map' ); ?>
+					</div>
+				</div>
+			</div>
+
 			<!-- ── Tilesets ─────────────────────────────────────────────── -->
 			<div class="bmg-help-card">
 				<div class="bmg-help-step-badge">
@@ -505,6 +550,10 @@ class BMG_Help {
 							<tr>
 								<td><?php esc_html_e( 'Exit fullscreen / Escape key', 'bmg-interactive-map' ); ?></td>
 								<td><?php esc_html_e( 'Exits fill-window or fullscreen mode and restores normal view.', 'bmg-interactive-map' ); ?></td>
+							</tr>
+							<tr>
+								<td><?php esc_html_e( 'URL ?location=slug or ?area=slug', 'bmg-interactive-map' ); ?></td>
+								<td><?php esc_html_e( 'On page load, pans the map to that item and opens its popup automatically.', 'bmg-interactive-map' ); ?></td>
 							</tr>
 							<tr>
 								<td><?php esc_html_e( 'Scroll wheel / pinch', 'bmg-interactive-map' ); ?></td>
