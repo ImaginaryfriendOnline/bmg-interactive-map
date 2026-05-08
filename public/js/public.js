@@ -265,9 +265,10 @@
 				// fit above AND there is more room below the marker than above it.
 				if ( popupRect.height + pad > spaceAbove && spaceBelow > spaceAbove ) {
 					popupEl.classList.add( 'bmg-popup-below' );
-					var currentTop = popupRect.top - mapRect.top;
-					var targetTop  = markerPt.y + iconHalf + 2;
-					dy = targetTop - currentTop;
+					void popupEl.offsetHeight; // flush layout so getBCR reflects the flipped position
+					var flippedRect = popupEl.getBoundingClientRect();
+					if ( flippedRect.top    < vpTop    + pad ) dy = ( vpTop    + pad ) - flippedRect.top;
+					if ( flippedRect.bottom > vpBottom - pad ) dy = ( vpBottom - pad ) - flippedRect.bottom;
 				} else {
 					// Keep above — nudge if it clips the visible top or bottom.
 					if ( popupRect.top    < vpTop    + pad ) dy = ( vpTop    + pad ) - popupRect.top;
