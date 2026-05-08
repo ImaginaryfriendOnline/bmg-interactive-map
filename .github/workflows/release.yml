@@ -1,0 +1,64 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: 'Version bump type'
+        required: false
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Bump version and build zip
+        run: |
+          BUMP="${{ github.event.inputs.bump }}"
+          if [ "$BUMP" = "major" ]; then
+            python3 repackage.py --major
+          elif [ "$BUMP" = "minor" ]; then
+            python3 repackage.py --minor
+          else
+            python3 repackage.py
+          fi
+
+      - name: Read new version
+        id: version
+        run: |
+          VERSION=$(grep '\* Version:' bmg-interactive-map.php | grep -oP '\d+\.\d+\.\d+')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Commit, tag, and push
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add bmg-interactive-map.php
+          git commit -m "Bump version to $VERSION"
+          git tag "v$VERSION"
+          git push origin HEAD:main
+          git push origin "v$VERSION"
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          gh release create "v${VERSION}" \
+            --title "v${VERSION}" \
+            --generate-notes \
+            "releases/bmg-interactive-map-${VERSION}.zip"
