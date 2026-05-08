@@ -437,6 +437,8 @@
 
 			initToolbar( el, map, el.closest( '.bmg-map-layout' ), polys, areas );
 
+			handleUrlParam( el, map, markers, locations, polys, areas );
+
 			} ); // requestAnimationFrame
 		};
 		img.src = imageUrl;
@@ -448,6 +450,51 @@
 		// also fires the async event afterwards.
 		if ( img.complete && img.naturalWidth ) {
 			img.onload();
+		}
+	}
+
+	// ------------------------------------------------------------------
+	// URL query parameter navigation — ?location=slug or ?area=slug
+	// ------------------------------------------------------------------
+
+	function handleUrlParam( el, map, markers, locations, polys, areas ) {
+		if ( ! window.URLSearchParams ) return;
+
+		var params   = new URLSearchParams( window.location.search );
+		var locSlug  = params.get( 'location' );
+		var areaSlug = params.get( 'area' );
+
+		if ( locSlug ) {
+			var locIdx = -1;
+			for ( var i = 0; i < locations.length; i++ ) {
+				if ( locations[ i ].slug === locSlug ) { locIdx = i; break; }
+			}
+			if ( locIdx !== -1 && markers[ locIdx ] ) {
+				var _done = false;
+				function _open() { if ( _done ) return; _done = true; markers[ locIdx ].openPopup(); }
+				map.once( 'moveend', function () { requestAnimationFrame( _open ); } );
+				setTimeout( _open, 600 );
+				map.flyTo( markers[ locIdx ].getLatLng(), map.getZoom(), { animate: true, duration: 0.4 } );
+			}
+			return;
+		}
+
+		if ( areaSlug ) {
+			var areaIdx = -1;
+			for ( var j = 0; j < areas.length; j++ ) {
+				if ( areas[ j ].slug === areaSlug ) { areaIdx = j; break; }
+			}
+			if ( areaIdx !== -1 && polys[ areaIdx ] ) {
+				var lls = polys[ areaIdx ].getLatLngs()[ 0 ];
+				var lat = 0, lng = 0;
+				lls.forEach( function ( ll ) { lat += ll.lat; lng += ll.lng; } );
+				var centroid = L.latLng( lat / lls.length, lng / lls.length );
+				var _doneA = false;
+				function _openA() { if ( _doneA ) return; _doneA = true; polys[ areaIdx ].openPopup( centroid ); }
+				map.once( 'moveend', function () { requestAnimationFrame( _openA ); } );
+				setTimeout( _openA, 600 );
+				map.flyTo( centroid, map.getZoom(), { animate: true, duration: 0.4 } );
+			}
 		}
 	}
 

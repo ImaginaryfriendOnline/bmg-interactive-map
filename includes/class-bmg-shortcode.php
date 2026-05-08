@@ -181,6 +181,7 @@ class BMG_Shortcode {
 
 			$locations_data[] = [
 				'index'       => count( $locations_data ),
+				'slug'        => $loc->post_name,
 				'title'       => $loc->post_title,
 				'description' => wp_kses_post( wpautop( do_shortcode( $loc->post_content ) ) ),
 				'x'           => (float) $x,
@@ -219,6 +220,7 @@ class BMG_Shortcode {
 
 			$areas_data[] = [
 				'index'       => count( $areas_data ),
+				'slug'        => $area->post_name,
 				'title'       => $area->post_title,
 				'description' => wp_kses_post( wpautop( do_shortcode( $area->post_content ) ) ),
 				'points'      => $points,
