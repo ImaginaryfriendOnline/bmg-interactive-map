@@ -233,7 +233,6 @@ Go to **Interactive Maps → Settings** to configure global defaults.
 | Parent Map | Which map this location belongs to |
 | X / Y coordinates | Position as a percentage (0–100); set visually by clicking the map preview |
 | Marker Color | Per-location hex colour (defaults to global setting) |
-| Font Awesome Icon | Optional icon class displayed inside the marker dot |
 
 ### Area Meta Fields
 
@@ -250,7 +249,7 @@ Go to **Interactive Maps → Settings** to configure global defaults.
 | Item | Storage |
 |------|---------|
 | Map | `bmg_map` CPT; background image = featured image; per-map zoom in `_bmg_map_min_zoom` / `_bmg_map_max_zoom` |
-| Location | `bmg_location` CPT; `_bmg_map_id`, `_bmg_loc_x`, `_bmg_loc_y`, `_bmg_loc_color`, `_bmg_loc_icon` |
+| Location | `bmg_location` CPT; `_bmg_map_id`, `_bmg_loc_x`, `_bmg_loc_y`, `_bmg_loc_color` |
 | Area | `bmg_area` CPT; `_bmg_area_map_id`, `_bmg_area_points` (JSON), `_bmg_area_color`, `_bmg_area_fill_color`, `_bmg_area_fill_opacity` |
 | Global settings | `bmg_map_settings` WordPress option (array) |
 | Tileset files | `wp-content/uploads/bmg-tiles/{map_id}/{z}/{x}/{y}.jpg` |

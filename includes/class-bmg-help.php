@@ -98,7 +98,7 @@ class BMG_Help {
 						<li><?php esc_html_e( 'Add a description in the content area — shown below the title in the popup.', 'bmg-interactive-map' ); ?></li>
 						<li><?php esc_html_e( 'In the Location Settings panel, choose the Parent Map from Step 1.', 'bmg-interactive-map' ); ?></li>
 						<li><?php esc_html_e( 'The map image loads in the visual editor. Click anywhere on it to drop a marker, or drag the marker to reposition it. You can also type X % and Y % values manually.', 'bmg-interactive-map' ); ?></li>
-						<li><?php esc_html_e( '(Optional) Pick a custom marker colour and Font Awesome icon class. The default colour is set under Interactive Maps → Settings.', 'bmg-interactive-map' ); ?></li>
+						<li><?php esc_html_e( '(Optional) Pick a custom marker colour. The default colour is set under Interactive Maps → Settings.', 'bmg-interactive-map' ); ?></li>
 						<li><?php esc_html_e( 'Publish the location. Repeat for as many locations as needed.', 'bmg-interactive-map' ); ?></li>
 					</ol>
 					<div class="bmg-help-tip">
