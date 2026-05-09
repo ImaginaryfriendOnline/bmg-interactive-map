@@ -7,10 +7,12 @@
 	var ADMIN_MIN_ZOOM = ( adminSettings.minZoom != null ) ? Number( adminSettings.minZoom ) : -3;
 	var ADMIN_MAX_ZOOM = ( adminSettings.maxZoom != null ) ? Number( adminSettings.maxZoom ) : 3;
 
-	var mapSelect      = document.getElementById( 'bmg_area_map_id' );
-	var colorInput     = document.getElementById( 'bmg_area_color' );
-	var fillColorInput = document.getElementById( 'bmg_area_fill_color' );
-	var opacityInput   = document.getElementById( 'bmg_area_fill_opacity' );
+	var mapSelect            = document.getElementById( 'bmg_area_map_id' );
+	var colorInput           = document.getElementById( 'bmg_area_color' );
+	var fillColorInput       = document.getElementById( 'bmg_area_fill_color' );
+	var opacityInput         = document.getElementById( 'bmg_area_fill_opacity' );
+	var namedColorSelect     = document.getElementById( 'bmg_area_named_color' );
+	var namedFillColorSelect = document.getElementById( 'bmg_area_named_fill_color' );
 	var pointsTextarea = document.getElementById( 'bmg_area_points' );
 	var vertexCountEl  = document.getElementById( 'bmg-area-vertex-count' );
 	var undoBtn        = document.getElementById( 'bmg-area-undo' );
@@ -372,9 +374,30 @@
 			} );
 	} );
 
-	colorInput     && colorInput.addEventListener(     'input', refreshPolygon );
-	fillColorInput && fillColorInput.addEventListener( 'input', refreshPolygon );
-	opacityInput   && opacityInput.addEventListener(   'input', refreshPolygon );
+	colorInput     && colorInput.addEventListener( 'input', function () {
+		if ( namedColorSelect ) namedColorSelect.value = '';
+		refreshPolygon();
+	} );
+	fillColorInput && fillColorInput.addEventListener( 'input', function () {
+		if ( namedFillColorSelect ) namedFillColorSelect.value = '';
+		refreshPolygon();
+	} );
+	opacityInput && opacityInput.addEventListener( 'input', refreshPolygon );
+
+	namedColorSelect && namedColorSelect.addEventListener( 'change', function () {
+		var opt = this.options[ this.selectedIndex ];
+		if ( opt && opt.dataset.hex ) {
+			colorInput.value = opt.dataset.hex;
+			refreshPolygon();
+		}
+	} );
+	namedFillColorSelect && namedFillColorSelect.addEventListener( 'change', function () {
+		var opt = this.options[ this.selectedIndex ];
+		if ( opt && opt.dataset.hex ) {
+			fillColorInput.value = opt.dataset.hex;
+			refreshPolygon();
+		}
+	} );
 
 	undoBtn  && undoBtn.addEventListener(  'click', removeLastVertex );
 	clearBtn && clearBtn.addEventListener( 'click', clearAll );

@@ -77,11 +77,14 @@ class BMG_Area_CPT {
 	public static function render_meta_box( WP_Post $post ): void {
 		wp_nonce_field( 'bmg_area_save', 'bmg_area_nonce' );
 
-		$map_id       = (int) get_post_meta( $post->ID, '_bmg_area_map_id', true );
-		$color        = get_post_meta( $post->ID, '_bmg_area_color',        true ) ?: '#3388ff';
-		$fill_color   = get_post_meta( $post->ID, '_bmg_area_fill_color',   true ) ?: '#3388ff';
-		$fill_opacity = get_post_meta( $post->ID, '_bmg_area_fill_opacity', true );
-		$fill_opacity = $fill_opacity !== '' ? (float) $fill_opacity : 0.2;
+		$map_id           = (int) get_post_meta( $post->ID, '_bmg_area_map_id',          true );
+		$color            = get_post_meta( $post->ID, '_bmg_area_color',               true ) ?: '#3388ff';
+		$fill_color       = get_post_meta( $post->ID, '_bmg_area_fill_color',          true ) ?: '#3388ff';
+		$fill_opacity     = get_post_meta( $post->ID, '_bmg_area_fill_opacity',        true );
+		$fill_opacity     = $fill_opacity !== '' ? (float) $fill_opacity : 0.2;
+		$named_color      = get_post_meta( $post->ID, '_bmg_area_named_color',         true ) ?: '';
+		$named_fill_color = get_post_meta( $post->ID, '_bmg_area_named_fill_color',    true ) ?: '';
+		$named_colors     = BMG_Settings::get()['named_colors'];
 		$points_json  = get_post_meta( $post->ID, '_bmg_area_points',       true ) ?: '[]';
 		$points_array = json_decode( $points_json, true );
 		if ( ! is_array( $points_array ) ) {
@@ -152,6 +155,34 @@ class BMG_Area_CPT {
 			</p>
 
 			<!-- Appearance -->
+			<?php if ( $named_colors ) : ?>
+			<p style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
+				<label for="bmg_area_named_color"><?php esc_html_e( 'Stroke named colour', 'bmg-interactive-map' ); ?>
+					<select id="bmg_area_named_color" name="bmg_area_named_color" style="margin-left:4px;">
+						<option value=""><?php esc_html_e( '— custom —', 'bmg-interactive-map' ); ?></option>
+						<?php foreach ( $named_colors as $nc ) : ?>
+							<option value="<?php echo esc_attr( $nc['name'] ); ?>"
+								data-hex="<?php echo esc_attr( $nc['hex'] ); ?>"
+								<?php selected( $named_color, $nc['name'] ); ?>>
+								<?php echo esc_html( $nc['name'] ); ?>
+							</option>
+						<?php endforeach; ?>
+					</select>
+				</label>
+				<label for="bmg_area_named_fill_color"><?php esc_html_e( 'Fill named colour', 'bmg-interactive-map' ); ?>
+					<select id="bmg_area_named_fill_color" name="bmg_area_named_fill_color" style="margin-left:4px;">
+						<option value=""><?php esc_html_e( '— custom —', 'bmg-interactive-map' ); ?></option>
+						<?php foreach ( $named_colors as $nc ) : ?>
+							<option value="<?php echo esc_attr( $nc['name'] ); ?>"
+								data-hex="<?php echo esc_attr( $nc['hex'] ); ?>"
+								<?php selected( $named_fill_color, $nc['name'] ); ?>>
+								<?php echo esc_html( $nc['name'] ); ?>
+							</option>
+						<?php endforeach; ?>
+					</select>
+				</label>
+			</p>
+			<?php endif; ?>
 			<p style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
 				<label for="bmg_area_color"><?php esc_html_e( 'Stroke colour', 'bmg-interactive-map' ); ?>
 					<input type="color" id="bmg_area_color" name="bmg_area_color"
@@ -254,6 +285,12 @@ class BMG_Area_CPT {
 		update_post_meta( $post_id, '_bmg_area_fill_color', $fill_color ?: '#3388ff' );
 
 		update_post_meta( $post_id, '_bmg_area_fill_opacity', min( 1.0, max( 0.0, (float) ( $_POST['bmg_area_fill_opacity'] ?? 0.2 ) ) ) );
+
+		$named_color = sanitize_text_field( wp_unslash( $_POST['bmg_area_named_color'] ?? '' ) );
+		update_post_meta( $post_id, '_bmg_area_named_color', $named_color );
+
+		$named_fill_color = sanitize_text_field( wp_unslash( $_POST['bmg_area_named_fill_color'] ?? '' ) );
+		update_post_meta( $post_id, '_bmg_area_named_fill_color', $named_fill_color );
 
 		$raw = wp_unslash( $_POST['bmg_area_points'] ?? '' );
 		$pts = json_decode( $raw, true );

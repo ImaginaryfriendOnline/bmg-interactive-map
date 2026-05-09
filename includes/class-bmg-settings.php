@@ -79,12 +79,19 @@ class BMG_Settings {
 			'bmg_defaults'
 		);
 
+		add_settings_section(
+			'bmg_named_colors',
+			__( 'Named Colors', 'bmg-interactive-map' ),
+			null,
+			'bmg-map-settings'
+		);
+
 		add_settings_field(
-			'fa_url',
-			__( 'Font Awesome URL', 'bmg-interactive-map' ),
-			[ __CLASS__, 'field_fa_url' ],
+			'named_colors',
+			__( 'Color Palette', 'bmg-interactive-map' ),
+			[ __CLASS__, 'field_named_colors' ],
 			'bmg-map-settings',
-			'bmg_defaults'
+			'bmg_named_colors'
 		);
 
 	}
@@ -100,7 +107,14 @@ class BMG_Settings {
 			? $input['zoom_position']
 			: 'topleft';
 
-		$clean['fa_url'] = esc_url_raw( $input['fa_url'] ?? '' );
+		$clean['named_colors'] = [];
+		foreach ( (array) ( $input['named_colors'] ?? [] ) as $entry ) {
+			$name = sanitize_text_field( $entry['name'] ?? '' );
+			$hex  = sanitize_hex_color( $entry['hex'] ?? '' );
+			if ( $name !== '' && $hex ) {
+				$clean['named_colors'][] = [ 'name' => $name, 'hex' => $hex ];
+			}
+		}
 
 		return $clean;
 	}
@@ -160,14 +174,67 @@ class BMG_Settings {
 		);
 	}
 
-	public static function field_fa_url(): void {
-		$opts = self::get();
-		printf(
-			'<input type="url" name="%s[fa_url]" value="%s" style="width:100%%;max-width:500px;" placeholder="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />',
-			esc_attr( self::OPTION_KEY ),
-			esc_attr( $opts['fa_url'] )
-		);
-		echo '<p class="description">' . esc_html__( 'Optional. Paste a Font Awesome URL to load it on pages that display a map — CSS CDN URLs and JS kit URLs (kit.fontawesome.com) are both supported. Leave blank if your theme already loads Font Awesome.', 'bmg-interactive-map' ) . '</p>';
+	public static function field_named_colors(): void {
+		$colors = self::get()['named_colors'];
+		$key    = esc_attr( self::OPTION_KEY );
+		$label_name    = esc_attr__( 'Color name', 'bmg-interactive-map' );
+		$label_remove  = esc_html__( 'Remove', 'bmg-interactive-map' );
+		$label_add     = esc_html__( '+ Add Color', 'bmg-interactive-map' );
+		?>
+		<div id="bmg-named-colors-list">
+			<?php foreach ( $colors as $i => $entry ) : ?>
+			<div class="bmg-named-color-row" style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+				<input type="text"
+					name="<?php echo $key; ?>[named_colors][<?php echo (int) $i; ?>][name]"
+					value="<?php echo esc_attr( $entry['name'] ); ?>"
+					placeholder="<?php echo $label_name; ?>"
+					style="width:200px;" />
+				<input type="color"
+					name="<?php echo $key; ?>[named_colors][<?php echo (int) $i; ?>][hex]"
+					value="<?php echo esc_attr( $entry['hex'] ); ?>" />
+				<button type="button" class="button button-link-delete bmg-remove-color"><?php echo $label_remove; ?></button>
+			</div>
+			<?php endforeach; ?>
+		</div>
+		<button type="button" id="bmg-add-named-color" class="button"><?php echo $label_add; ?></button>
+		<p class="description"><?php esc_html_e( 'Define reusable named colours that editors can pick by name in the location and area editors.', 'bmg-interactive-map' ); ?></p>
+		<script>
+		( function () {
+			var list   = document.getElementById( 'bmg-named-colors-list' );
+			var addBtn = document.getElementById( 'bmg-add-named-color' );
+			var optKey = <?php echo wp_json_encode( self::OPTION_KEY ); ?>;
+			var phName = <?php echo wp_json_encode( __( 'Color name', 'bmg-interactive-map' ) ); ?>;
+			var lblRem = <?php echo wp_json_encode( __( 'Remove', 'bmg-interactive-map' ) ); ?>;
+
+			function reindex() {
+				list.querySelectorAll( '.bmg-named-color-row' ).forEach( function ( row, i ) {
+					row.querySelectorAll( 'input' ).forEach( function ( inp ) {
+						inp.name = inp.name.replace( /\[named_colors\]\[\d+\]/, '[named_colors][' + i + ']' );
+					} );
+				} );
+			}
+
+			list.addEventListener( 'click', function ( e ) {
+				if ( e.target.classList.contains( 'bmg-remove-color' ) ) {
+					e.target.closest( '.bmg-named-color-row' ).remove();
+					reindex();
+				}
+			} );
+
+			addBtn.addEventListener( 'click', function () {
+				var i   = list.querySelectorAll( '.bmg-named-color-row' ).length;
+				var row = document.createElement( 'div' );
+				row.className = 'bmg-named-color-row';
+				row.style.cssText = 'display:flex;gap:8px;align-items:center;margin-bottom:6px;';
+				row.innerHTML =
+					'<input type="text" name="' + optKey + '[named_colors][' + i + '][name]" value="" placeholder="' + phName + '" style="width:200px;" />' +
+					'<input type="color" name="' + optKey + '[named_colors][' + i + '][hex]" value="#3388ff" />' +
+					'<button type="button" class="button button-link-delete bmg-remove-color">' + lblRem + '</button>';
+				list.appendChild( row );
+			} );
+		} )();
+		</script>
+		<?php
 	}
 
 	// -------------------------------------------------------------------------
@@ -204,7 +271,7 @@ class BMG_Settings {
 				'min_zoom'      => -3,
 				'max_zoom'      => 3,
 				'zoom_position' => 'topleft',
-				'fa_url'        => '',
+				'named_colors'  => [],
 			];
 			$cache = wp_parse_args( (array) get_option( self::OPTION_KEY, [] ), $defaults );
 		}

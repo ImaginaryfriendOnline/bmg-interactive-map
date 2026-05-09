@@ -80,8 +80,11 @@ class BMG_Location_CPT {
 		$map_id        = (int) get_post_meta( $post->ID, '_bmg_map_id', true );
 		$x             = get_post_meta( $post->ID, '_bmg_loc_x', true );
 		$y             = get_post_meta( $post->ID, '_bmg_loc_y', true );
-		$default_color = BMG_Settings::get()['default_color'];
-		$color         = get_post_meta( $post->ID, '_bmg_loc_color', true ) ?: $default_color;
+		$settings      = BMG_Settings::get();
+		$default_color = $settings['default_color'];
+		$color         = get_post_meta( $post->ID, '_bmg_loc_color',       true ) ?: $default_color;
+		$named_color   = get_post_meta( $post->ID, '_bmg_loc_named_color', true ) ?: '';
+		$named_colors  = $settings['named_colors'];
 		// Fetch published and draft maps for the dropdown.
 		$maps = get_posts( [
 			'post_type'      => 'bmg_map',
@@ -166,6 +169,20 @@ class BMG_Location_CPT {
 						min="0" max="100" step="0.01"
 						style="width:80px;" />
 				</label>
+				<?php if ( $named_colors ) : ?>
+				<label for="bmg_loc_named_color"><?php esc_html_e( 'Named colour', 'bmg-interactive-map' ); ?>
+					<select id="bmg_loc_named_color" name="bmg_loc_named_color" style="margin-left:4px;">
+						<option value=""><?php esc_html_e( '— custom —', 'bmg-interactive-map' ); ?></option>
+						<?php foreach ( $named_colors as $nc ) : ?>
+							<option value="<?php echo esc_attr( $nc['name'] ); ?>"
+								data-hex="<?php echo esc_attr( $nc['hex'] ); ?>"
+								<?php selected( $named_color, $nc['name'] ); ?>>
+								<?php echo esc_html( $nc['name'] ); ?>
+							</option>
+						<?php endforeach; ?>
+					</select>
+				</label>
+			<?php endif; ?>
 				<label for="bmg_loc_color"><?php esc_html_e( 'Marker colour', 'bmg-interactive-map' ); ?>
 					<input type="color" id="bmg_loc_color" name="bmg_loc_color"
 						value="<?php echo esc_attr( $color ); ?>" />
@@ -263,6 +280,9 @@ class BMG_Location_CPT {
 				update_post_meta( $post_id, '_bmg_loc_color', $color );
 			}
 		}
+
+		$named_color = sanitize_text_field( wp_unslash( $_POST['bmg_loc_named_color'] ?? '' ) );
+		update_post_meta( $post_id, '_bmg_loc_named_color', $named_color );
 
 		if ( isset( $_POST['bmg_location_visible'] ) ) {
 			delete_post_meta( $post_id, '_bmg_hidden' );

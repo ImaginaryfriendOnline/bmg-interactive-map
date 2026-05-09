@@ -8,10 +8,11 @@
 	var ADMIN_MIN_ZOOM = ( adminSettings.minZoom != null ) ? Number( adminSettings.minZoom ) : -3;
 	var ADMIN_MAX_ZOOM = ( adminSettings.maxZoom != null ) ? Number( adminSettings.maxZoom ) : 3;
 
-	var mapSelect = document.getElementById( 'bmg_map_id' );
-	var xInput    = document.getElementById( 'bmg_loc_x' );
-	var yInput    = document.getElementById( 'bmg_loc_y' );
-	var colorInput = document.getElementById( 'bmg_loc_color' );
+	var mapSelect        = document.getElementById( 'bmg_map_id' );
+	var xInput           = document.getElementById( 'bmg_loc_x' );
+	var yInput           = document.getElementById( 'bmg_loc_y' );
+	var colorInput       = document.getElementById( 'bmg_loc_color' );
+	var namedColorSelect = document.getElementById( 'bmg_loc_named_color' );
 
 	if ( ! mapSelect || typeof L === 'undefined' ) return;
 
@@ -291,7 +292,17 @@
 
 	xInput     && xInput.addEventListener( 'input', syncMarkerFromInputs );
 	yInput     && yInput.addEventListener( 'input', syncMarkerFromInputs );
-	colorInput && colorInput.addEventListener( 'input', syncMarkerColor );
+	colorInput && colorInput.addEventListener( 'input', function () {
+		if ( namedColorSelect ) namedColorSelect.value = '';
+		syncMarkerColor();
+	} );
+	namedColorSelect && namedColorSelect.addEventListener( 'change', function () {
+		var opt = this.options[ this.selectedIndex ];
+		if ( opt && opt.dataset.hex ) {
+			colorInput.value = opt.dataset.hex;
+			syncMarkerColor();
+		}
+	} );
 
 	// ------------------------------------------------------------------
 	// Sibling-toggle checkbox (injected after the colour input row)
