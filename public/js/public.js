@@ -237,11 +237,18 @@
 				var mapEl   = map.getContainer();
 				if ( ! popupEl || ! mapEl ) return;
 
+				// Always work from the true marker latLng so repeated calls
+				// (moveend, zoomend) don't compound the offset.
+				var markerLatLng = ( popup._source && popup._source.getLatLng )
+					? popup._source.getLatLng()
+					: popup.getLatLng();
+				popup.setLatLng( markerLatLng );
+
 				popupEl.classList.remove( 'bmg-popup-below' );
 				popupEl.style.removeProperty( '--bmg-tip-dx' );
 
 				var mapRect  = mapEl.getBoundingClientRect();
-				var markerPt = map.latLngToContainerPoint( popup.getLatLng() );
+				var markerPt = map.latLngToContainerPoint( markerLatLng );
 				var pad      = 10;
 				// iconHalf is captured from the initMap closure (markerSize / 2)
 
@@ -256,7 +263,7 @@
 
 				// Visible pixels available above and below the icon edge.
 				var spaceAbove = markerViewY - iconHalf - vpTop;
-				var spaceBelow = vpBottom    - iconHalf - markerViewY;
+				var spaceBelow = vpBottom - markerViewY - iconHalf;
 
 				var popupRect = popupEl.getBoundingClientRect();
 				var dx = 0, dy = 0;
@@ -265,10 +272,13 @@
 				// fit above AND there is more room below the marker than above it.
 				if ( popupRect.height + pad > spaceAbove && spaceBelow > spaceAbove ) {
 					popupEl.classList.add( 'bmg-popup-below' );
-					void popupEl.offsetHeight; // flush layout so getBCR reflects the flipped position
-					var flippedRect = popupEl.getBoundingClientRect();
-					if ( flippedRect.top    < vpTop    + pad ) dy = ( vpTop    + pad ) - flippedRect.top;
-					if ( flippedRect.bottom > vpBottom - pad ) dy = ( vpBottom - pad ) - flippedRect.bottom;
+					// Shift the popup so its top sits just below the marker's bottom edge.
+					var currentTop = popupRect.top - mapRect.top;   // container coords
+					var targetTop  = markerPt.y + iconHalf + 2;    // container coords
+					dy = targetTop - currentTop;
+					// Clamp so the popup doesn't run past the bottom of the viewport.
+					var estimatedBottom = popupRect.bottom + dy;
+					if ( estimatedBottom > vpBottom - pad ) dy -= estimatedBottom - ( vpBottom - pad );
 				} else {
 					// Keep above — nudge if it clips the visible top or bottom.
 					if ( popupRect.top    < vpTop    + pad ) dy = ( vpTop    + pad ) - popupRect.top;
@@ -280,7 +290,7 @@
 				if ( popupRect.left  < vpLeft  + pad ) dx = ( vpLeft  + pad ) - popupRect.left;
 
 				if ( dx !== 0 || dy !== 0 ) {
-					var anchorPt = map.latLngToContainerPoint( popup.getLatLng() );
+					var anchorPt = map.latLngToContainerPoint( markerLatLng );
 					popup.setLatLng( map.containerPointToLatLng(
 						L.point( anchorPt.x + dx, anchorPt.y + dy )
 					) );
