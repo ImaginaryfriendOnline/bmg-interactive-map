@@ -191,7 +191,7 @@ class BMG_Shortcode {
 				'color'            => $color,
 				'secret'           => get_post_meta( $loc->ID, '_bmg_loc_secret', true ) === '1',
 				'secretTemporary'  => get_post_meta( $loc->ID, '_bmg_loc_secret_temporary', true ) === '1',
-				'secretReachValue' => $secret_reach_value !== '' ? (int) $secret_reach_value : null,
+				'secretReachValue' => $secret_reach_value !== '' ? (float) $secret_reach_value : null,
 				'secretReachUnit'  => get_post_meta( $loc->ID, '_bmg_loc_secret_reach_unit', true ) ?: null,
 			];
 		}

@@ -4,6 +4,7 @@
 
 	var meta          = window.bmgAreaMeta;
 	var adminSettings = window.bmgAdminSettings || {};
+	var shared        = window.BMGAdminMapEditor;
 	var ADMIN_MIN_ZOOM = ( adminSettings.minZoom != null ) ? Number( adminSettings.minZoom ) : -3;
 	var ADMIN_MAX_ZOOM = ( adminSettings.maxZoom != null ) ? Number( adminSettings.maxZoom ) : 3;
 
@@ -18,7 +19,7 @@
 	var undoBtn        = document.getElementById( 'bmg-area-undo' );
 	var clearBtn       = document.getElementById( 'bmg-area-clear' );
 
-	if ( ! mapSelect || typeof L === 'undefined' ) return;
+	if ( ! mapSelect || typeof L === 'undefined' || ! shared ) return;
 
 	var leafletMap = null;
 	var vertices   = []; // [{latLng, marker}, …]
@@ -35,20 +36,11 @@
 	var showSiblings       = true;
 	var currentSiblingData = meta.siblingAreas || [];
 
-	// ------------------------------------------------------------------
-	// Coordinate conversion (same convention as admin.js and public.js)
-	// ------------------------------------------------------------------
-
-	function toLeaflet( x, y ) {
-		return L.latLng( imgH - ( y / 100 ) * imgH, ( x / 100 ) * imgW );
-	}
-
-	function fromLeaflet( latLng ) {
-		return {
-			x: +( latLng.lng / imgW * 100 ).toFixed( 4 ),
-			y: +( ( imgH - latLng.lat ) / imgH * 100 ).toFixed( 4 ),
-		};
-	}
+	// Coordinate conversion — 4 decimal places, matching the previous
+	// area-editor precision (locations use 2, see admin.js).
+	var coordConverter = shared.makeCoordConverter( function () { return imgW; }, function () { return imgH; }, 4 );
+	var toLeaflet       = coordConverter.toLeaflet;
+	var fromLeaflet     = coordConverter.fromLeaflet;
 
 	function getColor()       { return colorInput     ? colorInput.value                    : '#3388ff'; }
 	function getFillColor()   { return fillColorInput ? fillColorInput.value                : '#3388ff'; }
@@ -106,18 +98,12 @@
 	function makeVertexIcon( isSelected ) {
 		var bg   = isSelected ? '#f0c040' : getColor();
 		var size = isSelected ? 16 : 14;
-		var half = size / 2;
-		return L.divIcon( {
-			className : 'bmg-area-vertex-icon',
-			iconSize  : [ size, size ],
-			iconAnchor: [ half, half ],
-			html: '<div style="' +
-				'width:' + size + 'px;height:' + size + 'px;border-radius:50%;' +
-				'background:' + bg + ';' +
-				'border:2px solid #fff;' +
-				'box-shadow:0 1px 4px rgba(0,0,0,.4);' +
-				'cursor:move;' +
-			'"></div>',
+		return shared.makeCircleDivIcon( {
+			className: 'bmg-admin-map-vertex-icon',
+			size     : size,
+			color    : bg,
+			shadow   : '0 1px 4px rgba(0,0,0,.4)',
+			cursor   : 'move',
 		} );
 	}
 
@@ -157,12 +143,7 @@
 		} );
 
 		// Stop mousedown from bubbling so dragging a vertex doesn't pan the map.
-		setTimeout( function () {
-			var el = marker.getElement();
-			if ( el ) {
-				L.DomEvent.on( el, 'mousedown', L.DomEvent.stopPropagation );
-			}
-		}, 0 );
+		shared.stopMarkerMousedownBubble( marker );
 
 		refreshPolygon();
 		updateVertexCount();
@@ -214,7 +195,7 @@
 				dashArray  : '4 4',
 				opacity    : 0.6,
 			} ).addTo( leafletMap );
-			poly.bindTooltip( a.title, { sticky: true } );
+			poly.bindTooltip( shared.escHtml( a.title ), { sticky: true } );
 			poly.on( 'click', function ( e ) {
 				var idx = selectedEntry ? vertices.indexOf( selectedEntry ) + 1 : vertices.length;
 				insertVertex( idx, e.latlng );
@@ -250,7 +231,7 @@
 		polygon  = null;
 
 		wrap.style.aspectRatio = imgW + ' / ' + imgH;
-		wrap.innerHTML = '<div id="bmg-area-editor" class="bmg-admin-area-editor"></div>';
+		wrap.innerHTML = '<div id="bmg-area-editor" class="bmg-admin-editor-canvas"></div>';
 
 		// Hint lives as a sibling after the wrap so the wrap's max-height doesn't clip it.
 		var hint = wrap.nextElementSibling;
@@ -262,22 +243,19 @@
 		}
 
 		requestAnimationFrame( function () {
-			leafletMap = L.map( 'bmg-area-editor', {
-				crs              : L.CRS.Simple,
-				minZoom          : ADMIN_MIN_ZOOM,
-				maxZoom          : ADMIN_MAX_ZOOM,
-				zoomSnap         : 0,
-				zoomControl      : true,
-				attributionControl: false,
+			var editor = shared.initSimpleCrsEditor( {
+				containerId: 'bmg-area-editor',
+				imageUrl   : imageUrl,
+				imgW       : imgW,
+				imgH       : imgH,
+				minZoom    : ADMIN_MIN_ZOOM,
+				maxZoom    : ADMIN_MAX_ZOOM,
+				onClick    : function ( e ) {
+					var idx = selectedEntry ? vertices.indexOf( selectedEntry ) + 1 : vertices.length;
+					insertVertex( idx, e.latlng );
+				},
 			} );
-
-			var bounds = [ [ 0, 0 ], [ imgH, imgW ] ];
-			L.imageOverlay( imageUrl, bounds ).addTo( leafletMap );
-			leafletMap.fitBounds( bounds );
-			leafletMap.setMaxBounds( [
-				[ -imgH * 0.1, -imgW * 0.1 ],
-				[  imgH * 1.1,  imgW * 1.1 ],
-			] );
+			leafletMap = editor.map;
 
 			// Restore previously saved polygon vertices.
 			if ( meta.points && meta.points.length ) {
@@ -289,21 +267,6 @@
 
 			// Show sibling areas after vertices are restored.
 			renderSiblingAreas( currentSiblingData );
-
-			leafletMap.on( 'click', function ( e ) {
-				var idx = selectedEntry ? vertices.indexOf( selectedEntry ) + 1 : vertices.length;
-				insertVertex( idx, e.latlng );
-			} );
-
-			if ( typeof ResizeObserver !== 'undefined' ) {
-				var ro = new ResizeObserver( function () {
-					if ( leafletMap ) {
-						leafletMap.invalidateSize();
-						leafletMap.fitBounds( bounds );
-					}
-				} );
-				ro.observe( document.getElementById( 'bmg-area-editor' ) );
-			}
 		} );
 	}
 
@@ -353,14 +316,12 @@
 			wrap.innerHTML = '<p class="description">Loading map image\u2026</p>';
 		}
 
-		var data = new FormData();
-		data.append( 'action',          'bmg_get_map_image' );
-		data.append( 'nonce',           meta.nonce );
-		data.append( 'map_id',          mapId );
-		data.append( 'exclude_area_id', meta.postId || 0 );
-
-		fetch( meta.ajaxUrl, { method: 'POST', body: data } )
-			.then( function ( r ) { return r.json(); } )
+		shared.postForm( meta.ajaxUrl, {
+			action        : 'bmg_get_map_image',
+			nonce         : meta.nonce,
+			map_id        : mapId,
+			exclude_area_id: meta.postId || 0,
+		} )
 			.then( function ( json ) {
 				if ( json.success && json.data.url ) {
 					currentSiblingData = json.data.areas || [];

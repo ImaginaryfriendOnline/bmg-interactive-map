@@ -14,6 +14,39 @@ defined( 'ABSPATH' ) || exit;
  *  - _bmg_area_fill_opacity → fill opacity (0–1)
  */
 class BMG_Area_CPT {
+	use BMG_CPT_Admin_List_Trait;
+
+	protected static function post_type(): string {
+		return 'bmg_area';
+	}
+
+	protected static function map_meta_key(): string {
+		return '_bmg_area_map_id';
+	}
+
+	protected static function admin_script_handle(): string {
+		return 'bmg-area-admin';
+	}
+
+	protected static function admin_script_file(): string {
+		return 'admin/js/area-admin.js';
+	}
+
+	protected static function hide_notice_message( int $count ): string {
+		return sprintf(
+			/* translators: %d: number of areas */
+			_n( '%d area hidden from page view.', '%d areas hidden from page view.', $count, 'bmg-interactive-map' ),
+			$count
+		);
+	}
+
+	protected static function unhide_notice_message( int $count ): string {
+		return sprintf(
+			/* translators: %d: number of areas */
+			_n( '%d area set to show in page view.', '%d areas set to show in page view.', $count, 'bmg-interactive-map' ),
+			$count
+		);
+	}
 
 	public static function init(): void {
 		add_action( 'init',            [ __CLASS__, 'register_post_type' ] );
@@ -91,13 +124,7 @@ class BMG_Area_CPT {
 			$points_array = [];
 		}
 
-		$maps = get_posts( [
-			'post_type'      => 'bmg_map',
-			'post_status'    => [ 'publish', 'draft' ],
-			'posts_per_page' => -1,
-			'orderby'        => 'title',
-			'order'          => 'ASC',
-		] );
+		$maps = BMG_Map_CPT::get_all_for_dropdown();
 
 		$map_image_url = '';
 		$map_image_w   = 0;
@@ -113,29 +140,7 @@ class BMG_Area_CPT {
 		}
 
 		// Sibling areas for same map (shown as read-only overlays in the editor).
-		$sibling_areas = [];
-		if ( $map_id ) {
-			$sibling_posts = get_posts( [
-				'post_type'      => 'bmg_area',
-				'post_status'    => [ 'publish', 'draft' ],
-				'posts_per_page' => -1,
-				'exclude'        => [ $post->ID ],
-				'meta_query'     => [ [ 'key' => '_bmg_area_map_id', 'value' => $map_id, 'type' => 'NUMERIC' ] ],
-			] );
-			foreach ( $sibling_posts as $sp ) {
-				$pts = json_decode( get_post_meta( $sp->ID, '_bmg_area_points', true ), true );
-				if ( ! is_array( $pts ) || count( $pts ) < 2 ) {
-					continue;
-				}
-				$sibling_areas[] = [
-					'title'       => get_the_title( $sp ),
-					'points'      => $pts,
-					'color'       => get_post_meta( $sp->ID, '_bmg_area_color',        true ) ?: '#3388ff',
-					'fillColor'   => get_post_meta( $sp->ID, '_bmg_area_fill_color',   true ) ?: '#3388ff',
-					'fillOpacity' => (float) ( get_post_meta( $sp->ID, '_bmg_area_fill_opacity', true ) ?: 0.2 ),
-				];
-			}
-		}
+		$sibling_areas = $map_id ? self::build_sibling_areas( $map_id, $post->ID ) : [];
 
 		$visible = get_post_meta( $post->ID, '_bmg_hidden', true ) !== '1';
 		?>
@@ -226,7 +231,7 @@ class BMG_Area_CPT {
 			<div id="bmg-area-editor-wrap" style="margin-top:12px;">
 				<?php if ( $map_image_url ) : ?>
 					<p class="description"><?php esc_html_e( 'Click the map to add vertices. Drag a vertex to reposition it.', 'bmg-interactive-map' ); ?></p>
-					<div id="bmg-area-editor" class="bmg-admin-area-editor"></div>
+					<div id="bmg-area-editor" class="bmg-admin-editor-canvas"></div>
 				<?php else : ?>
 					<p id="bmg-no-map-notice" class="description">
 						<?php esc_html_e( 'Select a map above to enable the visual polygon editor.', 'bmg-interactive-map' ); ?>
@@ -259,18 +264,7 @@ class BMG_Area_CPT {
 	// -------------------------------------------------------------------------
 
 	public static function save_meta( int $post_id ): void {
-		if (
-			! isset( $_POST['bmg_area_nonce'] ) ||
-			! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['bmg_area_nonce'] ) ), 'bmg_area_save' )
-		) {
-			return;
-		}
-
-		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
-			return;
-		}
-
-		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+		if ( ! BMG_Admin_Helpers::verify_save_request( $post_id, 'bmg_area_nonce', 'bmg_area_save' ) ) {
 			return;
 		}
 
@@ -278,13 +272,9 @@ class BMG_Area_CPT {
 			update_post_meta( $post_id, '_bmg_area_map_id', absint( $_POST['bmg_area_map_id'] ) );
 		}
 
-		$color = sanitize_hex_color( wp_unslash( $_POST['bmg_area_color'] ?? '' ) );
-		update_post_meta( $post_id, '_bmg_area_color', $color ?: '#3388ff' );
-
-		$fill_color = sanitize_hex_color( wp_unslash( $_POST['bmg_area_fill_color'] ?? '' ) );
-		update_post_meta( $post_id, '_bmg_area_fill_color', $fill_color ?: '#3388ff' );
-
-		update_post_meta( $post_id, '_bmg_area_fill_opacity', min( 1.0, max( 0.0, (float) ( $_POST['bmg_area_fill_opacity'] ?? 0.2 ) ) ) );
+		update_post_meta( $post_id, '_bmg_area_color', BMG_Admin_Helpers::sanitize_hex_with_fallback( wp_unslash( $_POST['bmg_area_color'] ?? '' ), '#3388ff' ) );
+		update_post_meta( $post_id, '_bmg_area_fill_color', BMG_Admin_Helpers::sanitize_hex_with_fallback( wp_unslash( $_POST['bmg_area_fill_color'] ?? '' ), '#3388ff' ) );
+		update_post_meta( $post_id, '_bmg_area_fill_opacity', BMG_Admin_Helpers::clamp_float( $_POST['bmg_area_fill_opacity'] ?? 0.2, 0.0, 1.0 ) );
 
 		$named_color = sanitize_text_field( wp_unslash( $_POST['bmg_area_named_color'] ?? '' ) );
 		update_post_meta( $post_id, '_bmg_area_named_color', $named_color );
@@ -312,230 +302,32 @@ class BMG_Area_CPT {
 	}
 
 	// -------------------------------------------------------------------------
-	// Area listing — Parent Map column
+	// Helpers
 	// -------------------------------------------------------------------------
 
-	public static function add_map_column( array $columns ): array {
-		$new = [];
-		foreach ( $columns as $key => $label ) {
-			$new[ $key ] = $label;
-			if ( $key === 'title' ) {
-				$new['bmg_parent_map'] = __( 'Parent Map', 'bmg-interactive-map' );
-				$new['bmg_page_view']  = __( 'Page View',  'bmg-interactive-map' );
-			}
-		}
-		return $new;
-	}
-
-	public static function render_map_column( string $column, int $post_id ): void {
-		if ( $column === 'bmg_page_view' ) {
-			if ( get_post_meta( $post_id, '_bmg_hidden', true ) === '1' ) {
-				echo '<span class="dashicons dashicons-hidden" style="color:#999;" title="' . esc_attr__( 'Hidden from page view', 'bmg-interactive-map' ) . '"></span>';
-			} else {
-				echo '<span class="dashicons dashicons-visibility" style="color:#46b450;" title="' . esc_attr__( 'Shown in page view', 'bmg-interactive-map' ) . '"></span>';
-			}
-			return;
-		}
-
-		if ( $column !== 'bmg_parent_map' ) {
-			return;
-		}
-		$map_id = (int) get_post_meta( $post_id, '_bmg_area_map_id', true );
-		if ( ! $map_id ) {
-			echo '—';
-			return;
-		}
-		$map = get_post( $map_id );
-		if ( ! $map ) {
-			echo '—';
-			return;
-		}
-		printf(
-			'<a href="%s">%s</a>',
-			esc_url( get_edit_post_link( $map_id ) ),
-			esc_html( $map->post_title )
-		);
-	}
-
-	// -------------------------------------------------------------------------
-	// Admin list filters — Parent Map & Page View
-	// -------------------------------------------------------------------------
-
-	public static function render_list_filters( string $post_type ): void {
-		if ( $post_type !== 'bmg_area' ) {
-			return;
-		}
-
-		$maps = get_posts( [
-			'post_type'      => 'bmg_map',
+	/** Areas on the same map (excluding $exclude_id), for read-only editor overlays. Also used cross-class by BMG_Location_CPT::ajax_get_map_image(). */
+	public static function build_sibling_areas( int $map_id, int $exclude_id = 0 ): array {
+		$posts = get_posts( [
+			'post_type'      => 'bmg_area',
 			'post_status'    => [ 'publish', 'draft' ],
 			'posts_per_page' => -1,
-			'orderby'        => 'title',
-			'order'          => 'ASC',
+			'exclude'        => $exclude_id ? [ $exclude_id ] : [],
+			'meta_query'     => [ [ 'key' => '_bmg_area_map_id', 'value' => $map_id, 'type' => 'NUMERIC' ] ],
 		] );
-
-		$selected_map = absint( $_GET['bmg_filter_map'] ?? 0 );
-		echo '<select name="bmg_filter_map">';
-		echo '<option value="">' . esc_html__( 'All Maps', 'bmg-interactive-map' ) . '</option>';
-		foreach ( $maps as $map ) {
-			printf(
-				'<option value="%s"%s>%s</option>',
-				esc_attr( $map->ID ),
-				selected( $selected_map, $map->ID, false ),
-				esc_html( $map->post_title )
-			);
-		}
-		echo '</select>';
-
-		$selected_vis = isset( $_GET['bmg_filter_visible'] ) ? $_GET['bmg_filter_visible'] : '';
-		echo '<select name="bmg_filter_visible">';
-		echo '<option value="">' . esc_html__( 'All visibility', 'bmg-interactive-map' ) . '</option>';
-		echo '<option value="1"' . selected( $selected_vis, '1', false ) . '>' . esc_html__( 'Shown in page view', 'bmg-interactive-map' ) . '</option>';
-		echo '<option value="0"' . selected( $selected_vis, '0', false ) . '>' . esc_html__( 'Hidden from page view', 'bmg-interactive-map' ) . '</option>';
-		echo '</select>';
-	}
-
-	public static function apply_list_filters( WP_Query $query ): void {
-		if ( ! is_admin() || ! $query->is_main_query() || $query->get( 'post_type' ) !== 'bmg_area' ) {
-			return;
-		}
-
-		$meta_query = $query->get( 'meta_query' ) ?: [];
-
-		if ( ! empty( $_GET['bmg_filter_map'] ) ) {
-			$meta_query[] = [
-				'key'   => '_bmg_area_map_id',
-				'value' => absint( $_GET['bmg_filter_map'] ),
-				'type'  => 'NUMERIC',
-			];
-		}
-
-		if ( isset( $_GET['bmg_filter_visible'] ) && $_GET['bmg_filter_visible'] !== '' ) {
-			if ( $_GET['bmg_filter_visible'] === '0' ) {
-				// Hidden: _bmg_hidden = '1'
-				$meta_query[] = [ 'key' => '_bmg_hidden', 'value' => '1' ];
-			} else {
-				// Shown: _bmg_hidden absent or not '1'
-				$meta_query[] = [
-					'relation' => 'OR',
-					[ 'key' => '_bmg_hidden', 'compare' => 'NOT EXISTS' ],
-					[ 'key' => '_bmg_hidden', 'value' => '1', 'compare' => '!=' ],
-				];
-			}
-		}
-
-		if ( $meta_query ) {
-			$query->set( 'meta_query', $meta_query );
-		}
-	}
-
-	// -------------------------------------------------------------------------
-	// Bulk actions — Hide / Unhide
-	// -------------------------------------------------------------------------
-
-	public static function register_bulk_actions( array $actions ): array {
-		$actions['bmg_hide']   = __( 'Hide from page view', 'bmg-interactive-map' );
-		$actions['bmg_unhide'] = __( 'Show in page view',   'bmg-interactive-map' );
-		return $actions;
-	}
-
-	public static function handle_bulk_actions( string $redirect_to, string $action, array $post_ids ): string {
-		if ( $action !== 'bmg_hide' && $action !== 'bmg_unhide' ) {
-			return $redirect_to;
-		}
-
-		foreach ( $post_ids as $post_id ) {
-			if ( ! current_user_can( 'edit_post', (int) $post_id ) ) {
+		$out = [];
+		foreach ( $posts as $p ) {
+			$pts = json_decode( get_post_meta( $p->ID, '_bmg_area_points', true ), true );
+			if ( ! is_array( $pts ) || count( $pts ) < 2 ) {
 				continue;
 			}
-			if ( $action === 'bmg_hide' ) {
-				update_post_meta( (int) $post_id, '_bmg_hidden', '1' );
-			} else {
-				delete_post_meta( (int) $post_id, '_bmg_hidden' );
-			}
+			$out[] = [
+				'title'       => get_the_title( $p ),
+				'points'      => $pts,
+				'color'       => get_post_meta( $p->ID, '_bmg_area_color',        true ) ?: '#3388ff',
+				'fillColor'   => get_post_meta( $p->ID, '_bmg_area_fill_color',   true ) ?: '#3388ff',
+				'fillOpacity' => (float) ( get_post_meta( $p->ID, '_bmg_area_fill_opacity', true ) ?: 0.2 ),
+			];
 		}
-
-		return add_query_arg( [
-			'bmg_bulk_action' => $action,
-			'bmg_bulk_count'  => count( $post_ids ),
-		], $redirect_to );
-	}
-
-	public static function bulk_action_notice(): void {
-		$screen = get_current_screen();
-		if ( ! $screen || $screen->id !== 'edit-bmg_area' ) {
-			return;
-		}
-
-		$action = sanitize_key( $_GET['bmg_bulk_action'] ?? '' );
-		$count  = (int) ( $_GET['bmg_bulk_count'] ?? 0 );
-
-		if ( ! $action || ! $count ) {
-			return;
-		}
-
-		if ( $action === 'bmg_hide' ) {
-			$msg = sprintf(
-				/* translators: %d: number of areas */
-				_n( '%d area hidden from page view.', '%d areas hidden from page view.', $count, 'bmg-interactive-map' ),
-				$count
-			);
-		} else {
-			$msg = sprintf(
-				/* translators: %d: number of areas */
-				_n( '%d area set to show in page view.', '%d areas set to show in page view.', $count, 'bmg-interactive-map' ),
-				$count
-			);
-		}
-
-		printf( '<div class="notice notice-success is-dismissible"><p>%s</p></div>', esc_html( $msg ) );
-	}
-
-	// -------------------------------------------------------------------------
-	// Admin assets
-	// -------------------------------------------------------------------------
-
-	public static function enqueue_admin_assets( string $hook ): void {
-		$screen = get_current_screen();
-		if ( ! $screen || $screen->post_type !== 'bmg_area' ) {
-			return;
-		}
-
-		wp_enqueue_style(
-			'leaflet',
-			bmg_map_leaflet_url( 'leaflet.css' ),
-			[],
-			'1.9.4'
-		);
-
-		wp_enqueue_script(
-			'leaflet',
-			bmg_map_leaflet_url( 'leaflet.js' ),
-			[],
-			'1.9.4',
-			true
-		);
-
-		wp_enqueue_style(
-			'bmg-admin',
-			BMG_MAP_PLUGIN_URL . 'admin/css/admin.css',
-			[ 'leaflet' ],
-			BMG_MAP_VERSION
-		);
-
-		wp_enqueue_script(
-			'bmg-area-admin',
-			BMG_MAP_PLUGIN_URL . 'admin/js/area-admin.js',
-			[ 'leaflet' ],
-			BMG_MAP_VERSION,
-			true
-		);
-
-		$s = BMG_Settings::get();
-		wp_localize_script( 'bmg-area-admin', 'bmgAdminSettings', [
-			'defaultColor' => $s['default_color'],
-			'minZoom'      => $s['min_zoom'],
-			'maxZoom'      => $s['max_zoom'],
-		] );
+		return $out;
 	}
 }

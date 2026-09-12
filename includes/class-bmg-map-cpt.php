@@ -171,18 +171,7 @@ class BMG_Map_CPT {
 	}
 
 	public static function save_meta( int $post_id ): void {
-		if (
-			! isset( $_POST['bmg_map_zoom_nonce'] ) ||
-			! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['bmg_map_zoom_nonce'] ) ), 'bmg_map_zoom_save' )
-		) {
-			return;
-		}
-
-		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
-			return;
-		}
-
-		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+		if ( ! BMG_Admin_Helpers::verify_save_request( $post_id, 'bmg_map_zoom_nonce', 'bmg_map_zoom_save' ) ) {
 			return;
 		}
 
@@ -190,14 +179,14 @@ class BMG_Map_CPT {
 		if ( $min_raw === '' ) {
 			delete_post_meta( $post_id, '_bmg_map_min_zoom' );
 		} else {
-			update_post_meta( $post_id, '_bmg_map_min_zoom', max( -5, min( 0, (int) $min_raw ) ) );
+			update_post_meta( $post_id, '_bmg_map_min_zoom', BMG_Admin_Helpers::clamp_int( $min_raw, -5, 0 ) );
 		}
 
 		$max_raw = trim( wp_unslash( $_POST['bmg_map_max_zoom'] ?? '' ) );
 		if ( $max_raw === '' ) {
 			delete_post_meta( $post_id, '_bmg_map_max_zoom' );
 		} else {
-			update_post_meta( $post_id, '_bmg_map_max_zoom', max( 1, min( 5, (int) $max_raw ) ) );
+			update_post_meta( $post_id, '_bmg_map_max_zoom', BMG_Admin_Helpers::clamp_int( $max_raw, 1, 5 ) );
 		}
 	}
 
@@ -218,6 +207,17 @@ class BMG_Map_CPT {
 			BMG_MAP_VERSION,
 			true
 		);
+	}
+
+	/** All publish/draft maps, ordered by title — used to populate admin dropdown/filter UIs. */
+	public static function get_all_for_dropdown(): array {
+		return get_posts( [
+			'post_type'      => 'bmg_map',
+			'post_status'    => [ 'publish', 'draft' ],
+			'posts_per_page' => -1,
+			'orderby'        => 'title',
+			'order'          => 'ASC',
+		] );
 	}
 
 	// -------------------------------------------------------------------------

@@ -19,6 +19,8 @@ define( 'BMG_MAP_VERSION',    '5.1.0' );
 define( 'BMG_MAP_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'BMG_MAP_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
+require_once BMG_MAP_PLUGIN_DIR . 'includes/class-bmg-admin-helpers.php';
+require_once BMG_MAP_PLUGIN_DIR . 'includes/trait-bmg-cpt-admin-list.php';
 require_once BMG_MAP_PLUGIN_DIR . 'includes/class-bmg-settings.php';
 require_once BMG_MAP_PLUGIN_DIR . 'includes/class-bmg-map-cpt.php';
 require_once BMG_MAP_PLUGIN_DIR . 'includes/class-bmg-location-cpt.php';

@@ -106,17 +106,17 @@ class BMG_Settings {
 
 	public static function sanitize( $input ): array {
 		$clean = [];
-		$clean['default_color'] = sanitize_hex_color( $input['default_color'] ?? '' ) ?: '#e74c3c';
-		$clean['min_zoom']      = max( -5, min( 0, (int) ( $input['min_zoom'] ?? -3 ) ) );
-		$clean['max_zoom']      = max( 1,  min( 5, (int) ( $input['max_zoom'] ?? 3  ) ) );
+		$clean['default_color'] = BMG_Admin_Helpers::sanitize_hex_with_fallback( $input['default_color'] ?? '', '#e74c3c' );
+		$clean['min_zoom']      = BMG_Admin_Helpers::clamp_int( $input['min_zoom'] ?? -3, -5, 0 );
+		$clean['max_zoom']      = BMG_Admin_Helpers::clamp_int( $input['max_zoom'] ?? 3, 1, 5 );
 
 		$valid_zoom_positions   = [ 'topleft', 'topright', 'bottomleft', 'bottomright' ];
 		$clean['zoom_position'] = in_array( $input['zoom_position'] ?? '', $valid_zoom_positions, true )
 			? $input['zoom_position']
 			: 'topleft';
 
-		$clean['secret_reach_value'] = max( 1, min( 500, (int) ( $input['secret_reach_value'] ?? 40 ) ) );
 		$clean['secret_reach_unit']  = ( $input['secret_reach_unit'] ?? '' ) === '%' ? '%' : 'px';
+		$clean['secret_reach_value'] = BMG_Admin_Helpers::sanitize_reach_value( $input['secret_reach_value'] ?? 40, $clean['secret_reach_unit'] );
 
 		$clean['named_colors'] = [];
 		foreach ( (array) ( $input['named_colors'] ?? [] ) as $entry ) {
@@ -186,21 +186,35 @@ class BMG_Settings {
 	}
 
 	public static function field_secret_reach(): void {
-		$opts = self::get();
-		printf(
-			'<input type="number" name="%1$s[secret_reach_value]" value="%2$s" min="1" max="500" style="width:70px;" />
-			<select name="%1$s[secret_reach_unit]">
-				<option value="px"%3$s>%4$s</option>
-				<option value="%%"%5$s>%%</option>
-			</select>
-			<p class="description">%6$s</p>',
-			esc_attr( self::OPTION_KEY ),
-			esc_attr( $opts['secret_reach_value'] ),
-			selected( $opts['secret_reach_unit'], 'px', false ),
-			esc_html__( 'px', 'bmg-interactive-map' ),
-			selected( $opts['secret_reach_unit'], '%', false ),
-			esc_html__( 'Default distance the cursor (or a tap) must be from a Secret location before its "?" indicator appears. Percentage is relative to the map\'s rendered width. Can be overridden per location.', 'bmg-interactive-map' )
-		);
+		$opts       = self::get();
+		$key        = esc_attr( self::OPTION_KEY );
+		$is_percent = $opts['secret_reach_unit'] === '%';
+		?>
+		<input type="number" id="bmg_secret_reach_value" name="<?php echo $key; ?>[secret_reach_value]"
+			value="<?php echo esc_attr( $opts['secret_reach_value'] ); ?>"
+			min="<?php echo $is_percent ? '0.1' : '1'; ?>" max="500"
+			step="<?php echo $is_percent ? '0.1' : '1'; ?>" style="width:70px;" />
+		<select id="bmg_secret_reach_unit" name="<?php echo $key; ?>[secret_reach_unit]">
+			<option value="px" <?php selected( $opts['secret_reach_unit'], 'px' ); ?>><?php esc_html_e( 'px', 'bmg-interactive-map' ); ?></option>
+			<option value="%" <?php selected( $opts['secret_reach_unit'], '%' ); ?>>%</option>
+		</select>
+		<p class="description"><?php esc_html_e( 'Default distance the cursor (or a tap) must be from a Secret location before its "?" indicator appears. Percentage is relative to the map\'s rendered width. Fractional values are only allowed for percentages. Can be overridden per location.', 'bmg-interactive-map' ); ?></p>
+		<script>
+		( function () {
+			var val  = document.getElementById( 'bmg_secret_reach_value' );
+			var unit = document.getElementById( 'bmg_secret_reach_unit' );
+			if ( ! val || ! unit ) return;
+			unit.addEventListener( 'change', function () {
+				var isPercent = unit.value === '%';
+				val.step = isPercent ? '0.1' : '1';
+				val.min  = isPercent ? '0.1' : '1';
+				if ( ! isPercent ) {
+					val.value = Math.round( parseFloat( val.value ) || 0 );
+				}
+			} );
+		} )();
+		</script>
+		<?php
 	}
 
 	public static function field_named_colors(): void {

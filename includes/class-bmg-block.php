@@ -97,7 +97,12 @@ class BMG_Block {
 			'area_list_title'         => sanitize_text_field( $attributes['areaListTitle'] ?? '' ),
 			'toolbar_position'        => $toolbar_position,
 			'area_highlights_default' => ! empty( $attributes['areaHighlightsDefault'] ) ? '1' : '',
-			'show_hidden'             => ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ? '1' : '0',
+			// REST_REQUEST alone is true for any REST call, including a fully public,
+			// unauthenticated request that merely renders this block's containing post —
+			// gate on capability too so hidden/secret items aren't disclosed to anonymous
+			// or low-privilege visitors. The block-renderer REST endpoint used by the
+			// editor preview already requires edit_posts, so this preserves that flow.
+			'show_hidden'             => ( defined( 'REST_REQUEST' ) && REST_REQUEST && current_user_can( 'edit_posts' ) ) ? '1' : '0',
 		] );
 	}
 }

@@ -4,6 +4,7 @@
 
 	var meta          = window.bmgLocationMeta;
 	var adminSettings = window.bmgAdminSettings || {};
+	var shared        = window.BMGAdminMapEditor;
 	// wp_localize_script serialises scalars as strings — coerce back to numbers.
 	var ADMIN_MIN_ZOOM = ( adminSettings.minZoom != null ) ? Number( adminSettings.minZoom ) : -3;
 	var ADMIN_MAX_ZOOM = ( adminSettings.maxZoom != null ) ? Number( adminSettings.maxZoom ) : 3;
@@ -14,7 +15,7 @@
 	var colorInput       = document.getElementById( 'bmg_loc_color' );
 	var namedColorSelect = document.getElementById( 'bmg_loc_named_color' );
 
-	if ( ! mapSelect || typeof L === 'undefined' ) return;
+	if ( ! mapSelect || typeof L === 'undefined' || ! shared ) return;
 
 	var leafletMap = null; // active Leaflet instance
 	var marker     = null; // active Leaflet marker
@@ -26,25 +27,11 @@
 	var showSiblings       = true;
 	var currentSiblingData = meta.siblingLocations || [];
 
-	// ------------------------------------------------------------------
-	// Coordinate conversion helpers
-	//
-	// Storage: x%, y% where (0,0) = top-left, y increases downward.
-	// Leaflet CRS.Simple with pixel bounds [H, W], lat increases upward.
-	//   leaflet_lat = H - (y/100) * H
-	//   leaflet_lng = (x/100) * W
-	// ------------------------------------------------------------------
-
-	function toLeaflet( x, y ) {
-		return L.latLng( imgH - ( y / 100 ) * imgH, ( x / 100 ) * imgW );
-	}
-
-	function fromLeaflet( latLng ) {
-		return {
-			x: +( latLng.lng / imgW * 100 ).toFixed( 2 ),
-			y: +( ( imgH - latLng.lat ) / imgH * 100 ).toFixed( 2 ),
-		};
-	}
+	// Coordinate conversion — 2 decimal places, matching the previous
+	// location-editor precision (areas use 4, see area-admin.js).
+	var coordConverter = shared.makeCoordConverter( function () { return imgW; }, function () { return imgH; }, 2 );
+	var toLeaflet       = coordConverter.toLeaflet;
+	var fromLeaflet     = coordConverter.fromLeaflet;
 
 	// ------------------------------------------------------------------
 	// Build / rebuild the Leaflet editor for a given image URL
@@ -70,7 +57,7 @@
 		// as the frontend renderer to avoid whitespace / mis-centred map).
 		wrap.style.aspectRatio = imgW + ' / ' + imgH;
 
-		wrap.innerHTML = '<div id="bmg-map-editor" class="bmg-admin-map-editor"></div>';
+		wrap.innerHTML = '<div id="bmg-map-editor" class="bmg-admin-editor-canvas"></div>';
 
 		// Hint lives as a sibling after the wrap so the wrap's max-height doesn't clip it.
 		var hint = wrap.nextElementSibling;
@@ -83,22 +70,19 @@
 		}
 
 		requestAnimationFrame( function () {
-			leafletMap = L.map( 'bmg-map-editor', {
-				crs              : L.CRS.Simple,
-				minZoom          : ADMIN_MIN_ZOOM,
-				maxZoom          : ADMIN_MAX_ZOOM,
-				zoomSnap         : 0,
-				zoomControl      : true,
-				attributionControl: false,
+			var editor = shared.initSimpleCrsEditor( {
+				containerId: 'bmg-map-editor',
+				imageUrl   : imageUrl,
+				imgW       : imgW,
+				imgH       : imgH,
+				minZoom    : ADMIN_MIN_ZOOM,
+				maxZoom    : ADMIN_MAX_ZOOM,
+				onClick    : function ( e ) {
+					placeMarker( e.latlng );
+					syncInputsFromLatLng( e.latlng );
+				},
 			} );
-
-			var bounds = [ [ 0, 0 ], [ imgH, imgW ] ];
-			L.imageOverlay( imageUrl, bounds ).addTo( leafletMap );
-			leafletMap.fitBounds( bounds );
-			leafletMap.setMaxBounds( [
-				[ -imgH * 0.1, -imgW * 0.1 ],
-				[  imgH * 1.1,  imgW * 1.1 ],
-			] );
+			leafletMap = editor.map;
 
 			// If coordinates are already stored, place the marker immediately.
 			var x = parseFloat( xInput.value );
@@ -109,24 +93,6 @@
 
 			// Show sibling locations.
 			renderSiblingLocations( currentSiblingData );
-
-			// Click on the map → place / move marker.
-			leafletMap.on( 'click', function ( e ) {
-				placeMarker( e.latlng );
-				syncInputsFromLatLng( e.latlng );
-			} );
-
-			// Re-fit whenever the container is resized (e.g. block editor
-			// meta-box panel expanding after async load).
-			if ( typeof ResizeObserver !== 'undefined' ) {
-				var ro = new ResizeObserver( function () {
-					if ( leafletMap ) {
-						leafletMap.invalidateSize();
-						leafletMap.fitBounds( bounds );
-					}
-				} );
-				ro.observe( document.getElementById( 'bmg-map-editor' ) );
-			}
 		} );
 	}
 
@@ -135,31 +101,21 @@
 	// ------------------------------------------------------------------
 
 	function makeIcon( color ) {
-		return L.divIcon( {
-			className : 'bmg-admin-marker-icon',
-			iconSize  : [ 20, 20 ],
-			iconAnchor: [ 10, 10 ],
-			html      : '<div style="' +
-				'width:20px;height:20px;border-radius:50%;' +
-				'background:' + color + ';' +
-				'border:2px solid #fff;' +
-				'box-shadow:0 2px 6px rgba(0,0,0,.45);' +
-				'cursor:move;' +
-			'"></div>',
+		return shared.makeCircleDivIcon( {
+			className: 'bmg-admin-map-vertex-icon',
+			size     : 20,
+			color    : color,
+			shadow   : '0 2px 6px rgba(0,0,0,.45)',
+			cursor   : 'move',
 		} );
 	}
 
 	function makeSiblingIcon( color ) {
-		return L.divIcon( {
-			className : 'bmg-admin-marker-icon',
-			iconSize  : [ 14, 14 ],
-			iconAnchor: [ 7, 7 ],
-			html      : '<div style="' +
-				'width:14px;height:14px;border-radius:50%;' +
-				'background:' + color + ';' +
-				'border:2px solid #fff;' +
-				'box-shadow:0 1px 4px rgba(0,0,0,.3);' +
-			'"></div>',
+		return shared.makeCircleDivIcon( {
+			className: 'bmg-admin-map-vertex-icon',
+			size     : 14,
+			color    : color,
+			shadow   : '0 1px 4px rgba(0,0,0,.3)',
 		} );
 	}
 
@@ -172,7 +128,7 @@
 				icon   : makeSiblingIcon( loc.color ),
 				opacity: 0.5,
 			} ).addTo( leafletMap );
-			m.bindTooltip( loc.title, { sticky: true } );
+			m.bindTooltip( shared.escHtml( loc.title ), { sticky: true } );
 			siblingMarkers.push( m );
 		} );
 	}
@@ -182,25 +138,13 @@
 		siblingMarkers = [];
 	}
 
-	// After every icon set/replace, stop mousedown from bubbling to the map's
-	// drag handler. setIcon() replaces the DOM element so we use setTimeout
-	// to re-attach once Leaflet has finished the swap.
-	function attachMarkerMousedown() {
-		setTimeout( function () {
-			var el = marker && marker.getElement();
-			if ( el ) {
-				L.DomEvent.on( el, 'mousedown', L.DomEvent.stopPropagation );
-			}
-		}, 0 );
-	}
-
 	function placeMarker( latLng ) {
 		var color = colorInput ? colorInput.value : '#e74c3c';
 
 		if ( marker ) {
 			marker.setLatLng( latLng );
 			marker.setIcon( makeIcon( color ) );
-			attachMarkerMousedown();
+			shared.stopMarkerMousedownBubble( marker );
 		} else {
 			marker = L.marker( latLng, {
 				icon     : makeIcon( color ),
@@ -211,7 +155,7 @@
 				syncInputsFromLatLng( e.target.getLatLng() );
 			} );
 
-			attachMarkerMousedown();
+			shared.stopMarkerMousedownBubble( marker );
 		}
 	}
 
@@ -269,14 +213,12 @@
 			wrap.innerHTML = '<p class="description">Loading map image\u2026</p>';
 		}
 
-		var data = new FormData();
-		data.append( 'action',              'bmg_get_map_image' );
-		data.append( 'nonce',               meta.nonce );
-		data.append( 'map_id',              mapId );
-		data.append( 'exclude_location_id', meta.postId || 0 );
-
-		fetch( meta.ajaxUrl, { method: 'POST', body: data } )
-			.then( function ( r ) { return r.json(); } )
+		shared.postForm( meta.ajaxUrl, {
+			action             : 'bmg_get_map_image',
+			nonce              : meta.nonce,
+			map_id             : mapId,
+			exclude_location_id: meta.postId || 0,
+		} )
 			.then( function ( json ) {
 				if ( json.success && json.data.url ) {
 					currentSiblingData = json.data.locations || [];

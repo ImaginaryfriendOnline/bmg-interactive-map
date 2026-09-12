@@ -19,15 +19,7 @@ class BMG_Tileset {
 
 	public static function ajax_generate_tiles(): void {
 		$map_id = absint( $_POST['map_id'] ?? 0 );
-
-		if (
-			! $map_id ||
-			! isset( $_POST['nonce'] ) ||
-			! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'bmg_generate_tiles_' . $map_id ) ||
-			! current_user_can( 'edit_post', $map_id )
-		) {
-			wp_send_json_error( 'Unauthorized', 403 );
-		}
+		self::require_map_capability( $map_id, 'bmg_generate_tiles_' );
 
 		$thumb_id = (int) get_post_thumbnail_id( $map_id );
 		if ( ! $thumb_id ) {
@@ -102,15 +94,7 @@ class BMG_Tileset {
 
 	public static function ajax_tileset_status(): void {
 		$map_id = absint( $_POST['map_id'] ?? 0 );
-
-		if (
-			! $map_id ||
-			! isset( $_POST['nonce'] ) ||
-			! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'bmg_tileset_status_' . $map_id ) ||
-			! current_user_can( 'edit_post', $map_id )
-		) {
-			wp_send_json_error( 'Unauthorized', 403 );
-		}
+		self::require_map_capability( $map_id, 'bmg_tileset_status_' );
 
 		wp_send_json_success( [
 			'status'       => get_post_meta( $map_id, '_bmg_tileset_status', true ),
@@ -125,15 +109,7 @@ class BMG_Tileset {
 
 	public static function ajax_delete_tileset(): void {
 		$map_id = absint( $_POST['map_id'] ?? 0 );
-
-		if (
-			! $map_id ||
-			! isset( $_POST['nonce'] ) ||
-			! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'bmg_delete_tileset_' . $map_id ) ||
-			! current_user_can( 'edit_post', $map_id )
-		) {
-			wp_send_json_error( 'Unauthorized', 403 );
-		}
+		self::require_map_capability( $map_id, 'bmg_delete_tileset_' );
 
 		self::remove_tile_dir( $map_id );
 		delete_post_meta( $map_id, '_bmg_tileset_status' );
@@ -182,6 +158,18 @@ class BMG_Tileset {
 	// -------------------------------------------------------------------------
 	// Private helpers
 	// -------------------------------------------------------------------------
+
+	/** Sends a JSON error (and exits) unless $map_id is valid, nonce-verified, and editable by the current user. */
+	private static function require_map_capability( int $map_id, string $nonce_action_prefix ): void {
+		if (
+			! $map_id ||
+			! isset( $_POST['nonce'] ) ||
+			! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), $nonce_action_prefix . $map_id ) ||
+			! current_user_can( 'edit_post', $map_id )
+		) {
+			wp_send_json_error( 'Unauthorized', 403 );
+		}
+	}
 
 	private static function generate_zoom_level( $src, int $W, int $H, int $z, string $base_dir ): string {
 		// At zoom z, each tile represents this many source image pixels.
