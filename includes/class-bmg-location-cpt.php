@@ -27,6 +27,7 @@ class BMG_Location_CPT {
 		add_filter( 'bulk_actions-edit-bmg_location',        [ __CLASS__, 'register_bulk_actions' ] );
 		add_filter( 'handle_bulk_actions-edit-bmg_location', [ __CLASS__, 'handle_bulk_actions'  ], 10, 3 );
 		add_action( 'admin_notices',                         [ __CLASS__, 'bulk_action_notice'   ] );
+		add_action( 'admin_menu',                            [ __CLASS__, 'add_copy_page'         ] );
 	}
 
 	// -------------------------------------------------------------------------
@@ -133,7 +134,12 @@ class BMG_Location_CPT {
 			}
 		}
 
-		$visible = get_post_meta( $post->ID, '_bmg_hidden', true ) !== '1';
+		$visible          = get_post_meta( $post->ID, '_bmg_hidden', true ) !== '1';
+		$secret           = get_post_meta( $post->ID, '_bmg_loc_secret', true ) === '1';
+		$secret_temporary = get_post_meta( $post->ID, '_bmg_loc_secret_temporary', true ) === '1';
+		$secret_reach_val = get_post_meta( $post->ID, '_bmg_loc_secret_reach_value', true );
+		$secret_reach_unit = get_post_meta( $post->ID, '_bmg_loc_secret_reach_unit', true ) ?: 'px';
+		$global_reach      = $settings['secret_reach_value'] ?? 40;
 		?>
 		<div class="bmg-meta-wrap">
 
@@ -196,6 +202,45 @@ class BMG_Location_CPT {
 				<?php esc_html_e( 'Show in page view', 'bmg-interactive-map' ); ?>
 			</label>
 		</p>
+
+		<!-- Secret -->
+		<p>
+			<label>
+				<input type="checkbox" id="bmg_location_secret" name="bmg_location_secret" value="1" <?php checked( $secret ); ?> />
+				<?php esc_html_e( 'Secret (hidden until discovered by visitors)', 'bmg-interactive-map' ); ?>
+			</label>
+		</p>
+		<div id="bmg-secret-options" style="margin-left:24px;<?php echo $secret ? '' : 'display:none;'; ?>">
+			<p>
+				<label>
+					<input type="checkbox" name="bmg_location_secret_temporary" value="1" <?php checked( $secret_temporary ); ?> />
+					<?php esc_html_e( 'Temporary discovery (only remembered for the visitor\'s current browser session, not permanently)', 'bmg-interactive-map' ); ?>
+				</label>
+			</p>
+			<p>
+				<label for="bmg_loc_secret_reach_value"><?php esc_html_e( 'Reveal reach override', 'bmg-interactive-map' ); ?></label><br>
+				<input type="number" id="bmg_loc_secret_reach_value" name="bmg_loc_secret_reach_value"
+					value="<?php echo esc_attr( $secret_reach_val ); ?>"
+					placeholder="<?php echo esc_attr( $global_reach ); ?>"
+					min="1" max="500" style="width:70px;" />
+				<select name="bmg_loc_secret_reach_unit">
+					<option value="px" <?php selected( $secret_reach_unit, 'px' ); ?>><?php esc_html_e( 'px', 'bmg-interactive-map' ); ?></option>
+					<option value="%" <?php selected( $secret_reach_unit, '%' ); ?>>%</option>
+				</select>
+				<br><span class="description"><?php esc_html_e( 'Leave blank to use the global default set in Interactive Maps → Settings.', 'bmg-interactive-map' ); ?></span>
+			</p>
+		</div>
+		<script>
+		( function () {
+			var cb  = document.getElementById( 'bmg_location_secret' );
+			var opt = document.getElementById( 'bmg-secret-options' );
+			if ( cb && opt ) {
+				cb.addEventListener( 'change', function () {
+					opt.style.display = cb.checked ? '' : 'none';
+				} );
+			}
+		} )();
+		</script>
 
 		<!-- Popup preview -->
 		<p>
@@ -289,6 +334,27 @@ class BMG_Location_CPT {
 		} else {
 			update_post_meta( $post_id, '_bmg_hidden', '1' );
 		}
+
+		if ( isset( $_POST['bmg_location_secret'] ) ) {
+			update_post_meta( $post_id, '_bmg_loc_secret', '1' );
+		} else {
+			delete_post_meta( $post_id, '_bmg_loc_secret' );
+		}
+
+		if ( isset( $_POST['bmg_location_secret_temporary'] ) ) {
+			update_post_meta( $post_id, '_bmg_loc_secret_temporary', '1' );
+		} else {
+			delete_post_meta( $post_id, '_bmg_loc_secret_temporary' );
+		}
+
+		if ( isset( $_POST['bmg_loc_secret_reach_value'] ) && $_POST['bmg_loc_secret_reach_value'] !== '' ) {
+			update_post_meta( $post_id, '_bmg_loc_secret_reach_value', max( 1, min( 500, (int) $_POST['bmg_loc_secret_reach_value'] ) ) );
+			$reach_unit = ( $_POST['bmg_loc_secret_reach_unit'] ?? '' ) === '%' ? '%' : 'px';
+			update_post_meta( $post_id, '_bmg_loc_secret_reach_unit', $reach_unit );
+		} else {
+			delete_post_meta( $post_id, '_bmg_loc_secret_reach_value' );
+			delete_post_meta( $post_id, '_bmg_loc_secret_reach_unit' );
+		}
 	}
 
 	// -------------------------------------------------------------------------
@@ -303,6 +369,8 @@ class BMG_Location_CPT {
 			if ( $key === 'title' ) {
 				$new['bmg_parent_map'] = __( 'Parent Map', 'bmg-interactive-map' );
 				$new['bmg_page_view']  = __( 'Page View',  'bmg-interactive-map' );
+				$new['bmg_secret']     = __( 'Secret',     'bmg-interactive-map' );
+				$new['bmg_temporary']  = __( 'Temporary',  'bmg-interactive-map' );
 			}
 		}
 		return $new;
@@ -314,6 +382,26 @@ class BMG_Location_CPT {
 				echo '<span class="dashicons dashicons-hidden" style="color:#999;" title="' . esc_attr__( 'Hidden from page view', 'bmg-interactive-map' ) . '"></span>';
 			} else {
 				echo '<span class="dashicons dashicons-visibility" style="color:#46b450;" title="' . esc_attr__( 'Shown in page view', 'bmg-interactive-map' ) . '"></span>';
+			}
+			return;
+		}
+
+		if ( $column === 'bmg_secret' ) {
+			if ( get_post_meta( $post_id, '_bmg_loc_secret', true ) === '1' ) {
+				echo '<span class="dashicons dashicons-lock" style="color:#d63638;" title="' . esc_attr__( 'Secret location', 'bmg-interactive-map' ) . '"></span>';
+			} else {
+				echo '<span class="dashicons dashicons-unlock" style="color:#999;" title="' . esc_attr__( 'Not secret', 'bmg-interactive-map' ) . '"></span>';
+			}
+			return;
+		}
+
+		if ( $column === 'bmg_temporary' ) {
+			$is_secret    = get_post_meta( $post_id, '_bmg_loc_secret', true ) === '1';
+			$is_temporary = get_post_meta( $post_id, '_bmg_loc_secret_temporary', true ) === '1';
+			if ( $is_secret && $is_temporary ) {
+				echo '<span class="dashicons dashicons-clock" style="color:#dba617;" title="' . esc_attr__( 'Temporary reveal', 'bmg-interactive-map' ) . '"></span>';
+			} else {
+				echo '—';
 			}
 			return;
 		}
@@ -505,6 +593,13 @@ class BMG_Location_CPT {
 		echo '<option value="1"' . selected( $selected_vis, '1', false ) . '>' . esc_html__( 'Shown in page view', 'bmg-interactive-map' ) . '</option>';
 		echo '<option value="0"' . selected( $selected_vis, '0', false ) . '>' . esc_html__( 'Hidden from page view', 'bmg-interactive-map' ) . '</option>';
 		echo '</select>';
+
+		$selected_secret = isset( $_GET['bmg_filter_secret'] ) ? $_GET['bmg_filter_secret'] : '';
+		echo '<select name="bmg_filter_secret">';
+		echo '<option value="">' . esc_html__( 'All locations', 'bmg-interactive-map' ) . '</option>';
+		echo '<option value="1"' . selected( $selected_secret, '1', false ) . '>' . esc_html__( 'Secret only', 'bmg-interactive-map' ) . '</option>';
+		echo '<option value="0"' . selected( $selected_secret, '0', false ) . '>' . esc_html__( 'Not secret', 'bmg-interactive-map' ) . '</option>';
+		echo '</select>';
 	}
 
 	public static function apply_list_filters( WP_Query $query ): void {
@@ -536,26 +631,50 @@ class BMG_Location_CPT {
 			}
 		}
 
+		if ( isset( $_GET['bmg_filter_secret'] ) && $_GET['bmg_filter_secret'] !== '' ) {
+			if ( $_GET['bmg_filter_secret'] === '1' ) {
+				$meta_query[] = [ 'key' => '_bmg_loc_secret', 'value' => '1' ];
+			} else {
+				$meta_query[] = [
+					'relation' => 'OR',
+					[ 'key' => '_bmg_loc_secret', 'compare' => 'NOT EXISTS' ],
+					[ 'key' => '_bmg_loc_secret', 'value' => '1', 'compare' => '!=' ],
+				];
+			}
+		}
+
 		if ( $meta_query ) {
 			$query->set( 'meta_query', $meta_query );
 		}
 	}
 
 	// -------------------------------------------------------------------------
-	// Helpers
-	// -------------------------------------------------------------------------
-
-	// -------------------------------------------------------------------------
 	// Bulk actions — Hide / Unhide
 	// -------------------------------------------------------------------------
 
 	public static function register_bulk_actions( array $actions ): array {
-		$actions['bmg_hide']   = __( 'Hide from page view',   'bmg-interactive-map' );
-		$actions['bmg_unhide'] = __( 'Show in page view',     'bmg-interactive-map' );
+		$actions['bmg_hide']        = __( 'Hide from page view',   'bmg-interactive-map' );
+		$actions['bmg_unhide']      = __( 'Show in page view',     'bmg-interactive-map' );
+		$actions['bmg_copy_to_map'] = __( 'Copy to map…',          'bmg-interactive-map' );
 		return $actions;
 	}
 
 	public static function handle_bulk_actions( string $redirect_to, string $action, array $post_ids ): string {
+		if ( $action === 'bmg_copy_to_map' ) {
+			$valid_ids = [];
+			foreach ( $post_ids as $post_id ) {
+				$post_id = (int) $post_id;
+				if ( current_user_can( 'edit_post', $post_id ) ) {
+					$valid_ids[] = $post_id;
+				}
+			}
+			if ( ! $valid_ids ) {
+				return $redirect_to;
+			}
+			set_transient( 'bmg_copy_ids_' . get_current_user_id(), $valid_ids, 5 * MINUTE_IN_SECONDS );
+			return admin_url( 'admin.php?page=bmg-copy-locations' );
+		}
+
 		if ( $action !== 'bmg_hide' && $action !== 'bmg_unhide' ) {
 			return $redirect_to;
 		}
@@ -583,6 +702,18 @@ class BMG_Location_CPT {
 			return;
 		}
 
+		if ( isset( $_GET['bmg_copied_count'] ) ) {
+			$copied_count = (int) $_GET['bmg_copied_count'];
+			printf(
+				'<div class="notice notice-success is-dismissible"><p>%s</p></div>',
+				esc_html( sprintf(
+					/* translators: %d: number of locations copied */
+					_n( '%d location copied.', '%d locations copied.', $copied_count, 'bmg-interactive-map' ),
+					$copied_count
+				) )
+			);
+		}
+
 		$action = sanitize_key( $_GET['bmg_bulk_action'] ?? '' );
 		$count  = (int) ( $_GET['bmg_bulk_count'] ?? 0 );
 
@@ -605,6 +736,147 @@ class BMG_Location_CPT {
 		}
 
 		printf( '<div class="notice notice-success is-dismissible"><p>%s</p></div>', esc_html( $msg ) );
+	}
+
+	// -------------------------------------------------------------------------
+	// Bulk action: Copy to map
+	// -------------------------------------------------------------------------
+
+	public static function add_copy_page(): void {
+		add_submenu_page(
+			null, // Hidden — not attached to any menu, reachable only by URL.
+			__( 'Copy Locations to Map', 'bmg-interactive-map' ),
+			__( 'Copy Locations to Map', 'bmg-interactive-map' ),
+			'edit_posts',
+			'bmg-copy-locations',
+			[ __CLASS__, 'render_copy_page' ]
+		);
+	}
+
+	public static function render_copy_page(): void {
+		if ( ! current_user_can( 'edit_posts' ) ) {
+			wp_die( esc_html__( 'You do not have permission to do this.', 'bmg-interactive-map' ) );
+		}
+
+		$transient_key = 'bmg_copy_ids_' . get_current_user_id();
+		$post_ids      = get_transient( $transient_key );
+
+		echo '<div class="wrap"><h1>' . esc_html__( 'Copy Locations to Map', 'bmg-interactive-map' ) . '</h1>';
+
+		if ( empty( $post_ids ) || ! is_array( $post_ids ) ) {
+			printf(
+				'<div class="notice notice-error"><p>%s</p></div><p><a href="%s">%s</a></p></div>',
+				esc_html__( 'Your selection has expired or is no longer available. Please select locations again.', 'bmg-interactive-map' ),
+				esc_url( admin_url( 'edit.php?post_type=bmg_location' ) ),
+				esc_html__( 'Back to Locations', 'bmg-interactive-map' )
+			);
+			return;
+		}
+
+		if ( isset( $_POST['bmg_copy_submit'] ) ) {
+			check_admin_referer( 'bmg_copy_locations', 'bmg_copy_locations_nonce' );
+			if ( ! current_user_can( 'edit_posts' ) ) {
+				wp_die( esc_html__( 'You do not have permission to do this.', 'bmg-interactive-map' ) );
+			}
+			$target_map_id = absint( $_POST['bmg_target_map_id'] ?? 0 );
+			if ( $target_map_id && get_post_type( $target_map_id ) === 'bmg_map' ) {
+				$count = self::copy_locations_to_map( $post_ids, $target_map_id );
+				delete_transient( $transient_key );
+				wp_safe_redirect( add_query_arg(
+					[ 'bmg_filter_map' => $target_map_id, 'bmg_copied_count' => $count ],
+					admin_url( 'edit.php?post_type=bmg_location' )
+				) );
+				exit;
+			}
+			echo '<div class="notice notice-error"><p>' . esc_html__( 'Please choose a valid target map.', 'bmg-interactive-map' ) . '</p></div>';
+		}
+
+		echo '<p>' . esc_html__( 'The following locations will be copied:', 'bmg-interactive-map' ) . '</p><ul style="list-style:disc;margin-left:2em;">';
+		foreach ( $post_ids as $pid ) {
+			$p = get_post( $pid );
+			if ( $p && $p->post_type === 'bmg_location' ) {
+				printf( '<li>%s</li>', esc_html( get_the_title( $p ) ) );
+			}
+		}
+		echo '</ul>';
+
+		printf(
+			'<div class="notice notice-warning"><p>%s</p></div>',
+			esc_html__( 'The destination map should use the same underlying map image as the source. Location position is stored as X/Y percentages relative to a specific image\'s dimensions, so copying to a map with a different image will place the copies incorrectly.', 'bmg-interactive-map' )
+		);
+
+		$maps = get_posts( [
+			'post_type'      => 'bmg_map',
+			'post_status'    => [ 'publish', 'draft' ],
+			'posts_per_page' => -1,
+			'orderby'        => 'title',
+			'order'          => 'ASC',
+		] );
+
+		echo '<form method="post" action="' . esc_url( admin_url( 'admin.php?page=bmg-copy-locations' ) ) . '">';
+		wp_nonce_field( 'bmg_copy_locations', 'bmg_copy_locations_nonce' );
+		echo '<table class="form-table"><tr><th><label for="bmg_target_map_id">' . esc_html__( 'Copy to map', 'bmg-interactive-map' ) . '</label></th><td>';
+		echo '<select name="bmg_target_map_id" id="bmg_target_map_id" required>';
+		echo '<option value="">' . esc_html__( '— Select a map —', 'bmg-interactive-map' ) . '</option>';
+		foreach ( $maps as $map ) {
+			printf( '<option value="%s">%s</option>', esc_attr( $map->ID ), esc_html( $map->post_title ) );
+		}
+		echo '</select></td></tr></table>';
+		submit_button( __( 'Copy', 'bmg-interactive-map' ), 'primary', 'bmg_copy_submit' );
+		echo '</form></div>';
+	}
+
+	private static function copy_locations_to_map( array $post_ids, int $target_map_id ): int {
+		$meta_keys_to_copy = [
+			'_bmg_loc_x',
+			'_bmg_loc_y',
+			'_bmg_loc_color',
+			'_bmg_loc_named_color',
+			'_bmg_hidden',
+			'_bmg_loc_secret',
+			'_bmg_loc_secret_temporary',
+			'_bmg_loc_secret_reach_value',
+			'_bmg_loc_secret_reach_unit',
+		];
+
+		$copied = 0;
+
+		foreach ( $post_ids as $post_id ) {
+			$post_id = (int) $post_id;
+			if ( ! current_user_can( 'edit_post', $post_id ) ) {
+				continue;
+			}
+			$source = get_post( $post_id );
+			if ( ! $source || $source->post_type !== 'bmg_location' ) {
+				continue;
+			}
+
+			$new_id = wp_insert_post( [
+				'post_type'    => 'bmg_location',
+				'post_title'   => $source->post_title,
+				'post_content' => $source->post_content,
+				'post_status'  => $source->post_status,
+				// post_name intentionally omitted — let WP auto-generate a unique slug.
+			], true );
+
+			if ( is_wp_error( $new_id ) || ! $new_id ) {
+				continue;
+			}
+
+			foreach ( $meta_keys_to_copy as $key ) {
+				$value = get_post_meta( $post_id, $key, true );
+				if ( $value !== '' ) {
+					update_post_meta( $new_id, $key, $value );
+				}
+			}
+
+			// Always point the copy at the chosen target map, never the source's map.
+			update_post_meta( $new_id, '_bmg_map_id', $target_map_id );
+
+			$copied++;
+		}
+
+		return $copied;
 	}
 
 	// -------------------------------------------------------------------------

@@ -79,6 +79,14 @@ class BMG_Settings {
 			'bmg_defaults'
 		);
 
+		add_settings_field(
+			'secret_reach',
+			__( 'Secret Reveal Reach', 'bmg-interactive-map' ),
+			[ __CLASS__, 'field_secret_reach' ],
+			'bmg-map-settings',
+			'bmg_defaults'
+		);
+
 		add_settings_section(
 			'bmg_named_colors',
 			__( 'Named Colors', 'bmg-interactive-map' ),
@@ -106,6 +114,9 @@ class BMG_Settings {
 		$clean['zoom_position'] = in_array( $input['zoom_position'] ?? '', $valid_zoom_positions, true )
 			? $input['zoom_position']
 			: 'topleft';
+
+		$clean['secret_reach_value'] = max( 1, min( 500, (int) ( $input['secret_reach_value'] ?? 40 ) ) );
+		$clean['secret_reach_unit']  = ( $input['secret_reach_unit'] ?? '' ) === '%' ? '%' : 'px';
 
 		$clean['named_colors'] = [];
 		foreach ( (array) ( $input['named_colors'] ?? [] ) as $entry ) {
@@ -171,6 +182,24 @@ class BMG_Settings {
 			'<input type="number" name="%s[max_zoom]" value="%s" min="1" max="5" style="width:60px;" />',
 			esc_attr( self::OPTION_KEY ),
 			esc_attr( $opts['max_zoom'] )
+		);
+	}
+
+	public static function field_secret_reach(): void {
+		$opts = self::get();
+		printf(
+			'<input type="number" name="%1$s[secret_reach_value]" value="%2$s" min="1" max="500" style="width:70px;" />
+			<select name="%1$s[secret_reach_unit]">
+				<option value="px"%3$s>%4$s</option>
+				<option value="%%"%5$s>%%</option>
+			</select>
+			<p class="description">%6$s</p>',
+			esc_attr( self::OPTION_KEY ),
+			esc_attr( $opts['secret_reach_value'] ),
+			selected( $opts['secret_reach_unit'], 'px', false ),
+			esc_html__( 'px', 'bmg-interactive-map' ),
+			selected( $opts['secret_reach_unit'], '%', false ),
+			esc_html__( 'Default distance the cursor (or a tap) must be from a Secret location before its "?" indicator appears. Percentage is relative to the map\'s rendered width. Can be overridden per location.', 'bmg-interactive-map' )
 		);
 	}
 
@@ -271,6 +300,8 @@ class BMG_Settings {
 				'min_zoom'      => -3,
 				'max_zoom'      => 3,
 				'zoom_position' => 'topleft',
+				'secret_reach_value' => 40,
+				'secret_reach_unit'  => 'px',
 				'named_colors'  => [],
 			];
 			$cache = wp_parse_args( (array) get_option( self::OPTION_KEY, [] ), $defaults );

@@ -179,14 +179,20 @@ class BMG_Shortcode {
 				continue;
 			}
 
+			$secret_reach_value = get_post_meta( $loc->ID, '_bmg_loc_secret_reach_value', true );
+
 			$locations_data[] = [
-				'index'       => count( $locations_data ),
-				'slug'        => $loc->post_name,
-				'title'       => $loc->post_title,
-				'description' => wp_kses_post( wpautop( do_shortcode( $loc->post_content ) ) ),
-				'x'           => (float) $x,
-				'y'           => (float) $y,
-				'color'       => $color,
+				'index'            => count( $locations_data ),
+				'slug'             => $loc->post_name,
+				'title'            => $loc->post_title,
+				'description'      => wp_kses_post( wpautop( do_shortcode( $loc->post_content ) ) ),
+				'x'                => (float) $x,
+				'y'                => (float) $y,
+				'color'            => $color,
+				'secret'           => get_post_meta( $loc->ID, '_bmg_loc_secret', true ) === '1',
+				'secretTemporary'  => get_post_meta( $loc->ID, '_bmg_loc_secret_temporary', true ) === '1',
+				'secretReachValue' => $secret_reach_value !== '' ? (int) $secret_reach_value : null,
+				'secretReachUnit'  => get_post_meta( $loc->ID, '_bmg_loc_secret_reach_unit', true ) ?: null,
 			];
 		}
 
@@ -549,10 +555,12 @@ class BMG_Shortcode {
 
 		$s = BMG_Settings::get();
 		wp_localize_script( 'bmg-public', 'bmgMapSettings', [
-			'defaultColor' => $s['default_color'],
-			'minZoom'      => $s['min_zoom'],
-			'maxZoom'      => $s['max_zoom'],
-			'zoomPosition' => $s['zoom_position'],
+			'defaultColor'     => $s['default_color'],
+			'minZoom'          => $s['min_zoom'],
+			'maxZoom'          => $s['max_zoom'],
+			'zoomPosition'     => $s['zoom_position'],
+			'secretReachValue' => $s['secret_reach_value'],
+			'secretReachUnit'  => $s['secret_reach_unit'],
 		] );
 
 	}

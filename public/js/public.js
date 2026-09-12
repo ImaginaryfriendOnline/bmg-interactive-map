@@ -16,6 +16,8 @@
 	var MIN_ZOOM      = ( settings.minZoom != null ) ? Number( settings.minZoom ) : -3;
 	var MAX_ZOOM      = ( settings.maxZoom != null ) ? Number( settings.maxZoom ) : 3;
 	var ZOOM_POSITION = settings.zoomPosition || 'topleft';
+	var SECRET_REACH_VALUE = ( settings.secretReachValue != null ) ? Number( settings.secretReachValue ) : 40;
+	var SECRET_REACH_UNIT  = settings.secretReachUnit || 'px';
 
 	// ------------------------------------------------------------------
 	// Coordinate conversion
@@ -28,6 +30,112 @@
 
 	function toLatLng( x, y, W, H ) {
 		return L.latLng( H - ( y / 100 ) * H, ( x / 100 ) * W );
+	}
+
+	// ------------------------------------------------------------------
+	// Secret-location discovery persistence.
+	//
+	// Permanent secrets use a long-lived cookie; "temporary" secrets use
+	// sessionStorage so discovery only lasts for the current tab session
+	// and the location becomes rediscoverable on a fresh visit.
+	// ------------------------------------------------------------------
+
+	function bmgSetCookie( name, value ) {
+		var oneYear = 60 * 60 * 24 * 365;
+		document.cookie = name + '=' + encodeURIComponent( value )
+			+ '; max-age=' + oneYear
+			+ '; path=/; SameSite=Lax';
+	}
+
+	function bmgGetCookie( name ) {
+		var match = document.cookie.match(
+			new RegExp( '(?:^|; )' + name.replace( /[.$?*|{}()[\]\\/+^]/g, '\\$&' ) + '=([^;]*)' )
+		);
+		return match ? decodeURIComponent( match[ 1 ] ) : null;
+	}
+
+	function bmgIsDiscovered( key, temporary ) {
+		try {
+			return temporary ? sessionStorage.getItem( key ) === '1' : bmgGetCookie( key ) === '1';
+		} catch ( e ) {
+			return false; // storage blocked/unavailable — treat as undiscovered.
+		}
+	}
+
+	function bmgMarkDiscovered( key, temporary ) {
+		try {
+			if ( temporary ) {
+				sessionStorage.setItem( key, '1' );
+			} else {
+				bmgSetCookie( key, '1' );
+			}
+		} catch ( e ) {
+			// Storage blocked — discovery just won't persist this visit.
+		}
+	}
+
+	// ------------------------------------------------------------------
+	// Build the standard marker (icon + tooltip + popup + keyboard access)
+	// for a location. Used both for normal locations and for secret
+	// locations once they've been discovered.
+	// ------------------------------------------------------------------
+
+	function renderNormalMarker( loc, map, W, H, markerSize, iconHalf, el ) {
+		var ll    = toLatLng( loc.x, loc.y, W, H );
+		var color = escAttr( loc.color || DEFAULT_COLOR );
+		var label = escAttr( loc.title );
+
+		var icon = L.divIcon( {
+			className : 'bmg-map-marker-icon',
+			iconSize  : [ markerSize, markerSize ],
+			iconAnchor: [ iconHalf,   iconHalf   ],
+			html      : '<div class="bmg-pin"'
+				+ ' role="button"'
+				+ ' tabindex="0"'
+				+ ' aria-label="' + label + '"'
+				+ ' style="background:' + color + ';">'
+				+ '</div>',
+		} );
+
+		var leafletMarker = L.marker( ll, { icon: icon } ).addTo( map );
+
+		if ( el.dataset.tooltips ) {
+			leafletMarker.bindTooltip( escHtml( loc.title ), {
+				direction: 'top',
+				offset   : [ 0, -iconHalf ],
+			} );
+		}
+
+		var popupHtml = '<h3 class="bmg-popup-title">' + escHtml( loc.title ) + '</h3>';
+		if ( loc.description ) {
+			// description is already sanitised HTML produced by wp_kses_post server-side.
+			popupHtml += '<div class="bmg-popup-body">' + loc.description + '</div>';
+		}
+
+		leafletMarker.bindPopup( popupHtml, {
+			maxWidth : 300,
+			className: 'bmg-leaflet-popup',
+			autoPan  : false,
+		} );
+
+		// Keyboard accessibility: open popup on Enter or Space.
+		leafletMarker.on( 'add', function () {
+			var markerEl = leafletMarker.getElement();
+			if ( ! markerEl ) return;
+
+			markerEl.setAttribute( 'tabindex', '0' );
+			markerEl.setAttribute( 'role', 'button' );
+			markerEl.setAttribute( 'aria-label', loc.title );
+
+			markerEl.addEventListener( 'keydown', function ( e ) {
+				if ( e.key === 'Enter' || e.key === ' ' ) {
+					e.preventDefault();
+					leafletMarker.openPopup();
+				}
+			} );
+		} );
+
+		return leafletMarker;
 	}
 
 	// ------------------------------------------------------------------
@@ -313,62 +421,127 @@
 
 			var markers = [];
 
-			locations.forEach( function ( loc ) {
-				var ll    = toLatLng( loc.x, loc.y, W, H );
-				var color = escAttr( loc.color || DEFAULT_COLOR );
-				var label = escAttr( loc.title );
+			// Derive the map's post ID from the container id (format "bmg-map-<id>")
+			// for building collision-safe secret-discovery storage keys.
+			var mapIdMatch = el.id.match( /^bmg-map-(\d+)$/ );
+			var mapIdStr   = mapIdMatch ? mapIdMatch[ 1 ] : el.id;
 
+			function computeReachPx( loc ) {
+				var value = loc.secretReachValue != null ? loc.secretReachValue : SECRET_REACH_VALUE;
+				var unit  = loc.secretReachUnit  || SECRET_REACH_UNIT;
+				if ( unit === '%' ) {
+					return ( value / 100 ) * el.getBoundingClientRect().width;
+				}
+				return value;
+			}
+
+			var undiscoveredSecrets = [];
+
+			function showQuestionMarker( entry ) {
+				entry.revealed = true;
 				var icon = L.divIcon( {
 					className : 'bmg-map-marker-icon',
 					iconSize  : [ markerSize, markerSize ],
-					iconAnchor: [ iconHalf,   iconHalf   ],
-					html      : '<div class="bmg-pin"'
-						+ ' role="button"'
-						+ ' tabindex="0"'
-						+ ' aria-label="' + label + '"'
-						+ ' style="background:' + color + ';">'
-						+ '</div>',
+					iconAnchor: [ iconHalf, iconHalf ],
+					html      : '<div class="bmg-pin bmg-pin-secret" role="button" tabindex="0"'
+						+ ' aria-label="' + escAttr( 'Discover: ' + entry.loc.title ) + '">?</div>',
 				} );
+				entry.marker = L.marker( entry.latlng, { icon: icon } ).addTo( map );
 
-				var leafletMarker = L.marker( ll, { icon: icon } ).addTo( map );
-				markers.push( leafletMarker );
-
-				if ( el.dataset.tooltips ) {
-					leafletMarker.bindTooltip( escHtml( loc.title ), {
-						direction: 'top',
-						offset   : [ 0, -iconHalf ],
-					} );
-				}
-
-				var popupHtml = '<h3 class="bmg-popup-title">' + escHtml( loc.title ) + '</h3>';
-				if ( loc.description ) {
-					// description is already sanitised HTML produced by wp_kses_post server-side.
-					popupHtml += '<div class="bmg-popup-body">' + loc.description + '</div>';
-				}
-
-				leafletMarker.bindPopup( popupHtml, {
-					maxWidth : 300,
-					className: 'bmg-leaflet-popup',
-					autoPan  : false,
+				entry.marker.on( 'click', function () {
+					discoverSecret( entry );
 				} );
-
-				// Keyboard accessibility: open popup on Enter or Space.
-				leafletMarker.on( 'add', function () {
-					var markerEl = leafletMarker.getElement();
-					if ( ! markerEl ) return;
-
-					markerEl.setAttribute( 'tabindex', '0' );
-					markerEl.setAttribute( 'role', 'button' );
-					markerEl.setAttribute( 'aria-label', loc.title );
-
-					markerEl.addEventListener( 'keydown', function ( e ) {
+				entry.marker.on( 'add', function () {
+					var mEl = entry.marker.getElement();
+					if ( ! mEl ) return;
+					mEl.addEventListener( 'keydown', function ( e ) {
 						if ( e.key === 'Enter' || e.key === ' ' ) {
 							e.preventDefault();
-							leafletMarker.openPopup();
+							discoverSecret( entry );
 						}
 					} );
 				} );
+			}
+
+			function hideQuestionMarker( entry ) {
+				entry.revealed = false;
+				if ( entry.marker ) {
+					map.removeLayer( entry.marker );
+					entry.marker = null;
+				}
+			}
+
+			function discoverSecret( entry ) {
+				if ( entry.discovered ) return;
+				entry.discovered = true;
+				bmgMarkDiscovered( entry.key, entry.temporary );
+				hideQuestionMarker( entry );
+				var realMarker = renderNormalMarker( entry.loc, map, W, H, markerSize, iconHalf, el );
+				markers[ entry.loc.index ] = realMarker;
+				realMarker.openPopup();
+
+				var i = undiscoveredSecrets.indexOf( entry );
+				if ( i !== -1 ) undiscoveredSecrets.splice( i, 1 );
+				if ( ! undiscoveredSecrets.length ) {
+					map.off( 'mousemove', onSecretMouseMove );
+					map.off( 'click', onSecretClick );
+				}
+			}
+
+			function onSecretMouseMove( e ) {
+				undiscoveredSecrets.forEach( function ( entry ) {
+					var pt     = map.latLngToContainerPoint( entry.latlng );
+					var dist   = Math.hypot( pt.x - e.containerPoint.x, pt.y - e.containerPoint.y );
+					var within = dist <= computeReachPx( entry.loc );
+
+					if ( within && ! entry.revealed ) {
+						showQuestionMarker( entry );
+					} else if ( ! within && entry.revealed ) {
+						hideQuestionMarker( entry );
+					}
+				} );
+			}
+
+			function onSecretClick( e ) {
+				// Works for both desktop (fallback for a direct click within reach
+				// without a prior hover reveal) and touch (no mousemove ever fires,
+				// so a single tap both reveals and discovers in one action).
+				undiscoveredSecrets.slice().forEach( function ( entry ) {
+					var pt   = map.latLngToContainerPoint( entry.latlng );
+					var dist = Math.hypot( pt.x - e.containerPoint.x, pt.y - e.containerPoint.y );
+					if ( dist <= computeReachPx( entry.loc ) ) {
+						discoverSecret( entry );
+					}
+				} );
+			}
+
+			locations.forEach( function ( loc ) {
+				if ( loc.secret ) {
+					var key = 'bmg_secret_' + mapIdStr + '_' + ( loc.slug || ( 'idx' + loc.index ) );
+					if ( bmgIsDiscovered( key, loc.secretTemporary ) ) {
+						markers.push( renderNormalMarker( loc, map, W, H, markerSize, iconHalf, el ) );
+						return;
+					}
+					markers.push( null ); // placeholder — keeps index-parity with `locations`.
+					undiscoveredSecrets.push( {
+						loc      : loc,
+						latlng   : toLatLng( loc.x, loc.y, W, H ),
+						key      : key,
+						temporary: !! loc.secretTemporary,
+						marker   : null,
+						revealed : false,
+						discovered: false,
+					} );
+					return;
+				}
+
+				markers.push( renderNormalMarker( loc, map, W, H, markerSize, iconHalf, el ) );
 			} );
+
+			if ( undiscoveredSecrets.length ) {
+				map.on( 'mousemove', onSecretMouseMove );
+				map.on( 'click', onSecretClick );
+			}
 
 			// Render polygon areas.
 			var areasRaw = el.getAttribute( 'data-areas' );
@@ -619,7 +792,10 @@
 		} );
 
 		// Map marker → list: highlight and scroll the corresponding item.
+		// (A marker can be `null` here — an undiscovered secret location — until
+		// it's revealed, at which point it starts participating like any other.)
 		markers.forEach( function ( marker, idx ) {
+			if ( ! marker ) return;
 			marker.on( 'popupopen', function () {
 				setActive( idx );
 				var activeItem = listEl.querySelector( '.bmg-location-list__item--active' );
