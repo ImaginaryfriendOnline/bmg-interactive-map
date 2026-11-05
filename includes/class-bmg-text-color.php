@@ -32,6 +32,14 @@ class BMG_Text_Color {
 		return preg_replace( self::PATTERN, '$2', $text ) ?? $text;
 	}
 
+	/**
+	 * The title as literal text, with tags removed and entities decoded. Every place
+	 * that outputs this value must escape it.
+	 */
+	public static function plain_title( string $title ): string {
+		return html_entity_decode( self::strip( $title ), ENT_QUOTES, 'UTF-8' );
+	}
+
 	/** Resolve a Named Colour (case-insensitive) or hex value to a hex colour. */
 	public static function resolve( string $value ): ?string {
 		$value = trim( $value );
