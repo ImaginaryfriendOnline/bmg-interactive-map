@@ -345,9 +345,9 @@ class BMG_Location_CPT {
 		</p>
 		<div id="bmg-popup-preview-wrap" style="display:none;margin-bottom:12px;">
 			<div class="bmg-admin-popup-preview">
-				<h3 class="bmg-popup-title"><?php echo esc_html( $post->post_title ); ?></h3>
+				<h3 class="bmg-popup-title"><?php echo BMG_Text_Color::title_html( $post->post_title ); ?></h3>
 				<?php if ( $post->post_content ) : ?>
-					<div class="bmg-popup-body"><?php echo wp_kses_post( wpautop( do_shortcode( $post->post_content ) ) ); ?></div>
+					<div class="bmg-popup-body"><?php echo wp_kses_post( wpautop( do_shortcode( BMG_Text_Color::body_html( $post->post_content ) ) ) ); ?></div>
 				<?php endif; ?>
 			</div>
 		</div>

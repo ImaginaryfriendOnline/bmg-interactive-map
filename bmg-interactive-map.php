@@ -22,6 +22,7 @@ define( 'BMG_MAP_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 require_once BMG_MAP_PLUGIN_DIR . 'includes/class-bmg-admin-helpers.php';
 require_once BMG_MAP_PLUGIN_DIR . 'includes/trait-bmg-cpt-admin-list.php';
 require_once BMG_MAP_PLUGIN_DIR . 'includes/class-bmg-settings.php';
+require_once BMG_MAP_PLUGIN_DIR . 'includes/class-bmg-text-color.php';
 require_once BMG_MAP_PLUGIN_DIR . 'includes/class-bmg-map-cpt.php';
 require_once BMG_MAP_PLUGIN_DIR . 'includes/class-bmg-location-cpt.php';
 require_once BMG_MAP_PLUGIN_DIR . 'includes/class-bmg-area-cpt.php';
@@ -32,6 +33,7 @@ require_once BMG_MAP_PLUGIN_DIR . 'includes/class-bmg-help.php';
 
 add_action( 'plugins_loaded', function () {
 	BMG_Settings::init();
+	BMG_Text_Color::init();
 	BMG_Map_CPT::init();
 	BMG_Location_CPT::init();
 	BMG_Area_CPT::init();

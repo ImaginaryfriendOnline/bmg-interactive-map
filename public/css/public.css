@@ -303,6 +303,12 @@
 	font-style: italic;
 }
 
+/* Undiscovered secret locations. Needed because display: flex above beats [hidden]. */
+.bmg-location-list__item[hidden],
+.bmg-location-list__empty[hidden] {
+	display: none;
+}
+
 /* -----------------------------------------------------------------
    Location list search field
    ----------------------------------------------------------------- */

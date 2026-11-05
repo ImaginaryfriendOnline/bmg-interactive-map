@@ -106,7 +106,8 @@
 			} );
 		}
 
-		var popupHtml = '<h3 class="bmg-popup-title">' + escHtml( loc.title ) + '</h3>';
+		// titleHtml is escaped server-side. The fallback covers pages cached before it existed.
+		var popupHtml = '<h3 class="bmg-popup-title">' + ( loc.titleHtml || escHtml( loc.title ) ) + '</h3>';
 		if ( loc.description ) {
 			// description is already sanitised HTML produced by wp_kses_post server-side.
 			popupHtml += '<div class="bmg-popup-body">' + loc.description + '</div>';
@@ -436,6 +437,7 @@
 			}
 
 			var undiscoveredSecrets = [];
+			var listApi = null; // set by initList() once the location list is ready.
 
 			function showQuestionMarker( entry ) {
 				entry.revealed = true;
@@ -478,6 +480,9 @@
 				hideQuestionMarker( entry );
 				var realMarker = renderNormalMarker( entry.loc, map, W, H, markerSize, iconHalf, el );
 				markers[ entry.loc.index ] = realMarker;
+				if ( listApi ) {
+					listApi.revealLocation( realMarker, entry.loc.index );
+				}
 				realMarker.openPopup();
 
 				var i = undiscoveredSecrets.indexOf( entry );
@@ -559,7 +564,7 @@
 					return [ H - ( p.y / 100 ) * H, ( p.x / 100 ) * W ];
 				} );
 
-				var popupHtml = '<h3 class="bmg-popup-title">' + escHtml( area.title ) + '</h3>';
+				var popupHtml = '<h3 class="bmg-popup-title">' + ( area.titleHtml || escHtml( area.title ) ) + '</h3>';
 				if ( area.description ) {
 					popupHtml += '<div class="bmg-popup-body">' + area.description + '</div>';
 				}
@@ -612,7 +617,7 @@
 			}
 
 			if ( el.dataset.showList ) {
-				initList( el, map, markers );
+				listApi = initList( el, map, markers ) || null;
 			}
 
 			if ( el.dataset.showAreaList ) {
@@ -706,12 +711,18 @@
 		}
 
 		// Cap each list to 5 visible items so stacked and floating lists stay compact.
-		if ( items.length >= 5 ) {
+		// Undiscovered secrets don't count, and heights can't be measured while collapsed.
+		function capListHeight() {
+			if ( listEl.classList.contains( 'bmg-location-list--collapsed' ) ) return;
+			var visible = Array.prototype.filter.call( items, function ( item ) {
+				return ! item.hidden;
+			} );
+			if ( visible.length < 5 ) return;
 			var searchWrap  = listEl.querySelector( '.bmg-location-search-wrap' );
 			var searchH     = searchWrap ? searchWrap.offsetHeight : 0;
 			var headerEl    = listEl.querySelector( '.bmg-location-list__header' );
 			var headerH     = headerEl ? headerEl.offsetHeight : 34;
-			var itemH       = items[ 0 ].offsetHeight || 36;
+			var itemH       = visible[ 0 ].offsetHeight || 36;
 			listEl.style.maxHeight = ( headerH + searchH + itemH * 5 ) + 'px';
 		}
 
@@ -735,6 +746,7 @@
 				// Re-measure after the CSS transition completes.
 				setTimeout( function () {
 					syncListHeight();
+					capListHeight(); // a secret may have been discovered while collapsed.
 					map.invalidateSize();
 				}, 220 );
 			} );
@@ -743,15 +755,19 @@
 		// Search: filter list items as the user types.  Markers stay on the
 		// map — only the sidebar list is narrowed down.
 		var searchInput = listEl.querySelector( '.bmg-location-search' );
-		if ( searchInput ) {
-			searchInput.addEventListener( 'input', function () {
-				var q = searchInput.value.toLowerCase();
-				items.forEach( function ( item ) {
-					var titleEl = item.querySelector( '.bmg-location-list__title' );
-					var title   = titleEl ? titleEl.textContent.toLowerCase() : '';
-					item.style.display = ( q && title.indexOf( q ) === -1 ) ? 'none' : '';
-				} );
+
+		function applySearch() {
+			if ( ! searchInput ) return;
+			var q = searchInput.value.toLowerCase();
+			items.forEach( function ( item ) {
+				var titleEl = item.querySelector( '.bmg-location-list__title' );
+				var title   = titleEl ? titleEl.textContent.toLowerCase() : '';
+				item.style.display = ( q && title.indexOf( q ) === -1 ) ? 'none' : '';
 			} );
+		}
+
+		if ( searchInput ) {
+			searchInput.addEventListener( 'input', applySearch );
 		}
 
 		function setActive( idx ) {
@@ -792,10 +808,7 @@
 		} );
 
 		// Map marker → list: highlight and scroll the corresponding item.
-		// (A marker can be `null` here — an undiscovered secret location — until
-		// it's revealed, at which point it starts participating like any other.)
-		markers.forEach( function ( marker, idx ) {
-			if ( ! marker ) return;
+		function bindMarker( marker, idx ) {
 			marker.on( 'popupopen', function () {
 				setActive( idx );
 				var activeItem = listEl.querySelector( '.bmg-location-list__item--active' );
@@ -807,7 +820,37 @@
 			marker.on( 'popupclose', function () {
 				setActive( -1 );
 			} );
+		}
+
+		function showItem( marker, idx ) {
+			items.forEach( function ( item ) {
+				if ( parseInt( item.dataset.index, 10 ) === idx ) {
+					item.hidden = false;
+				}
+			} );
+			var emptyEl = listEl.querySelector( '.bmg-location-list__empty' );
+			if ( emptyEl ) {
+				emptyEl.hidden = true;
+			}
+			bindMarker( marker, idx );
+		}
+
+		// A marker is `null` here for an undiscovered secret location: its list
+		// item stays hidden until discoverSecret() calls revealLocation().
+		markers.forEach( function ( marker, idx ) {
+			if ( marker ) {
+				showItem( marker, idx );
+			}
 		} );
+		capListHeight();
+
+		return {
+			revealLocation: function ( marker, idx ) {
+				showItem( marker, idx );
+				applySearch();
+				capListHeight();
+			},
+		};
 	}
 
 	// ------------------------------------------------------------------

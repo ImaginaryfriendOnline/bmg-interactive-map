@@ -105,6 +105,10 @@ class BMG_Help {
 						<span class="dashicons dashicons-lightbulb" aria-hidden="true"></span>
 						<?php esc_html_e( 'Tip: only Published locations appear on the frontend. Draft or private locations are hidden.', 'bmg-interactive-map' ); ?>
 					</div>
+					<div class="bmg-help-tip">
+						<span class="dashicons dashicons-lightbulb" aria-hidden="true"></span>
+						<?php esc_html_e( 'Tip: to colour specific letters in a location or area popup, type a tag in the title or description, using a Named Colour from Settings or a hex value: [color=Gold]B[/color]lack [color=#e74c3c]R[/color]iver. A tag must open and close on one line, and tags cannot be nested. Lists and tooltips show the plain title.', 'bmg-interactive-map' ); ?>
+					</div>
 				</div>
 			</div>
 
