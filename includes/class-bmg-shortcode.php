@@ -184,7 +184,7 @@ class BMG_Shortcode {
 			$locations_data[] = [
 				'index'            => count( $locations_data ),
 				'slug'             => $loc->post_name,
-				'title'            => BMG_Text_Color::strip( $loc->post_title ),
+				'title'            => BMG_Text_Color::plain_title( $loc->post_title ),
 				'titleHtml'        => BMG_Text_Color::title_html( $loc->post_title ),
 				'description'      => wp_kses_post( wpautop( do_shortcode( BMG_Text_Color::body_html( $loc->post_content ) ) ) ),
 				'x'                => (float) $x,
@@ -228,7 +228,7 @@ class BMG_Shortcode {
 			$areas_data[] = [
 				'index'       => count( $areas_data ),
 				'slug'        => $area->post_name,
-				'title'       => BMG_Text_Color::strip( $area->post_title ),
+				'title'       => BMG_Text_Color::plain_title( $area->post_title ),
 				'titleHtml'   => BMG_Text_Color::title_html( $area->post_title ),
 				'description' => wp_kses_post( wpautop( do_shortcode( BMG_Text_Color::body_html( $area->post_content ) ) ) ),
 				'points'      => $points,
@@ -362,8 +362,8 @@ class BMG_Shortcode {
 			<div class="bmg-map-container"
 				id="<?php echo esc_attr( $container_id ); ?>"
 				data-image="<?php echo esc_url( $image_url ); ?>"
-				data-locations="<?php echo esc_attr( wp_json_encode( $locations_data, JSON_INVALID_UTF8_SUBSTITUTE ) ?: '[]' ); ?>"
-				data-areas="<?php echo esc_attr( wp_json_encode( $areas_data, JSON_INVALID_UTF8_SUBSTITUTE ) ?: '[]' ); ?>"
+				data-locations="<?php echo esc_attr( wp_json_encode( $locations_data, JSON_INVALID_UTF8_SUBSTITUTE | JSON_HEX_AMP ) ?: '[]' ); ?>"
+				data-areas="<?php echo esc_attr( wp_json_encode( $areas_data, JSON_INVALID_UTF8_SUBSTITUTE | JSON_HEX_AMP ) ?: '[]' ); ?>"
 				<?php echo ( ! empty( $atts['area_highlights_default'] ) && $atts['area_highlights_default'] !== '0' ) ? 'data-areas-highlighted="1"' : ''; ?>
 				<?php echo $show_list ? 'data-show-list="1"' : ''; ?>
 				<?php echo $show_area_list ? 'data-show-area-list="1"' : ''; ?>
