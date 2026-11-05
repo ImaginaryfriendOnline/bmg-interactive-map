@@ -19,6 +19,7 @@ A WordPress plugin for creating interactive image-based maps with clickable loca
 - **Elementor styling** — full visual control over markers, popups, location list, area list, toolbar, and close button via Elementor style tabs
 - **Tilesets** — optionally pre-slice the map image into 256×256 px tiles at multiple zoom levels; served as static files for faster rendering of large images
 - **Deep linking** — append `?location=slug` or `?area=slug` to any map page URL to auto-pan and open the popup for that item on load
+- **Coloured letters** — colour specific letters in popup titles and text with `[color=…]` tags
 - **Cascade operations** — trashing or deleting a map automatically cascades to its locations and areas
 
 ## Requirements
@@ -122,6 +123,19 @@ Drag the **Interactive Map** widget from the General category onto your page. Al
 - **Location List** — panel, title bar, search field, item, hover, and active colours and typography
 - **Area List** — same controls as Location List, scoped to the area list
 - **Popup** — container background, border, border radius; title and body typography and colours; close button icon, colour, size, and shape
+
+## Coloured Letters in Popups
+
+To colour specific letters, wrap them in a `[color=…]` tag in the title or content of a location or area. Use a Named Colour from **Interactive Maps → Settings** (not case-sensitive) or a hex value:
+
+```
+[color=Gold]B[/color]lack [color=#e74c3c]R[/color]iver
+```
+
+- Colours appear in the popup only. Lists, tooltips, search, and admin screens show the plain title, `Black River`.
+- A tag must open and close on the same line, and tags cannot be nested.
+- If the colour isn't recognised, the letters are shown in the normal colour.
+- Slugs generated for new posts ignore the tags. Adding tags to a title doesn't change an existing slug.
 
 ## Deep Linking
 

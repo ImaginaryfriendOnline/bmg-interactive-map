@@ -166,7 +166,7 @@ class BMG_Shortcode {
 		] );
 
 		$locations_data = [];
-		foreach ( $location_posts as $loc ) {
+		foreach ( BMG_Text_Color::sort_by_title( $location_posts ) as $loc ) {
 			if ( $atts['show_hidden'] !== '1' && get_post_meta( $loc->ID, '_bmg_hidden', true ) === '1' ) {
 				continue;
 			}
@@ -184,8 +184,9 @@ class BMG_Shortcode {
 			$locations_data[] = [
 				'index'            => count( $locations_data ),
 				'slug'             => $loc->post_name,
-				'title'            => $loc->post_title,
-				'description'      => wp_kses_post( wpautop( do_shortcode( $loc->post_content ) ) ),
+				'title'            => BMG_Text_Color::strip( $loc->post_title ),
+				'titleHtml'        => BMG_Text_Color::title_html( $loc->post_title ),
+				'description'      => wp_kses_post( wpautop( do_shortcode( BMG_Text_Color::body_html( $loc->post_content ) ) ) ),
 				'x'                => (float) $x,
 				'y'                => (float) $y,
 				'color'            => $color,
@@ -213,7 +214,7 @@ class BMG_Shortcode {
 		] );
 
 		$areas_data = [];
-		foreach ( $area_posts as $area ) {
+		foreach ( BMG_Text_Color::sort_by_title( $area_posts ) as $area ) {
 			if ( $atts['show_hidden'] !== '1' && get_post_meta( $area->ID, '_bmg_hidden', true ) === '1' ) {
 				continue;
 			}
@@ -227,8 +228,9 @@ class BMG_Shortcode {
 			$areas_data[] = [
 				'index'       => count( $areas_data ),
 				'slug'        => $area->post_name,
-				'title'       => $area->post_title,
-				'description' => wp_kses_post( wpautop( do_shortcode( $area->post_content ) ) ),
+				'title'       => BMG_Text_Color::strip( $area->post_title ),
+				'titleHtml'   => BMG_Text_Color::title_html( $area->post_title ),
+				'description' => wp_kses_post( wpautop( do_shortcode( BMG_Text_Color::body_html( $area->post_content ) ) ) ),
 				'points'      => $points,
 				'color'       => get_post_meta( $area->ID, '_bmg_area_color',        true ) ?: '#3388ff',
 				'fillColor'   => get_post_meta( $area->ID, '_bmg_area_fill_color',   true ) ?: '#3388ff',
@@ -444,19 +446,28 @@ class BMG_Shortcode {
 
 		$html .= '<ul class="bmg-location-list__items">' . "\n";
 
-		if ( empty( $locations ) ) {
-			$html .= '<li class="bmg-location-list__empty">No locations.</li>' . "\n";
-		} else {
-			foreach ( $locations as $loc ) {
-				$html .= '<li class="bmg-location-list__item"'
-					. ' data-index="' . (int) $loc['index'] . '"'
-					. ' role="button"'
-					. ' tabindex="0"'
-					. ' aria-label="' . esc_attr( $loc['title'] ) . '">'
-					. '<span class="bmg-location-list__swatch" style="background:' . esc_attr( $loc['color'] ) . ';"></span>'
-					. '<span class="bmg-location-list__title">' . esc_html( $loc['title'] ) . '</span>'
-					. '</li>' . "\n";
+		// Secret locations start hidden. Discovery state lives in the visitor's
+		// browser, so public.js shows each one once it has been discovered.
+		$has_visible = false;
+		foreach ( $locations as $loc ) {
+			if ( empty( $loc['secret'] ) ) {
+				$has_visible = true;
+				break;
 			}
+		}
+
+		$html .= '<li class="bmg-location-list__empty"' . ( $has_visible ? ' hidden' : '' ) . '>No locations.</li>' . "\n";
+
+		foreach ( $locations as $loc ) {
+			$html .= '<li class="bmg-location-list__item"'
+				. ' data-index="' . (int) $loc['index'] . '"'
+				. ( empty( $loc['secret'] ) ? '' : ' hidden' )
+				. ' role="button"'
+				. ' tabindex="0"'
+				. ' aria-label="' . esc_attr( $loc['title'] ) . '">'
+				. '<span class="bmg-location-list__swatch" style="background:' . esc_attr( $loc['color'] ) . ';"></span>'
+				. '<span class="bmg-location-list__title">' . esc_html( $loc['title'] ) . '</span>'
+				. '</li>' . "\n";
 		}
 
 		$html .= '</ul>' . "\n" . '</nav>' . "\n";
