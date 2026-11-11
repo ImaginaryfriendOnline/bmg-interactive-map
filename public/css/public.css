@@ -160,6 +160,86 @@
 	margin-bottom: 0;
 }
 
+/* Block-editor image alignment/sizing — popups render raw post_content without
+   going through the page's normal block-library stylesheet, so these core
+   classes (alignleft/aligncenter/etc., wp-block-image) need their own rules here. */
+.bmg-popup-body img {
+	max-width: 100%;
+	height: auto;
+}
+
+.bmg-popup-body .wp-block-image {
+	margin: 0 0 1em;
+}
+
+.bmg-popup-body .alignleft {
+	float: left;
+	margin: 0 1em 1em 0;
+}
+
+.bmg-popup-body .alignright {
+	float: right;
+	margin: 0 0 1em 1em;
+}
+
+.bmg-popup-body .aligncenter {
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.bmg-popup-body .alignwide,
+.bmg-popup-body .alignfull {
+	max-width: 100%;
+}
+
+/* Images with Lightbox enabled in the editor — click-to-enlarge is reimplemented
+   in JS since the Interactivity API directives that drive it natively don't
+   survive wp_kses_post(). */
+.bmg-popup-body .wp-lightbox-container img {
+	cursor: zoom-in;
+}
+
+/* Minimal click-to-enlarge overlay for popup/tooltip images. */
+.bmg-image-lightbox {
+	display: none;
+	position: fixed;
+	inset: 0;
+	z-index: 100000;
+	background: rgba( 0, 0, 0, 0.85 );
+	align-items: center;
+	justify-content: center;
+}
+
+.bmg-image-lightbox--open {
+	display: flex;
+}
+
+.bmg-image-lightbox__img {
+	max-width: 90vw;
+	max-height: 90vh;
+	object-fit: contain;
+}
+
+.bmg-image-lightbox__close {
+	position: absolute;
+	top: 16px;
+	right: 16px;
+	width: 40px;
+	height: 40px;
+	border: none;
+	border-radius: 50%;
+	background: rgba( 255, 255, 255, 0.15 );
+	color: #fff;
+	font-size: 24px;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.bmg-image-lightbox__close:hover {
+	background: rgba( 255, 255, 255, 0.3 );
+}
+
 /* Leaflet close button — black circle, centred via flexbox so any icon aligns */
 .bmg-leaflet-popup .leaflet-popup-close-button {
 	position: absolute;

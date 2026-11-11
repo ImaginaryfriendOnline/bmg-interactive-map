@@ -159,6 +159,12 @@ On the frontend, an undiscovered secret shows a small `?` pin once the pointer (
 - **Permanent vs. temporary** — by default, discovery is remembered in a long-lived cookie, so a visitor only has to find a secret once. Check **Temporary discovery** on a location to use `sessionStorage` instead, so it becomes hidden again on the visitor's next visit (but stays discovered for the rest of the current browser tab session).
 - Secret status, the temporary flag, and the reach override are all configured on the **Edit Location** screen.
 
+## Popup Body Content
+
+The popup body is the location/area's **Content**, edited with the full WordPress block editor — paragraphs, headings, lists, links, text/background colour, and images, including alignment (left/right/centred/wide).
+
+Images with **Lightbox** (expand on click) enabled in the Image block work in the popup too, but not through WordPress's native lightbox: that feature relies on the Interactivity API's `data-wp-*` attributes, which are stripped by the sanitizer run on popup content. The plugin instead detects the Lightbox setting and provides its own click-to-enlarge overlay, so the feature still works — just via different code than on a normal page.
+
 ## Deep Linking
 
 Append a query parameter to any map page URL to automatically pan to a location or area and open its popup when the page loads.

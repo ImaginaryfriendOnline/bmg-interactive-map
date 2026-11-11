@@ -176,6 +176,62 @@
 	}
 
 	// ------------------------------------------------------------------
+	// Popup body images — click to enlarge
+	//
+	// Popup/tooltip bodies are raw post_content run through wp_kses_post(),
+	// which strips the Interactivity API directives (data-wp-*) that power
+	// core's native Image block lightbox, so that feature can't work as-is.
+	// The wp-lightbox-container class survives (it's just a class), so we use
+	// it as the signal for "this image had Lightbox enabled in the editor"
+	// and open our own minimal overlay instead.
+	// ------------------------------------------------------------------
+
+	var bmgLightboxOverlay = null;
+
+	function bmgOpenImageLightbox( src, alt ) {
+		if ( ! bmgLightboxOverlay ) {
+			bmgLightboxOverlay = document.createElement( 'div' );
+			bmgLightboxOverlay.className = 'bmg-image-lightbox';
+			bmgLightboxOverlay.innerHTML = '<img class="bmg-image-lightbox__img" alt="" />'
+				+ '<button type="button" class="bmg-image-lightbox__close" aria-label="Close">×</button>';
+			document.body.appendChild( bmgLightboxOverlay );
+
+			bmgLightboxOverlay.addEventListener( 'click', function ( e ) {
+				if ( e.target === bmgLightboxOverlay || e.target.classList.contains( 'bmg-image-lightbox__close' ) ) {
+					bmgCloseImageLightbox();
+				}
+			} );
+			document.addEventListener( 'keydown', function ( e ) {
+				if ( e.key === 'Escape' ) bmgCloseImageLightbox();
+			} );
+		}
+
+		var img = bmgLightboxOverlay.querySelector( '.bmg-image-lightbox__img' );
+		img.src = src;
+		img.alt = alt || '';
+		bmgLightboxOverlay.classList.add( 'bmg-image-lightbox--open' );
+	}
+
+	function bmgCloseImageLightbox() {
+		if ( bmgLightboxOverlay ) {
+			bmgLightboxOverlay.classList.remove( 'bmg-image-lightbox--open' );
+		}
+	}
+
+	/** Called on every Leaflet popupopen — wires up any not-yet-bound lightbox-enabled images. */
+	function bmgWireLightboxImages( popupEl ) {
+		if ( ! popupEl ) return;
+		popupEl.querySelectorAll( '.wp-lightbox-container img' ).forEach( function ( img ) {
+			if ( img.dataset.bmgLightboxBound ) return;
+			img.dataset.bmgLightboxBound = '1';
+			img.addEventListener( 'click', function ( e ) {
+				e.stopPropagation();
+				bmgOpenImageLightbox( img.currentSrc || img.src, img.alt );
+			} );
+		} );
+	}
+
+	// ------------------------------------------------------------------
 	// Initialise one map container
 	// ------------------------------------------------------------------
 
@@ -419,6 +475,10 @@
 						applyPopupCorrection( popup );
 					} );
 				} );
+			} );
+
+			map.on( 'popupopen', function ( e ) {
+				bmgWireLightboxImages( e.popup.getElement() );
 			} );
 
 			var markers = [];
