@@ -14,6 +14,35 @@ class BMG_Settings {
 	public static function init(): void {
 		add_action( 'admin_menu', [ __CLASS__, 'add_settings_page' ] );
 		add_action( 'admin_init', [ __CLASS__, 'register_settings' ] );
+		add_filter( 'block_editor_settings_all', [ __CLASS__, 'filter_block_editor_colors' ], 10, 2 );
+	}
+
+	/**
+	 * Limit the block editor's colour palette to the Named Colours list when editing a
+	 * location or area, so every colour picker in that editor — the body content's
+	 * Highlight format and the Styled Title sidebar panel's RichText colour picker —
+	 * offers the same swatches, drawn from Interactive Maps → Settings.
+	 *
+	 * @param array                   $settings
+	 * @param WP_Block_Editor_Context $context
+	 */
+	public static function filter_block_editor_colors( array $settings, $context ): array {
+		$post_type    = $context->post->post_type ?? '';
+		$named_colors = self::get()['named_colors'];
+
+		if ( ! in_array( $post_type, [ 'bmg_location', 'bmg_area' ], true ) || ! $named_colors ) {
+			return $settings;
+		}
+
+		$settings['colors'] = array_map( static function ( array $c ): array {
+			return [
+				'name'  => $c['name'],
+				'slug'  => sanitize_title( $c['name'] ),
+				'color' => $c['hex'],
+			];
+		}, $named_colors );
+
+		return $settings;
 	}
 
 	// -------------------------------------------------------------------------

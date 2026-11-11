@@ -170,6 +170,17 @@ class BMG_Location_CPT {
 			'capability_type' => 'post',
 			'show_in_rest'    => true,
 		] );
+
+		register_post_meta( 'bmg_location', '_bmg_loc_styled_title', [
+			'type'              => 'string',
+			'single'            => true,
+			'default'           => '',
+			'show_in_rest'      => true,
+			'sanitize_callback' => [ BMG_Text_Color::class, 'sanitize_styled_title' ],
+			'auth_callback'     => static function ( bool $allowed, string $meta_key, int $post_id ): bool {
+				return current_user_can( 'edit_post', $post_id );
+			},
+		] );
 	}
 
 	// -------------------------------------------------------------------------
@@ -279,27 +290,6 @@ class BMG_Location_CPT {
 						value="<?php echo esc_attr( $color ); ?>" />
 				</label>
 			</p>
-
-		<!-- Styled Title -->
-		<p>
-			<label for="bmglocstyledtitle"><strong><?php esc_html_e( 'Styled Title (optional)', 'bmg-interactive-map' ); ?></strong></label><br>
-			<span class="description"><?php esc_html_e( 'Add bold, italic, underline, or letter colour for the popup and hover tooltip. Leave blank to use the plain title above (which supports [color=…] tags).', 'bmg-interactive-map' ); ?></span>
-		</p>
-		<?php
-		wp_editor( $styled_title, 'bmglocstyledtitle', [
-			'textarea_name' => 'bmg_loc_styled_title',
-			'textarea_rows' => 2,
-			'media_buttons' => false,
-			'teeny'         => true,
-			'quicktags'     => false,
-			'tinymce'       => [
-				'toolbar1'  => 'bold,italic,underline,forecolor',
-				'plugins'   => 'textcolor',
-				'statusbar' => false,
-				'resize'    => false,
-			],
-		] );
-		?>
 
 		<!-- Visibility -->
 		<p>
@@ -438,9 +428,7 @@ class BMG_Location_CPT {
 		$named_color = sanitize_text_field( wp_unslash( $_POST['bmg_loc_named_color'] ?? '' ) );
 		update_post_meta( $post_id, '_bmg_loc_named_color', $named_color );
 
-		if ( isset( $_POST['bmg_loc_styled_title'] ) ) {
-			update_post_meta( $post_id, '_bmg_loc_styled_title', BMG_Text_Color::sanitize_styled_title( wp_unslash( $_POST['bmg_loc_styled_title'] ) ) );
-		}
+		// _bmg_loc_styled_title is saved via its registered REST meta field (block editor sidebar panel), not this form.
 
 		if ( isset( $_POST['bmg_location_visible'] ) ) {
 			delete_post_meta( $post_id, '_bmg_hidden' );

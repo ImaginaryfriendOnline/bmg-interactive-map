@@ -11,10 +11,11 @@
  * title is shown without them. A tag must open and close on one line, and
  * tags cannot be nested.
  *
- * A location or area can also have a Styled Title (bold/italic/underline and
- * its own free-colour picker, set via a restricted rich-text editor — not
- * tied to the Named Colours list). When non-empty it replaces the plain
- * title's [color=] rendering entirely in the popup/tooltip; see display_title_html().
+ * A location or area can also have a Styled Title: bold/italic/underline and
+ * per-letter colour, applied by selecting text in the block editor's "Styled
+ * Title" sidebar panel (a RichText field bound to post meta, not a [color=]
+ * tag). When non-empty it replaces the plain title's [color=] rendering
+ * entirely in the popup/tooltip; see display_title_html().
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -27,20 +28,57 @@ class BMG_Text_Color {
 
 	private const POST_TYPES = [ 'bmg_location', 'bmg_area' ];
 
-	/** Tags allowed in a Styled Title field, written via its restricted editor toolbar. */
+	/**
+	 * Tags allowed in a Styled Title field. Matches what the RichText panel's
+	 * bold/italic/underline/highlight formats can produce (WordPress core's
+	 * format-library uses <strong>, <em>, and <span>/<mark> with a style and/or
+	 * class attribute for underline and per-letter colour).
+	 */
 	private const STYLED_TITLE_TAGS = [
 		'strong' => [],
 		'b'      => [],
 		'em'     => [],
 		'i'      => [],
 		'u'      => [],
-		'span'   => [ 'style' => true ],
+		'span'   => [ 'style' => true, 'class' => true ],
+		'mark'   => [ 'style' => true, 'class' => true ],
 	];
 
 	public static function init(): void {
 		// Priority 1: strip before wptexturize and friends alter the tag text.
 		add_filter( 'the_title', [ __CLASS__, 'filter_the_title' ], 1, 2 );
 		add_filter( 'wp_insert_post_data', [ __CLASS__, 'filter_post_data' ], 10, 2 );
+		add_action( 'enqueue_block_editor_assets', [ __CLASS__, 'enqueue_styled_title_panel' ] );
+	}
+
+	/** Load the Styled Title sidebar panel only on the Location/Area block editor screens. */
+	public static function enqueue_styled_title_panel(): void {
+		$screen = get_current_screen();
+		if ( ! $screen || ! in_array( $screen->post_type, self::POST_TYPES, true ) ) {
+			return;
+		}
+
+		wp_enqueue_script(
+			'bmg-styled-title-panel',
+			BMG_MAP_PLUGIN_URL . 'admin/js/styled-title-panel.js',
+			[ 'wp-plugins', 'wp-editor', 'wp-edit-post', 'wp-block-editor', 'wp-components', 'wp-data', 'wp-element', 'wp-i18n' ],
+			BMG_MAP_VERSION,
+			true
+		);
+
+		wp_localize_script( 'bmg-styled-title-panel', 'bmgStyledTitle', [
+			'metaKeys' => [
+				'bmg_location' => '_bmg_loc_styled_title',
+				'bmg_area'     => '_bmg_area_styled_title',
+			],
+		] );
+
+		wp_enqueue_style(
+			'bmg-styled-title-panel',
+			BMG_MAP_PLUGIN_URL . 'admin/css/styled-title-panel.css',
+			[],
+			BMG_MAP_VERSION
+		);
 	}
 
 	/** Remove colour tags, keeping the text inside them. */

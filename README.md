@@ -141,12 +141,13 @@ To colour specific letters, wrap them in a `[color=…]` tag in the title or con
 
 ### Styled Title
 
-For bold, italic, underline, or free-pick letter colour, use the **Styled Title** field on the **Edit Location** or **Edit Area** screen. It's a small rich-text editor below the main Title field, with its own colour-picker button — selecting any colour, not limited to the Named Colours list used by `[color=…]` tags.
+For bold, italic, underline, or per-letter colour, use the **Styled Title** panel in the block editor sidebar (the same sidebar as Status & Visibility) on the **Edit Location** or **Edit Area** screen.
 
-- When the Styled Title field is filled in, it replaces the Title entirely in the on-click popup and the on-hover tooltip — including any `[color=…]` tags on the plain title, which are ignored while a Styled Title is set.
+- Select any text in that panel's field — a letter, a word, the whole title — and apply **Bold**, *Italic*, Underline, or **Highlight** (for colour) from the inline toolbar that appears over the selection, exactly like formatting text anywhere else in the block editor.
+- The Highlight colour picker offers the same swatches as your Named Colours list from **Interactive Maps → Settings**, plus a custom-colour option.
+- When the Styled Title panel is filled in, it replaces the Title entirely in the on-click popup and the on-hover tooltip — including any `[color=…]` tags on the plain title, which are ignored while a Styled Title is set.
 - Leave it blank to keep using the plain Title (with optional `[color=…]` tags) in the popup and tooltip.
 - The plain Title field is still what's used everywhere else — the location/area list, search, slugs, and admin screens.
-- Select text in the editor and use the toolbar's colour swatch to colour it, alongside bold, italic, and underline.
 
 ## Secret Locations
 
