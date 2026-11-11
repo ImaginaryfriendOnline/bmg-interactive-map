@@ -100,7 +100,8 @@
 		var leafletMarker = L.marker( ll, { icon: icon } ).addTo( map );
 
 		if ( el.dataset.tooltips ) {
-			leafletMarker.bindTooltip( escHtml( loc.title ), {
+			// titleHtml is escaped server-side. The fallback covers pages cached before it existed.
+			leafletMarker.bindTooltip( loc.titleHtml || escHtml( loc.title ), {
 				direction: 'top',
 				offset   : [ 0, -iconHalf ],
 			} );
@@ -582,7 +583,8 @@
 					autoPan    : false,
 				} );
 
-				poly.bindTooltip( escHtml( area.title ), {
+				// titleHtml is escaped server-side. The fallback covers pages cached before it existed.
+				poly.bindTooltip( area.titleHtml || escHtml( area.title ), {
 					sticky   : true,
 					direction: 'top',
 					offset   : [ 0, -4 ],

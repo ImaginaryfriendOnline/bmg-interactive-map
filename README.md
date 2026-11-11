@@ -125,7 +125,7 @@ Drag the **Interactive Map** widget from the General category onto your page. Al
 - **Area List** — same controls as Location List, scoped to the area list
 - **Popup** — container background, border, border radius; title and body typography and colours; close button icon, colour, size, and shape
 
-## Coloured Letters in Popups
+## Coloured Letters in Popups & Tooltips
 
 To colour specific letters, wrap them in a `[color=…]` tag in the title or content of a location or area. Use a Named Colour from **Interactive Maps → Settings** (not case-sensitive) or a hex value:
 
@@ -133,7 +133,7 @@ To colour specific letters, wrap them in a `[color=…]` tag in the title or con
 [color=Gold]B[/color]lack [color=#e74c3c]R[/color]iver
 ```
 
-- Colours appear in the popup only. Lists, tooltips, search, and admin screens show the plain title, `Black River`.
+- Colours appear in the on-click popup and the on-hover tooltip (when `show_tooltips` is enabled). The location list, area list, search, and admin screens show the plain title, `Black River`.
 - A tag must open and close on the same line, and tags cannot be nested.
 - If the colour isn't recognised, the letters are shown in the normal colour.
 - Slugs generated for new posts ignore the tags. Adding tags to a title doesn't change an existing slug.
