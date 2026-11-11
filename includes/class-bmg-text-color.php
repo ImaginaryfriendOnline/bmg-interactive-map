@@ -61,7 +61,7 @@ class BMG_Text_Color {
 		wp_enqueue_script(
 			'bmg-styled-title-panel',
 			BMG_MAP_PLUGIN_URL . 'admin/js/styled-title-panel.js',
-			[ 'wp-plugins', 'wp-editor', 'wp-edit-post', 'wp-block-editor', 'wp-components', 'wp-data', 'wp-element', 'wp-i18n' ],
+			[ 'wp-plugins', 'wp-editor', 'wp-edit-post', 'wp-block-editor', 'wp-components', 'wp-rich-text', 'wp-data', 'wp-element', 'wp-i18n' ],
 			BMG_MAP_VERSION,
 			true
 		);

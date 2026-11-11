@@ -1,5 +1,11 @@
 /* BMG Interactive Map — Styled Title block-editor sidebar panel */
 
+.bmg-styled-title-toolbar {
+	margin-bottom: 8px;
+	border: 1px solid #ddd;
+	border-radius: 2px;
+}
+
 .bmg-styled-title-input {
 	min-height: 36px;
 	padding: 6px 8px;
