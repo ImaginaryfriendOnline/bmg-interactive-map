@@ -20,6 +20,7 @@ A WordPress plugin for creating interactive image-based maps with clickable loca
 - **Tilesets** — optionally pre-slice the map image into 256×256 px tiles at multiple zoom levels; served as static files for faster rendering of large images
 - **Deep linking** — append `?location=slug` or `?area=slug` to any map page URL to auto-pan and open the popup for that item on load
 - **Coloured letters** — colour specific letters in popup titles and text with `[color=…]` tags
+- **Secret locations** — hide a marker from the map and location list until a visitor discovers it by hovering or tapping near its position
 - **Cascade operations** — trashing or deleting a map automatically cascades to its locations and areas
 
 ## Requirements
@@ -137,6 +138,16 @@ To colour specific letters, wrap them in a `[color=…]` tag in the title or con
 - If the colour isn't recognised, the letters are shown in the normal colour.
 - Slugs generated for new posts ignore the tags. Adding tags to a title doesn't change an existing slug.
 
+## Secret Locations
+
+A location can be marked **Secret** so it stays hidden — both the marker and its entry in the location list — until a visitor discovers it.
+
+On the frontend, an undiscovered secret shows a small `?` pin once the pointer (or a tap, on touch devices) comes within its **reveal reach** of the marker's position. Hovering/tapping reveals the real marker; clicking or tapping it discovers the location, which then behaves like any other marker and appears in the location list for the rest of the visit.
+
+- **Reveal reach** — how close a visitor needs to get before the `?` pin appears. Set a global default in **Interactive Maps → Settings → Secret Reveal Reach** (in pixels or as a percentage of the map), or override it per location.
+- **Permanent vs. temporary** — by default, discovery is remembered in a long-lived cookie, so a visitor only has to find a secret once. Check **Temporary discovery** on a location to use `sessionStorage` instead, so it becomes hidden again on the visitor's next visit (but stays discovered for the rest of the current browser tab session).
+- Secret status, the temporary flag, and the reach override are all configured on the **Edit Location** screen.
+
 ## Deep Linking
 
 Append a query parameter to any map page URL to automatically pan to a location or area and open its popup when the page loads.
@@ -215,6 +226,7 @@ Go to **Interactive Maps → Settings** to configure global defaults.
 | Min Zoom | `-3` | How far out visitors can zoom (range: −5 to 0) |
 | Max Zoom | `3` | How far in visitors can zoom (range: 1 to 5) |
 | Zoom Control Position | `topleft` | Default corner for zoom buttons |
+| Secret Reveal Reach | `40px` | Default distance from a secret marker's position at which its `?` pin appears; can be set in px or % and overridden per location |
 
 ## Admin Reference
 
@@ -247,6 +259,9 @@ Go to **Interactive Maps → Settings** to configure global defaults.
 | Parent Map | Which map this location belongs to |
 | X / Y coordinates | Position as a percentage (0–100); set visually by clicking the map preview |
 | Marker Color | Per-location hex colour (defaults to global setting) |
+| Secret | Hides the marker and list entry until a visitor discovers it |
+| Temporary discovery | When Secret is enabled, discovery is remembered only for the current browser tab session instead of permanently |
+| Reveal reach override | Per-location override of the global Secret Reveal Reach distance |
 
 ### Area Meta Fields
 
@@ -263,10 +278,11 @@ Go to **Interactive Maps → Settings** to configure global defaults.
 | Item | Storage |
 |------|---------|
 | Map | `bmg_map` CPT; background image = featured image; per-map zoom in `_bmg_map_min_zoom` / `_bmg_map_max_zoom` |
-| Location | `bmg_location` CPT; `_bmg_map_id`, `_bmg_loc_x`, `_bmg_loc_y`, `_bmg_loc_color` |
+| Location | `bmg_location` CPT; `_bmg_map_id`, `_bmg_loc_x`, `_bmg_loc_y`, `_bmg_loc_color`, `_bmg_loc_secret`, `_bmg_loc_secret_temporary`, `_bmg_loc_secret_reach_value`, `_bmg_loc_secret_reach_unit` |
 | Area | `bmg_area` CPT; `_bmg_area_map_id`, `_bmg_area_points` (JSON), `_bmg_area_color`, `_bmg_area_fill_color`, `_bmg_area_fill_opacity` |
 | Global settings | `bmg_map_settings` WordPress option (array) |
 | Tileset files | `wp-content/uploads/bmg-tiles/{map_id}/{z}/{x}/{y}.jpg` |
+| Secret discovery state | Per-visitor, client-side only — a cookie for permanent discovery, `sessionStorage` for temporary discovery; key is derived from the map ID and location slug |
 | Leaflet library | `wp-content/plugins/bmg-interactive-map/lib/leaflet/` |
 
 ## Third-Party Libraries
