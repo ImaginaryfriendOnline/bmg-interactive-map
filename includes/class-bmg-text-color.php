@@ -228,4 +228,16 @@ class BMG_Text_Color {
 		$styled_title = self::sanitize_styled_title( $styled_title );
 		return $styled_title !== '' ? $styled_title : self::title_html( $plain_title );
 	}
+
+	/**
+	 * The HTML to render for a popup/tooltip body, from a location/area's raw post_content.
+	 *
+	 * do_blocks() must run first, on the raw content: dynamic blocks (e.g. the Image
+	 * block's Lightbox button and its "wp-lightbox-container" class) are added by a
+	 * render_callback at render time, not saved into post_content, so skipping this
+	 * step — as earlier versions of this plugin did — silently drops that markup.
+	 */
+	public static function body_render_html( string $raw_content ): string {
+		return wp_kses_post( wpautop( do_shortcode( self::body_html( do_blocks( $raw_content ) ) ) ) );
+	}
 }

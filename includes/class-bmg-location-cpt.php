@@ -360,7 +360,7 @@ class BMG_Location_CPT {
 			<div class="bmg-admin-popup-preview">
 				<h3 class="bmg-popup-title"><?php echo BMG_Text_Color::display_title_html( $post->post_title, $styled_title ); ?></h3>
 				<?php if ( $post->post_content ) : ?>
-					<div class="bmg-popup-body"><?php echo wp_kses_post( wpautop( do_shortcode( BMG_Text_Color::body_html( $post->post_content ) ) ) ); ?></div>
+					<div class="bmg-popup-body"><?php echo BMG_Text_Color::body_render_html( $post->post_content ); ?></div>
 				<?php endif; ?>
 			</div>
 		</div>

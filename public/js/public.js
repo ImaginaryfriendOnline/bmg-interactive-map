@@ -178,11 +178,13 @@
 	// ------------------------------------------------------------------
 	// Popup body images — click to enlarge
 	//
-	// Popup/tooltip bodies are raw post_content run through wp_kses_post(),
-	// which strips the Interactivity API directives (data-wp-*) that power
-	// core's native Image block lightbox, so that feature can't work as-is.
-	// The wp-lightbox-container class survives (it's just a class), so we use
-	// it as the signal for "this image had Lightbox enabled in the editor"
+	// Popup/tooltip bodies are rendered server-side via do_blocks() + wp_kses_post()
+	// (BMG_Text_Color::body_render_html()). do_blocks() makes the Image block's
+	// Lightbox button/class actually appear (they're added by a render_callback,
+	// not saved in post_content), but wp_kses_post() then strips the Interactivity
+	// API directives (data-wp-*) that drive it, so native click-to-enlarge still
+	// can't work. The wp-lightbox-container class survives (it's just a class), so
+	// we use it as the signal for "this image had Lightbox enabled in the editor"
 	// and open our own minimal overlay instead.
 	// ------------------------------------------------------------------
 
