@@ -142,7 +142,8 @@ class BMG_Area_CPT {
 		// Sibling areas for same map (shown as read-only overlays in the editor).
 		$sibling_areas = $map_id ? self::build_sibling_areas( $map_id, $post->ID ) : [];
 
-		$visible = get_post_meta( $post->ID, '_bmg_hidden', true ) !== '1';
+		$styled_title = get_post_meta( $post->ID, '_bmg_area_styled_title', true );
+		$visible      = get_post_meta( $post->ID, '_bmg_hidden', true ) !== '1';
 		?>
 		<div class="bmg-meta-wrap">
 
@@ -203,6 +204,27 @@ class BMG_Area_CPT {
 						min="0" max="1" step="0.05" style="width:70px;" />
 				</label>
 			</p>
+
+			<!-- Styled Title -->
+			<p>
+				<label for="bmgareastyledtitle"><strong><?php esc_html_e( 'Styled Title (optional)', 'bmg-interactive-map' ); ?></strong></label><br>
+				<span class="description"><?php esc_html_e( 'Add bold, italic, underline, or letter colour for the popup and hover tooltip. Leave blank to use the plain title above (which supports [color=…] tags).', 'bmg-interactive-map' ); ?></span>
+			</p>
+			<?php
+			wp_editor( $styled_title, 'bmgareastyledtitle', [
+				'textarea_name' => 'bmg_area_styled_title',
+				'textarea_rows' => 2,
+				'media_buttons' => false,
+				'teeny'         => true,
+				'quicktags'     => false,
+				'tinymce'       => [
+					'toolbar1'  => 'bold,italic,underline,forecolor',
+					'plugins'   => 'textcolor',
+					'statusbar' => false,
+					'resize'    => false,
+				],
+			] );
+			?>
 
 			<!-- Visibility -->
 			<p>
@@ -281,6 +303,10 @@ class BMG_Area_CPT {
 
 		$named_fill_color = sanitize_text_field( wp_unslash( $_POST['bmg_area_named_fill_color'] ?? '' ) );
 		update_post_meta( $post_id, '_bmg_area_named_fill_color', $named_fill_color );
+
+		if ( isset( $_POST['bmg_area_styled_title'] ) ) {
+			update_post_meta( $post_id, '_bmg_area_styled_title', BMG_Text_Color::sanitize_styled_title( wp_unslash( $_POST['bmg_area_styled_title'] ) ) );
+		}
 
 		$raw = wp_unslash( $_POST['bmg_area_points'] ?? '' );
 		$pts = json_decode( $raw, true );

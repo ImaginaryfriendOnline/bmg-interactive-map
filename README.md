@@ -20,6 +20,7 @@ A WordPress plugin for creating interactive image-based maps with clickable loca
 - **Tilesets** — optionally pre-slice the map image into 256×256 px tiles at multiple zoom levels; served as static files for faster rendering of large images
 - **Deep linking** — append `?location=slug` or `?area=slug` to any map page URL to auto-pan and open the popup for that item on load
 - **Coloured letters** — colour specific letters in popup titles and text with `[color=…]` tags
+- **Styled titles** — optionally give a location or area a bold/italic/underline/coloured title via a rich-text field, used in place of the plain title in the popup and tooltip
 - **Secret locations** — hide a marker from the map and location list until a visitor discovers it by hovering or tapping near its position
 - **Cascade operations** — trashing or deleting a map automatically cascades to its locations and areas
 
@@ -137,6 +138,15 @@ To colour specific letters, wrap them in a `[color=…]` tag in the title or con
 - A tag must open and close on the same line, and tags cannot be nested.
 - If the colour isn't recognised, the letters are shown in the normal colour.
 - Slugs generated for new posts ignore the tags. Adding tags to a title doesn't change an existing slug.
+
+### Styled Title
+
+For bold, italic, underline, or free-pick letter colour, use the **Styled Title** field on the **Edit Location** or **Edit Area** screen. It's a small rich-text editor below the main Title field, with its own colour-picker button — selecting any colour, not limited to the Named Colours list used by `[color=…]` tags.
+
+- When the Styled Title field is filled in, it replaces the Title entirely in the on-click popup and the on-hover tooltip — including any `[color=…]` tags on the plain title, which are ignored while a Styled Title is set.
+- Leave it blank to keep using the plain Title (with optional `[color=…]` tags) in the popup and tooltip.
+- The plain Title field is still what's used everywhere else — the location/area list, search, slugs, and admin screens.
+- Select text in the editor and use the toolbar's colour swatch to colour it, alongside bold, italic, and underline.
 
 ## Secret Locations
 
@@ -259,6 +269,7 @@ Go to **Interactive Maps → Settings** to configure global defaults.
 | Parent Map | Which map this location belongs to |
 | X / Y coordinates | Position as a percentage (0–100); set visually by clicking the map preview |
 | Marker Color | Per-location hex colour (defaults to global setting) |
+| Styled Title | Optional bold/italic/underline/coloured title; replaces the plain Title (and its `[color=]` tags) in the popup and tooltip when non-empty |
 | Secret | Hides the marker and list entry until a visitor discovers it |
 | Temporary discovery | When Secret is enabled, discovery is remembered only for the current browser tab session instead of permanently |
 | Reveal reach override | Per-location override of the global Secret Reveal Reach distance |
@@ -272,14 +283,15 @@ Go to **Interactive Maps → Settings** to configure global defaults.
 | Stroke Color | Outline colour of the polygon |
 | Fill Color | Interior fill colour shown on hover |
 | Fill Opacity | Opacity of the fill (0–1) |
+| Styled Title | Optional bold/italic/underline/coloured title; replaces the plain Title (and its `[color=]` tags) in the popup and tooltip when non-empty |
 
 ## Data Storage
 
 | Item | Storage |
 |------|---------|
 | Map | `bmg_map` CPT; background image = featured image; per-map zoom in `_bmg_map_min_zoom` / `_bmg_map_max_zoom` |
-| Location | `bmg_location` CPT; `_bmg_map_id`, `_bmg_loc_x`, `_bmg_loc_y`, `_bmg_loc_color`, `_bmg_loc_secret`, `_bmg_loc_secret_temporary`, `_bmg_loc_secret_reach_value`, `_bmg_loc_secret_reach_unit` |
-| Area | `bmg_area` CPT; `_bmg_area_map_id`, `_bmg_area_points` (JSON), `_bmg_area_color`, `_bmg_area_fill_color`, `_bmg_area_fill_opacity` |
+| Location | `bmg_location` CPT; `_bmg_map_id`, `_bmg_loc_x`, `_bmg_loc_y`, `_bmg_loc_color`, `_bmg_loc_styled_title`, `_bmg_loc_secret`, `_bmg_loc_secret_temporary`, `_bmg_loc_secret_reach_value`, `_bmg_loc_secret_reach_unit` |
+| Area | `bmg_area` CPT; `_bmg_area_map_id`, `_bmg_area_points` (JSON), `_bmg_area_color`, `_bmg_area_fill_color`, `_bmg_area_fill_opacity`, `_bmg_area_styled_title` |
 | Global settings | `bmg_map_settings` WordPress option (array) |
 | Tileset files | `wp-content/uploads/bmg-tiles/{map_id}/{z}/{x}/{y}.jpg` |
 | Secret discovery state | Per-visitor, client-side only — a cookie for permanent discovery, `sessionStorage` for temporary discovery; key is derived from the map ID and location slug |

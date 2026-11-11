@@ -180,12 +180,13 @@ class BMG_Shortcode {
 			}
 
 			$secret_reach_value = get_post_meta( $loc->ID, '_bmg_loc_secret_reach_value', true );
+			$styled_title       = get_post_meta( $loc->ID, '_bmg_loc_styled_title', true );
 
 			$locations_data[] = [
 				'index'            => count( $locations_data ),
 				'slug'             => $loc->post_name,
 				'title'            => BMG_Text_Color::plain_title( $loc->post_title ),
-				'titleHtml'        => BMG_Text_Color::title_html( $loc->post_title ),
+				'titleHtml'        => BMG_Text_Color::display_title_html( $loc->post_title, $styled_title ),
 				'description'      => wp_kses_post( wpautop( do_shortcode( BMG_Text_Color::body_html( $loc->post_content ) ) ) ),
 				'x'                => (float) $x,
 				'y'                => (float) $y,
@@ -225,11 +226,13 @@ class BMG_Shortcode {
 				continue;
 			}
 
+			$area_styled_title = get_post_meta( $area->ID, '_bmg_area_styled_title', true );
+
 			$areas_data[] = [
 				'index'       => count( $areas_data ),
 				'slug'        => $area->post_name,
 				'title'       => BMG_Text_Color::plain_title( $area->post_title ),
-				'titleHtml'   => BMG_Text_Color::title_html( $area->post_title ),
+				'titleHtml'   => BMG_Text_Color::display_title_html( $area->post_title, $area_styled_title ),
 				'description' => wp_kses_post( wpautop( do_shortcode( BMG_Text_Color::body_html( $area->post_content ) ) ) ),
 				'points'      => $points,
 				'color'       => get_post_meta( $area->ID, '_bmg_area_color',        true ) ?: '#3388ff',

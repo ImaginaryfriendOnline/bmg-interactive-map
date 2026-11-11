@@ -7,8 +7,14 @@
  *
  *   [color=Gold]B[/color]lack [color=#e74c3c]R[/color]iver
  *
- * Tags are rendered in popups only. Everywhere else the title is shown without
- * them. A tag must open and close on one line, and tags cannot be nested.
+ * Tags are rendered in the popup and hover tooltip only. Everywhere else the
+ * title is shown without them. A tag must open and close on one line, and
+ * tags cannot be nested.
+ *
+ * A location or area can also have a Styled Title (bold/italic/underline and
+ * its own free-colour picker, set via a restricted rich-text editor — not
+ * tied to the Named Colours list). When non-empty it replaces the plain
+ * title's [color=] rendering entirely in the popup/tooltip; see display_title_html().
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -20,6 +26,16 @@ class BMG_Text_Color {
 	private const PATTERN = '/\[color=([^\]\r\n]+)\](.*?)\[\/color\]/i';
 
 	private const POST_TYPES = [ 'bmg_location', 'bmg_area' ];
+
+	/** Tags allowed in a Styled Title field, written via its restricted editor toolbar. */
+	private const STYLED_TITLE_TAGS = [
+		'strong' => [],
+		'b'      => [],
+		'em'     => [],
+		'i'      => [],
+		'u'      => [],
+		'span'   => [ 'style' => true ],
+	];
 
 	public static function init(): void {
 		// Priority 1: strip before wptexturize and friends alter the tag text.
@@ -158,5 +174,20 @@ class BMG_Text_Color {
 	private static function wrap( string $html, string $color ): string {
 		$hex = self::resolve( $color );
 		return $hex ? '<span style="color:' . esc_attr( $hex ) . '">' . $html . '</span>' : $html;
+	}
+
+	/** Sanitize a Styled Title field to its allowed formatting tags (including a free text colour), for saving and for display. */
+	public static function sanitize_styled_title( string $html ): string {
+		return trim( wp_kses( $html, self::STYLED_TITLE_TAGS ) );
+	}
+
+	/**
+	 * The HTML to render for a popup/tooltip title. Uses the Styled Title when one is
+	 * set (bold/italic/underline, no [color=] parsing); otherwise falls back to the
+	 * plain title with [color=] tags applied.
+	 */
+	public static function display_title_html( string $plain_title, string $styled_title ): string {
+		$styled_title = self::sanitize_styled_title( $styled_title );
+		return $styled_title !== '' ? $styled_title : self::title_html( $plain_title );
 	}
 }

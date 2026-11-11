@@ -11,6 +11,7 @@ defined( 'ABSPATH' ) || exit;
  *  - _bmg_loc_x  → horizontal position as a percentage (0–100)
  *  - _bmg_loc_y  → vertical position as a percentage (0–100)
  *  - _bmg_loc_color → marker accent colour (hex, optional)
+ *  - _bmg_loc_styled_title → optional bold/italic/underline title, replaces Title in popup/tooltip
  */
 class BMG_Location_CPT {
 	use BMG_CPT_Admin_List_Trait;
@@ -217,6 +218,7 @@ class BMG_Location_CPT {
 		// Sibling locations for same map (shown as read-only overlays in the editor).
 		$sibling_locations = $map_id ? self::build_sibling_locations( $map_id, $post->ID ) : [];
 
+		$styled_title     = get_post_meta( $post->ID, '_bmg_loc_styled_title', true );
 		$visible          = get_post_meta( $post->ID, '_bmg_hidden', true ) !== '1';
 		$secret           = get_post_meta( $post->ID, '_bmg_loc_secret', true ) === '1';
 		$secret_temporary = get_post_meta( $post->ID, '_bmg_loc_secret_temporary', true ) === '1';
@@ -277,6 +279,27 @@ class BMG_Location_CPT {
 						value="<?php echo esc_attr( $color ); ?>" />
 				</label>
 			</p>
+
+		<!-- Styled Title -->
+		<p>
+			<label for="bmglocstyledtitle"><strong><?php esc_html_e( 'Styled Title (optional)', 'bmg-interactive-map' ); ?></strong></label><br>
+			<span class="description"><?php esc_html_e( 'Add bold, italic, underline, or letter colour for the popup and hover tooltip. Leave blank to use the plain title above (which supports [color=…] tags).', 'bmg-interactive-map' ); ?></span>
+		</p>
+		<?php
+		wp_editor( $styled_title, 'bmglocstyledtitle', [
+			'textarea_name' => 'bmg_loc_styled_title',
+			'textarea_rows' => 2,
+			'media_buttons' => false,
+			'teeny'         => true,
+			'quicktags'     => false,
+			'tinymce'       => [
+				'toolbar1'  => 'bold,italic,underline,forecolor',
+				'plugins'   => 'textcolor',
+				'statusbar' => false,
+				'resize'    => false,
+			],
+		] );
+		?>
 
 		<!-- Visibility -->
 		<p>
@@ -345,7 +368,7 @@ class BMG_Location_CPT {
 		</p>
 		<div id="bmg-popup-preview-wrap" style="display:none;margin-bottom:12px;">
 			<div class="bmg-admin-popup-preview">
-				<h3 class="bmg-popup-title"><?php echo BMG_Text_Color::title_html( $post->post_title ); ?></h3>
+				<h3 class="bmg-popup-title"><?php echo BMG_Text_Color::display_title_html( $post->post_title, $styled_title ); ?></h3>
 				<?php if ( $post->post_content ) : ?>
 					<div class="bmg-popup-body"><?php echo wp_kses_post( wpautop( do_shortcode( BMG_Text_Color::body_html( $post->post_content ) ) ) ); ?></div>
 				<?php endif; ?>
@@ -414,6 +437,10 @@ class BMG_Location_CPT {
 
 		$named_color = sanitize_text_field( wp_unslash( $_POST['bmg_loc_named_color'] ?? '' ) );
 		update_post_meta( $post_id, '_bmg_loc_named_color', $named_color );
+
+		if ( isset( $_POST['bmg_loc_styled_title'] ) ) {
+			update_post_meta( $post_id, '_bmg_loc_styled_title', BMG_Text_Color::sanitize_styled_title( wp_unslash( $_POST['bmg_loc_styled_title'] ) ) );
+		}
 
 		if ( isset( $_POST['bmg_location_visible'] ) ) {
 			delete_post_meta( $post_id, '_bmg_hidden' );
@@ -624,6 +651,7 @@ class BMG_Location_CPT {
 			'_bmg_loc_y',
 			'_bmg_loc_color',
 			'_bmg_loc_named_color',
+			'_bmg_loc_styled_title',
 			'_bmg_hidden',
 			'_bmg_loc_secret',
 			'_bmg_loc_secret_temporary',
